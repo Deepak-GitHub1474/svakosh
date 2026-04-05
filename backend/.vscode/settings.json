@@ -1,0 +1,6 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "git.enabled": false,
+  "git.openRepositoryInParentFolders": "never",
+  "git.autoRepositoryDetection": false
+}

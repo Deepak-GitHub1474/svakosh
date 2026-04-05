@@ -1,0 +1,6 @@
+{
+  "include": ["app", "run.py"],
+  "venvPath": ".",
+  "venv": ".venv",
+  "extraPaths": ["."]
+}
