@@ -10,37 +10,27 @@ from fastapi.exceptions import RequestValidationError
 logger = logging.getLogger("svakosh.responses")
 
 
-def ok_envelope(
+def ok_response(
     message: str,
     *,
     data: Any = None,
-    payload: Any = None,
 ) -> dict[str, Any]:
     return {
         "success": True,
-        "payload": payload,
-        "response": {
-            "message": message,
-            "data": data,
-        },
+        "message": message,
+        "data": data,
     }
 
 
-def err_envelope(
-    reason: str,
+def err_response(
     message: str,
     *,
     data: Any = None,
-    payload: Any = None,
 ) -> dict[str, Any]:
     return {
         "success": False,
-        "reason": reason,
-        "payload": payload,
-        "response": {
-            "message": message,
-            "data": data,
-        },
+        "message": message,
+        "data": data,
     }
 
 

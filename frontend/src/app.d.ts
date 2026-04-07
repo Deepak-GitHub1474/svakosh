@@ -1,4 +1,4 @@
-import type { BackendConfig } from './lib/config';
+import type { TBackendConfig } from './lib/config';
 
 declare module '*.svg' {
 	const content: string;
@@ -8,7 +8,7 @@ declare module '*.svg' {
 declare global {
 	namespace App {
 		interface PageData {
-			backend: BackendConfig;
+			backend: TBackendConfig;
 		}
 	}
 }

@@ -1,23 +1,19 @@
+import { env } from '$env/dynamic/public';
 import { presets } from './presets';
 
-export type BackendConfig = {
+export type TBackendConfig = {
 	apiUrl: string;
 	wsUrl: string;
-	isDev: boolean;
 	isProd: boolean;
 };
 
-type EnvSlice = {
-	SVAKOSH_API_URL?: string;
-	SVAKOSH_WS_URL?: string;
-};
-
-export function resolveBackendConfig(env: EnvSlice, isProd: boolean): BackendConfig {
+export function resolveBackendConfig(): TBackendConfig {
+	const appEnv = (env.PUBLIC_SAVKOSH_APP_ENV || 'development').toLowerCase();
+	const isProd = appEnv === 'production';
 	const preset = isProd ? presets.production : presets.development;
 	return {
-		apiUrl: env.SVAKOSH_API_URL ?? preset.apiUrl,
-		wsUrl: env.SVAKOSH_WS_URL ?? preset.wsUrl,
-		isDev: !isProd,
+		apiUrl: preset.apiUrl,
+		wsUrl: preset.wsUrl,
 		isProd
 	};
 }

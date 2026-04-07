@@ -16,7 +16,7 @@ from app.database import (
     init_database_state,
 )
 from app.error_handlers import register_exception_handlers
-from app.responses import extract_request_payload, ok_envelope
+from app.responses import extract_request_payload, ok_response
 
 logger = logging.getLogger("svakosh.main")
 settings = get_settings()
@@ -73,7 +73,8 @@ app.add_middleware(
 @app.get("/")
 async def root(request: Request) -> dict[str, Any]:
     pl = await extract_request_payload(request)
-    return ok_envelope(
+    logger.info("root endpoint success=True message=%s payload=%r", "Service information retrieved.", pl)
+    return ok_response(
         "Service information retrieved.",
         data={
             "service": settings.APP_NAME,
@@ -81,5 +82,4 @@ async def root(request: Request) -> dict[str, Any]:
             "docs": "/docs",
             "health": "/health",
         },
-        payload=pl,
     )

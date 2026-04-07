@@ -102,6 +102,7 @@
 	}
 
 	html {
+		font-size: 14px;
 		@apply bg-background text-foreground font-sans antialiased;
 	}
 

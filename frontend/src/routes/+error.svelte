@@ -3,7 +3,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { BRAND } from '$lib/brand';
-	import SvaKoshButton from '$lib/components/SvaKoshButton.svelte';
+	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import { cn } from '$lib/utils';
 
 	const status = $derived(page.status);

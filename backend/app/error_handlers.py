@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
-from app.responses import err_envelope, extract_request_payload
+from app.responses import err_response, extract_request_payload
 
 logger = logging.getLogger("svakosh.error_handlers")
 
@@ -45,13 +45,12 @@ def register_exception_handlers(app: FastAPI) -> None:
             raw = str(e0.get("msg", "invalid input"))
             reason = f"Validation error: {loc}: {raw}" if loc else f"Validation error: {raw}"
         payload = await extract_request_payload(request, exc)
+        logger.warning("Validation failure message=%s payload=%r", reason, payload)
         return JSONResponse(
             status_code=422,
-            content=err_envelope(
+            content=err_response(
                 reason,
-                "Request validation failed.",
                 data=None,
-                payload=payload,
             ),
         )
 
@@ -60,14 +59,18 @@ def register_exception_handlers(app: FastAPI) -> None:
         payload = await extract_request_payload(request)
         detail = exc.detail
         msg = _http_fail_message(exc.status_code)
+        logger.warning(
+            "HTTP exception status=%s detail=%r payload=%r",
+            exc.status_code,
+            detail,
+            payload,
+        )
         if isinstance(detail, str):
-            content = err_envelope(detail, msg, data=None, payload=payload)
+            content = err_response(detail, data=None)
         else:
-            content = err_envelope(
-                "Request failed.",
+            content = err_response(
                 msg,
                 data=detail,
-                payload=payload,
             )
         return JSONResponse(status_code=exc.status_code, content=content)
 
@@ -85,12 +88,11 @@ def register_exception_handlers(app: FastAPI) -> None:
             else "Something went wrong. Try again later."
         )
         payload = await extract_request_payload(request)
+        logger.error("Unhandled request error message=%s payload=%r", reason, payload)
         return JSONResponse(
             status_code=500,
-            content=err_envelope(
+            content=err_response(
                 reason,
-                "Internal server error.",
                 data=None,
-                payload=payload,
             ),
         )
