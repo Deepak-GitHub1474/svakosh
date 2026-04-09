@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { resolve } from '$app/paths';
 	import { BRAND } from '$lib/brand';
 	import Pulse from '$lib/components/svakosh/Pulse.svelte';
 	import Background from '$lib/components/svakosh/Background.svelte';
@@ -135,9 +136,9 @@
 		</section>
 
 		<nav class="text-muted-foreground flex flex-wrap justify-center gap-4 text-center">
-			<a href="/" class="text-primary hover:underline transition-colors">{BRAND.name} home</a>
+			<a href={resolve('/')} class="text-primary hover:underline transition-colors">{BRAND.name} home</a>
 			<span aria-hidden="true">·</span>
-			<a href="/health" class="hover:text-foreground transition-colors">Frontend Heartbeat</a>
+			<a href={resolve('/health')} class="hover:text-foreground transition-colors">Frontend Heartbeat</a>
 		</nav>
 	</div>
 </main>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { BRAND } from '$lib/brand';
 	import Pulse from '$lib/components/svakosh/Pulse.svelte';
 	import Background from '$lib/components/svakosh/Background.svelte';
@@ -55,7 +56,7 @@
 						<p class="text-muted-foreground mt-2 leading-relaxed text-sm">
 							Use this endpoint to confirm the UI shell and routing respond. For API reachability, open
 							<a
-								href="/server-connection"
+								href={resolve('/server-connection')}
 								data-sveltekit-preload-data="off"
 								class="text-primary font-medium underline-offset-2 hover:underline"
 							>
@@ -75,10 +76,10 @@
 		</section>
 
 		<nav class="text-muted-foreground flex flex-wrap justify-center gap-4 text-center">
-			<a href="/" class="text-primary hover:underline transition-colors">{BRAND.name} home</a>
+			<a href={resolve('/')} class="text-primary hover:underline transition-colors">{BRAND.name} home</a>
 			<span aria-hidden="true">·</span>
 			<a
-				href="/server-connection"
+				href={resolve('/server-connection')}
 				data-sveltekit-preload-data="off"
 				class="hover:text-foreground transition-colors"
 			>
