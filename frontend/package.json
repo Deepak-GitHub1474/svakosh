@@ -50,6 +50,7 @@
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
+		"echarts": "^6.0.0",
 		"tailwind-merge": "^3.5.0"
 	}
 }
