@@ -1,6 +1,29 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import * as echarts from 'echarts';
+	import { browser } from '$app/environment';
+	import * as echarts from 'echarts/core';
+	import { BarChart, LineChart } from 'echarts/charts';
+	import {
+		TooltipComponent,
+		GridComponent,
+		LegendComponent,
+		DataZoomComponent,
+		MarkLineComponent
+	} from 'echarts/components';
+	import { CanvasRenderer } from 'echarts/renderers';
+
+	if (browser) {
+		echarts.use([
+			BarChart,
+			LineChart,
+			TooltipComponent,
+			GridComponent,
+			LegendComponent,
+			DataZoomComponent,
+			MarkLineComponent,
+			CanvasRenderer
+		]);
+	}
 	import { fade, fly } from 'svelte/transition';
 	import { UNDERLYINGS, MOCK_DATA } from './mock-data';
 	import type { OptionsAnalyticsData, StrikeOIItem } from './types';
@@ -229,8 +252,10 @@
 	});
 
 	onDestroy(() => {
-		chart?.dispose();
-		window.removeEventListener('click', handleOutsideClick);
+		if (browser) {
+			chart?.dispose();
+			window.removeEventListener('click', handleOutsideClick);
+		}
 	});
 
 	function formatLakh(v: number) {
@@ -475,15 +500,6 @@
 		backdrop-filter: blur(12px);
 		box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 	}
-
-	select {
-		appearance: none;
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E");
-		background-repeat: no-repeat;
-		background-position: right 1rem center;
-		background-size: 1rem;
-	}
-
 
 	::-webkit-scrollbar {
 		width: 4px;
