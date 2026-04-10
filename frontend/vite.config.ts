@@ -3,5 +3,17 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-	plugins: [sveltekit(), tailwindcss()]
+	plugins: [sveltekit(), tailwindcss()],
+	build: {
+		rollupOptions: {
+			output: {
+				manualChunks: (id) => {
+					if (id.includes('node_modules/echarts')) {
+						return 'echarts';
+					}
+				}
+			}
+		},
+		chunkSizeWarningLimit: 1000
+	}
 });
