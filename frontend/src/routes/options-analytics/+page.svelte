@@ -297,14 +297,14 @@
 											<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
 										{/if}
 									</div>
-									<span class="text-[10px] text-muted-foreground">{u.exchange}</span>
+									<span class="text-[0.714rem] text-muted-foreground">{u.exchange}</span>
 								</button>
 							{:else}
 								<div class="p-8 text-center" in:fade>
 									<svg class="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
 									</svg>
-									<p class="text-[11px] text-muted-foreground">No matches for "<span class="text-foreground/70">{searchQuery}</span>"</p>
+									<p class="text-[0.786rem] text-muted-foreground">No matches for "<span class="text-foreground/70">{searchQuery}</span>"</p>
 								</div>
 							{/each}
 						</div>
@@ -349,45 +349,45 @@
 
 	<section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
 		<div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-			<div class="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Spot Price</div>
+			<div class="text-[0.714rem] text-muted-foreground uppercase tracking-widest mb-1">Spot Price</div>
 			<div class="text-lg">{formatCurrency(currentData.spot_price)}</div>
 			<div class="absolute right-0 bottom-0 opacity-5 group-hover:opacity-10 transition-opacity">
 				<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
 			</div>
 		</div>
 		<div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-			<div class="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Max Pain</div>
+			<div class="text-[0.714rem] text-muted-foreground uppercase tracking-widest mb-1">Max Pain</div>
 			<div class="text-lg text-primary">{formatCurrency(currentData.max_pain_strike)}</div>
 			<div class="absolute right-0 bottom-0 opacity-5 group-hover:opacity-10 transition-opacity">
 				<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>
 			</div>
 		</div>
 		<div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-			<div class="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">PCR</div>
+			<div class="text-[0.714rem] text-muted-foreground uppercase tracking-widest mb-1">PCR</div>
 			<div class="flex items-baseline gap-2">
 				<span class="text-lg {currentData.pcr > 1 ? 'text-bullish' : 'text-bearish'}">{currentData.pcr}</span>
-				<span class="text-[10px] opacity-60">({currentData.pcr_interpretation})</span>
+				<span class="text-[0.714rem] opacity-60">({currentData.pcr_interpretation})</span>
 			</div>
 			<div class="absolute right-0 bottom-0 opacity-5 group-hover:opacity-10 transition-opacity">
 				<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M13 11h9v2h-9v-2zm-2 0h-9v2h9v-2zm1-5c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-7c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
 			</div>
 		</div>
 		<div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-			<div class="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">ATM Strike</div>
+			<div class="text-[0.714rem] text-muted-foreground uppercase tracking-widest mb-1">ATM Strike</div>
 			<div class="text-lg">{formatCurrency(currentData.atm_strike)}</div>
 			<div class="absolute right-0 bottom-0 opacity-5 group-hover:opacity-10 transition-opacity">
 				<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm-7 7H3v2c0 1.1.9 2 2 2h2v-2H5v-2zM5 5h2V3H5c-1.1 0-2 .9-2 2v2h2V5zm14-2h-2v2h2v2h2V5c0-1.1-.9-2-2-2zm0 16h-2v2h2c1.1 0 2-.9 2-2v-2h-2v2z"/></svg>
 			</div>
 		</div>
 		<div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-			<div class="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Total CE OI</div>
+			<div class="text-[0.714rem] text-muted-foreground uppercase tracking-widest mb-1">Total CE OI</div>
 			<div class="text-lg text-bearish">{formatLakh(currentData.total_ce_oi)}</div>
 			<div class="absolute right-0 bottom-0 opacity-5 group-hover:opacity-10 transition-opacity">
 				<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M16 18l2.29-2.29-4.88-4.88-4 4L2 7.41 3.41 6l6 6 4-4 6.3 6.29L22 12v6h-6z"/></svg>
 			</div>
 		</div>
 		<div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-			<div class="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Total PE OI</div>
+			<div class="text-[0.714rem] text-muted-foreground uppercase tracking-widest mb-1">Total PE OI</div>
 			<div class="text-lg text-bullish">{formatLakh(currentData.total_pe_oi)}</div>
 			<div class="absolute right-0 bottom-0 opacity-5 group-hover:opacity-10 transition-opacity">
 				<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"/></svg>
@@ -415,13 +415,13 @@
 				Top OI Buildup
 			</h3>
 			<div class="glass-panel overflow-hidden rounded-xl">
-				<table class="w-full text-left text-xs">
+				<table class="w-full text-left">
 					<thead>
 						<tr class="bg-white/5 text-muted-foreground">
-							<th class="px-6 py-4 font-medium">Strike</th>
-							<th class="px-6 py-4 font-medium text-right">CE Change</th>
-							<th class="px-6 py-4 font-medium text-right">PE Change</th>
-							<th class="px-6 py-4 font-medium text-right">Net Chg</th>
+							<th class="px-6 py-4">Strike</th>
+							<th class="px-6 py-4 text-right">CE Change</th>
+							<th class="px-6 py-4 text-right">PE Change</th>
+							<th class="px-6 py-4 text-right">Net Chg</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-white/5">
@@ -450,13 +450,13 @@
 				Significant Unwinding
 			</h3>
 			<div class="glass-panel overflow-hidden rounded-xl">
-				<table class="w-full text-left text-xs">
+				<table class="w-full text-left">
 					<thead>
 						<tr class="bg-white/5 text-muted-foreground">
-							<th class="px-6 py-4 font-medium">Strike</th>
-							<th class="px-6 py-4 font-medium text-right">CE Change</th>
-							<th class="px-6 py-4 font-medium text-right">PE Change</th>
-							<th class="px-6 py-4 font-medium text-right">Net Chg</th>
+							<th class="px-6 py-4">Strike</th>
+							<th class="px-6 py-4 text-right">CE Change</th>
+							<th class="px-6 py-4 text-right">PE Change</th>
+							<th class="px-6 py-4 text-right">Net Chg</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-white/5">

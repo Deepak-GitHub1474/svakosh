@@ -61,7 +61,7 @@
 									{index.change >= 0 ? '+' : ''}{formatNumber(index.change)}
 								</span>
 							</div>
-							<div class="mt-4 pt-4 border-t border-glass-border grid grid-cols-2 gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+							<div class="mt-4 pt-4 border-t border-glass-border grid grid-cols-2 gap-2 text-[0.714rem] uppercase tracking-wider text-muted-foreground">
 								<div>Open <span class="text-foreground block">{formatNumber(index.open)}</span></div>
 								<div>Prev Close <span class="text-foreground block">{formatNumber(index.prev_close)}</span></div>
 							</div>
@@ -121,7 +121,7 @@
 							<span class="text-xs text-muted-foreground uppercase tracking-wider"
 								>Cash Market (in Cr)</span
 							>
-							<span class="rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-muted-foreground"
+							<span class="rounded-full bg-white/5 px-2 py-0.5 text-[0.714rem] text-muted-foreground"
 								>{fii_dii[0].date}</span
 							>
 						</div>
@@ -129,25 +129,25 @@
 							<table class="w-full text-left border-collapse">
 								<thead>
 									<tr
-										class="border-b border-glass-border text-xs uppercase tracking-widest text-muted-foreground"
+										class="border-b border-glass-border uppercase tracking-widest text-muted-foreground"
 									>
-										<th class="py-2 px-4 font-medium">Type</th>
-										<th class="py-2 px-4 font-medium">Buy Value</th>
-										<th class="py-2 px-4 font-medium">Sell Value</th>
-										<th class="py-2 px-4 font-medium text-right">Net Value</th>
+										<th class="py-2 px-4">Type</th>
+										<th class="py-2 px-4">Buy Value</th>
+										<th class="py-2 px-4">Sell Value</th>
+										<th class="py-2 px-4 text-right">Net Value</th>
 									</tr>
 								</thead>
 								<tbody class="divide-y divide-glass-border">
 									<tr class="group transition-colors hover:bg-white/5">
-										<td class="py-3 px-4 text-[11px] font-medium">FII</td>
-										<td class="py-3 px-4 text-[11px] opacity-80 font-medium"
+										<td class="py-3 px-4 text-[0.786rem]">FII</td>
+										<td class="py-3 px-4 text-[0.786rem] opacity-80"
 											>{formatNumber(fii_dii[0].fii_buy_value)}</td
 										>
-										<td class="py-3 px-4 text-[11px] opacity-80 font-medium"
+										<td class="py-3 px-4 text-[0.786rem] opacity-80"
 											>{formatNumber(fii_dii[0].fii_sell_value)}</td
 										>
 										<td
-											class="py-3 px-4 text-right text-[11px] font-bold {fii_dii[0].fii_net >= 0
+											class="py-3 px-4 text-right text-[0.786rem] font-bold {fii_dii[0].fii_net >= 0
 												? 'text-bullish'
 												: 'text-bearish'}"
 										>
@@ -155,15 +155,15 @@
 										</td>
 									</tr>
 									<tr class="group transition-colors hover:bg-white/5">
-										<td class="py-3 px-4 text-[11px] font-medium">DII</td>
-										<td class="py-3 px-4 text-[11px] opacity-80 font-medium"
+										<td class="py-3 px-4 text-[0.786rem]">DII</td>
+										<td class="py-3 px-4 text-[0.786rem] opacity-80"
 											>{formatNumber(fii_dii[0].dii_buy_value)}</td
 										>
-										<td class="py-3 px-4 text-[11px] opacity-80 font-medium"
+										<td class="py-3 px-4 text-[0.786rem] opacity-80"
 											>{formatNumber(fii_dii[0].dii_sell_value)}</td
 										>
 										<td
-											class="py-3 px-4 text-right text-[11px] font-medium {fii_dii[0].dii_net >= 0
+											class="py-3 px-4 text-right text-[0.786rem] {fii_dii[0].dii_net >= 0
 												? 'text-bullish'
 												: 'text-bearish'}"
 										>
@@ -171,8 +171,8 @@
 										</td>
 									</tr>
 									<tr class="bg-primary/10 text-primary border-t border-primary/20">
-										<td class="py-3 px-4 text-[11px] font-medium">Total Flow</td>
-										<td colspan="2" class="py-3 px-4 text-center text-[10px] uppercase tracking-wider italic opacity-60"
+										<td class="py-3 px-4 text-[0.786rem]">Total Flow</td>
+										<td colspan="2" class="py-3 px-4 text-center text-[0.714rem] uppercase tracking-wider italic opacity-60"
 											>Combined Institutional Activity</td
 										>
 										<td
@@ -201,20 +201,20 @@
 					<div class="glass-panel overflow-hidden rounded-2xl">
 						<table class="w-full text-left border-collapse">
 							<thead>
-								<tr class="bg-bullish-subtle/30 text-xs uppercase tracking-widest text-bullish">
-									<th class="px-6 py-4 font-medium">Symbol</th>
-									<th class="px-6 py-4 font-medium">LTP</th>
-									<th class="px-6 py-4 font-medium text-right">Change %</th>
+								<tr class="bg-bullish-subtle/30 uppercase tracking-widest text-bullish">
+									<th class="px-6 py-4">Symbol</th>
+									<th class="px-6 py-4">LTP</th>
+									<th class="px-6 py-4 text-right">Change %</th>
 								</tr>
 							</thead>
 							<tbody class="divide-y divide-glass-border">
 								{#each top_gainers as gainer}
 									<tr class="hover:bg-bullish-subtle/10 transition-colors group">
-										<td class="px-6 py-4 text-[11px]">
+										<td class="px-6 py-4 text-[0.786rem]">
 											{gainer.symbol}
 										</td>
-										<td class="px-6 py-4 text-[11px]">{formatNumber(gainer.ltp)}</td>
-										<td class="px-6 py-4 text-right text-bullish text-[11px]">
+										<td class="px-6 py-4 text-[0.786rem]">{formatNumber(gainer.ltp)}</td>
+										<td class="px-6 py-4 text-right text-bullish text-[0.786rem]">
 											+{gainer.change_pct}%
 										</td>
 									</tr>
@@ -232,20 +232,20 @@
 					<div class="glass-panel overflow-hidden rounded-2xl">
 						<table class="w-full text-left border-collapse">
 							<thead>
-								<tr class="bg-bearish-subtle/30 text-xs uppercase tracking-widest text-bearish">
-									<th class="px-6 py-4 font-medium">Symbol</th>
-									<th class="px-6 py-4 font-medium">LTP</th>
-									<th class="px-6 py-4 font-medium text-right">Change %</th>
+								<tr class="bg-bearish-subtle/30 uppercase tracking-widest text-bearish">
+									<th class="px-6 py-4">Symbol</th>
+									<th class="px-6 py-4">LTP</th>
+									<th class="px-6 py-4 text-right">Change %</th>
 								</tr>
 							</thead>
 							<tbody class="divide-y divide-glass-border">
 								{#each top_losers as loser}
 									<tr class="hover:bg-bearish-subtle/10 transition-colors group">
-										<td class="px-6 py-4 text-[11px]">
+										<td class="px-6 py-4 text-[0.786rem]">
 											{loser.symbol}
 										</td>
-										<td class="px-6 py-4 text-[11px]">{formatNumber(loser.ltp)}</td>
-										<td class="px-6 py-4 text-right text-bearish text-[11px]">
+										<td class="px-6 py-4 text-[0.786rem]">{formatNumber(loser.ltp)}</td>
+										<td class="px-6 py-4 text-right text-bearish text-[0.786rem]">
 											{loser.change_pct}%
 										</td>
 									</tr>

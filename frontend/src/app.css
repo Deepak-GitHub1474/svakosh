@@ -102,9 +102,19 @@
 	}
 
 	html {
-		font-size: 14px;
+		font-size: 0.875rem;
 		font-weight: 400;
 		@apply bg-background text-foreground font-sans antialiased;
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	th, td {
+		font-weight: 400;
+		font-size: 0.857rem;
 	}
 
 	button:not(:disabled) {
