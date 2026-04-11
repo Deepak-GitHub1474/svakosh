@@ -17,14 +17,6 @@ export function getExpiryUpdate(exp: string) {
 	};
 }
 
-export function formatLakh(v: number): string {
-	return (v / 100000).toFixed(2) + 'L';
-}
-
-export function formatCurrency(v: number): string {
-	return v.toLocaleString('en-IN', { maximumFractionDigits: 2 });
-}
-
 export function calculateOiStats(strikes: TStrikeOIItem[]) {
 	const buildups = [...strikes]
 		.sort((a, b) => b.ce_oi_change + b.pe_oi_change - (a.ce_oi_change + a.pe_oi_change))

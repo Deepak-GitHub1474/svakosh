@@ -2,7 +2,8 @@
 	import { fly, fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import { MARKET_DATA } from './_lib/mock-data';
-	import { formatNumber } from './_lib/helper';
+	import { formatNumber } from '$lib/utils';
+	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 
 	const { indices, breadth, top_gainers, top_losers, fii_dii } = MARKET_DATA.data;
 
@@ -29,42 +30,43 @@
 				</h2>
 				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 					{#each indices as index, i}
-						<div
-							in:fly={{ y: 20, delay: i * 50, duration: 500 }}
-							class="glass-panel p-4 rounded-2xl hover:border-primary/40 transition-all duration-300 group cursor-default relative overflow-hidden"
-						>
-							<div
-								class="absolute -bottom-2 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"
+						<div in:fly={{ y: 20, delay: i * 50, duration: 500 }}>
+							<SvaKoshCard
+								class="hover:border-primary/40 transition-all duration-300 group cursor-default"
 							>
-								<span class="text-5xl">{index.symbol[0]}</span>
-							</div>
-							<div class="flex justify-between items-start mb-4">
-								<div>
-									<h3 class="text-base">
-										{index.display_name}
-									</h3>
-									<span class="text-xs text-muted-foreground uppercase group-hover:text-primary transition-colors">{index.symbol}</span>
-								</div>
 								<div
-									class="px-2 py-1 rounded text-xs {index.change >= 0
-										? 'bg-bullish-subtle text-bullish'
-										: 'bg-bearish-subtle text-bearish'}"
+									class="absolute -bottom-2 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"
 								>
-									{index.change_pct}%
+									<span class="text-5xl">{index.symbol[0]}</span>
 								</div>
-							</div>
-							<div class="flex items-baseline gap-2">
+								<div class="flex justify-between items-start mb-4">
+									<div>
+										<h3 class="text-base">
+											{index.display_name}
+										</h3>
+										<span class="text-xs text-muted-foreground uppercase group-hover:text-primary transition-colors">{index.symbol}</span>
+									</div>
+									<div
+									class="px-2 py-1 rounded text-xs {index.change >= 0
+											? 'bg-bullish-subtle text-bullish'
+											: 'bg-bearish-subtle text-bearish'}"
+									>
+										{index.change_pct}%
+									</div>
+								</div>
+								<div class="flex items-baseline gap-2">
 								<span class="text-2xl">{formatNumber(index.ltp)}</span>
-								<span
+									<span
 									class="text-sm {index.change >= 0 ? 'text-bullish' : 'text-bearish'}"
-								>
-									{index.change >= 0 ? '+' : ''}{formatNumber(index.change)}
-								</span>
-							</div>
+									>
+										{index.change >= 0 ? '+' : ''}{formatNumber(index.change)}
+									</span>
+								</div>
 							<div class="mt-4 pt-4 border-t border-glass-border grid grid-cols-2 gap-2 text-[0.714rem] uppercase tracking-wider text-muted-foreground">
 								<div>Open <span class="text-foreground block">{formatNumber(index.open)}</span></div>
 								<div>Prev Close <span class="text-foreground block">{formatNumber(index.prev_close)}</span></div>
-							</div>
+								</div>
+							</SvaKoshCard>
 						</div>
 					{/each}
 				</div>

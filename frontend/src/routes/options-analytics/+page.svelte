@@ -14,14 +14,23 @@
 	import { CanvasRenderer } from 'echarts/renderers';
 	import { UNDERLYINGS, MOCK_DATA } from './_lib/mock-data';
 	import {
-		formatLakh,
-		formatCurrency,
 		calculateOiStats,
 		calculateActiveStrikes,
 		getSymbolUpdate,
 		getExpiryUpdate
 	} from './_lib/helper';
 	import type { TStrikeOIItem } from './_lib/types';
+	import { formatNumber as formatCurrency, formatLakh } from '$lib/utils';
+	import Info from '$lib/components/svg-provider/Info.svelte';
+	import SpotIcon from '$lib/components/svg-provider/SpotIcon.svelte';
+	import PcrIcon from '$lib/components/svg-provider/PcrIcon.svelte';
+	import StrikeIcon from '$lib/components/svg-provider/StrikeIcon.svelte';
+	import DownArrow from '$lib/components/svg-provider/DownArrow.svelte';
+	import UpArrow from '$lib/components/svg-provider/UpArrow.svelte';
+	import BullishArrow from '$lib/components/svg-provider/BullishArrow.svelte';
+	import BearishArrow from '$lib/components/svg-provider/BearishArrow.svelte';
+	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
+	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 
 	if (browser) {
 		echarts.use([
@@ -38,19 +47,34 @@
 
 	let chart: echarts.ECharts | null = null;
 	let symbol = $state('NIFTY');
-	let searchQuery = $state('');
-	let showSymbolDropdown = $state(false);
-	let showExpiryDropdown = $state(false);
 	let selectedExpiry = $state<string | null>(null);
 	let chartContainer = $state<HTMLDivElement | null>(null);
 
-	const currentData = $derived(MOCK_DATA[symbol] || MOCK_DATA['NIFTY']);
-	
-	const filteredUnderlyings = $derived.by(() => {
-		const q = searchQuery.trim().toUpperCase();
-		if (!q) return UNDERLYINGS;
-		return UNDERLYINGS.filter((u) => u.symbol.includes(q));
+	let isSymbolOpen = $state(false);
+	let isExpiryOpen = $state(false);
+
+	$effect(() => {
+		if (isSymbolOpen) isExpiryOpen = false;
 	});
+
+	$effect(() => {
+		if (isExpiryOpen) isSymbolOpen = false;
+	});
+
+	const symbolOptions = UNDERLYINGS.map((u) => ({
+		label: u.symbol,
+		value: u.symbol,
+		meta: u.exchange
+	}));
+
+	const currentData = $derived(MOCK_DATA[symbol] || MOCK_DATA['NIFTY']);
+
+	const expiryOptions = $derived(
+		currentData.expiries.map((exp) => ({
+			label: exp,
+			value: exp
+		}))
+	);
 
 	const oiStats = $derived.by(() => calculateOiStats(currentData.strikes));
 
@@ -61,15 +85,12 @@
 	function selectSymbol(s: string) {
 		const update = getSymbolUpdate(s);
 		symbol = update.symbol;
-		showSymbolDropdown = update.showSymbolDropdown;
-		searchQuery = update.searchQuery;
 		selectedExpiry = update.selectedExpiry;
 	}
 
 	function selectExpiry(exp: string) {
 		const update = getExpiryUpdate(exp);
 		selectedExpiry = update.selectedExpiry;
-		showExpiryDropdown = update.showExpiryDropdown;
 	}
 
 	function initChart() {
@@ -224,13 +245,6 @@
 		chart.setOption(option, true);
 	}
 
-	function handleOutsideClick(e: MouseEvent) {
-		const target = e.target as HTMLElement;
-		if (!target.closest('.dropdown-trigger')) {
-			showSymbolDropdown = false;
-			showExpiryDropdown = false;
-		}
-	}
 
 	$effect(() => {
 		if (activeStrikes) {
@@ -241,13 +255,11 @@
 	onMount(() => {
 		initChart();
 		if (!selectedExpiry) selectedExpiry = currentData.expiry;
-		window.addEventListener('click', handleOutsideClick);
 	});
 
 	onDestroy(() => {
 		if (browser) {
 			chart?.dispose();
-			window.removeEventListener('click', handleOutsideClick);
 		}
 	});
 </script>
@@ -262,140 +274,64 @@
 		</div>
 
 		<div class="flex items-center gap-4">
-			<div class="relative w-52 dropdown-trigger">
-				<button 
-					onclick={() => { showSymbolDropdown = !showSymbolDropdown; showExpiryDropdown = false; }}
-					class="w-full glass-panel px-4 py-3 rounded-xl flex items-center justify-between group hover:border-primary/40 transition-all"
-				>
-					<span class="tracking-wide text-sm">{symbol}</span>
-					<svg class="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors {showSymbolDropdown ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-					</svg>
-				</button>
+			<SvaKoshSelector
+				options={symbolOptions}
+				bind:value={symbol}
+				bind:isOpen={isSymbolOpen}
+				searchable={true}
+				onSelect={selectSymbol}
+				class="w-52"
+			/>
 
-				{#if showSymbolDropdown}
-					<div 
-						class="absolute top-full mt-2 left-0 w-full glass-panel border border-primary/20 rounded-xl z-50 overflow-hidden shadow-2xl"
-						transition:fly={{ y: -10, duration: 200 }}
-					>
-						<div class="border-b border-white/5">
-							<input 
-								bind:value={searchQuery}
-								placeholder="Search symbol..."
-								class="w-full px-3 py-4 rounded-t-lg text-xs border border-white/5 focus:outline-0"
-							/>
-						</div>
-						<div class="min-h-[130px] max-h-60 overflow-y-auto">
-							{#each filteredUnderlyings as u}
-								<button 
-									onclick={() => selectSymbol(u.symbol)}
-									class="w-full px-4 py-3 text-left text-xs hover:bg-primary/5 transition-colors flex items-center justify-between {symbol === u.symbol ? 'text-primary bg-primary/10 border-l-2 border-primary' : ''}"
-								>
-									<div class="flex items-center gap-2">
-										<span>{u.symbol}</span>
-										{#if symbol === u.symbol}
-											<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-										{/if}
-									</div>
-									<span class="text-[0.714rem] text-muted-foreground">{u.exchange}</span>
-								</button>
-							{:else}
-								<div class="p-8 text-center" in:fade>
-									<svg class="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-									</svg>
-									<p class="text-[0.786rem] text-muted-foreground">No matches for "<span class="text-foreground/70">{searchQuery}</span>"</p>
-								</div>
-							{/each}
-						</div>
-					</div>
-				{/if}
-			</div>
-
-			<div class="relative w-48 dropdown-trigger">
-				<button 
-					onclick={() => { showExpiryDropdown = !showExpiryDropdown; showSymbolDropdown = false; }}
-					class="w-full glass-panel px-4 py-3 rounded-xl flex items-center justify-between group hover:border-primary/40 transition-all tracking-wide"
-				>
-					<span class="text-sm">{selectedExpiry}</span>
-					<svg class="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors {showExpiryDropdown ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-					</svg>
-				</button>
-
-				{#if showExpiryDropdown}
-					<div 
-						class="absolute top-full mt-2 left-0 w-full glass-panel border border-primary/20 rounded-xl z-50 overflow-hidden shadow-2xl"
-						transition:fly={{ y: -10, duration: 200 }}
-					>
-						<div class="max-h-60 overflow-y-auto">
-							{#each currentData.expiries as exp}
-								<button 
-									onclick={() => selectExpiry(exp)}
-									class="w-full px-4 py-3 text-left hover:bg-primary/5 transition-colors flex items-center justify-between {selectedExpiry === exp ? 'text-primary bg-primary/10 border-l-2 border-primary' : ''}"
-								>
-									<span class="text-sm">{exp}</span>
-									{#if selectedExpiry === exp}
-										<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-									{/if}
-								</button>
-							{/each}
-						</div>
-					</div>
-				{/if}
-			</div>
+			<SvaKoshSelector
+				options={expiryOptions}
+				bind:value={selectedExpiry}
+				bind:isOpen={isExpiryOpen}
+				onSelect={selectExpiry}
+				class="w-48"
+			/>
 		</div>
 	</header>
 
 	<section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-		<div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-			<div class="text-[0.714rem] text-muted-foreground uppercase tracking-widest mb-1">Spot Price</div>
-			<div class="text-lg">{formatCurrency(currentData.spot_price)}</div>
-			<div class="absolute right-0 bottom-0 opacity-5 group-hover:opacity-10 transition-opacity">
-				<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-			</div>
-		</div>
-		<div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-			<div class="text-[0.714rem] text-muted-foreground uppercase tracking-widest mb-1">Max Pain</div>
-			<div class="text-lg text-primary">{formatCurrency(currentData.max_pain_strike)}</div>
-			<div class="absolute right-0 bottom-0 opacity-5 group-hover:opacity-10 transition-opacity">
-				<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>
-			</div>
-		</div>
-		<div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-			<div class="text-[0.714rem] text-muted-foreground uppercase tracking-widest mb-1">PCR</div>
-			<div class="flex items-baseline gap-2">
-				<span class="text-lg {currentData.pcr > 1 ? 'text-bullish' : 'text-bearish'}">{currentData.pcr}</span>
-				<span class="text-[0.714rem] opacity-60">({currentData.pcr_interpretation})</span>
-			</div>
-			<div class="absolute right-0 bottom-0 opacity-5 group-hover:opacity-10 transition-opacity">
-				<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M13 11h9v2h-9v-2zm-2 0h-9v2h9v-2zm1-5c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-7c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-			</div>
-		</div>
-		<div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-			<div class="text-[0.714rem] text-muted-foreground uppercase tracking-widest mb-1">ATM Strike</div>
-			<div class="text-lg">{formatCurrency(currentData.atm_strike)}</div>
-			<div class="absolute right-0 bottom-0 opacity-5 group-hover:opacity-10 transition-opacity">
-				<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm-7 7H3v2c0 1.1.9 2 2 2h2v-2H5v-2zM5 5h2V3H5c-1.1 0-2 .9-2 2v2h2V5zm14-2h-2v2h2v2h2V5c0-1.1-.9-2-2-2zm0 16h-2v2h2c1.1 0 2-.9 2-2v-2h-2v2z"/></svg>
-			</div>
-		</div>
-		<div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-			<div class="text-[0.714rem] text-muted-foreground uppercase tracking-widest mb-1">Total CE OI</div>
-			<div class="text-lg text-bearish">{formatLakh(currentData.total_ce_oi)}</div>
-			<div class="absolute right-0 bottom-0 opacity-5 group-hover:opacity-10 transition-opacity">
-				<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M16 18l2.29-2.29-4.88-4.88-4 4L2 7.41 3.41 6l6 6 4-4 6.3 6.29L22 12v6h-6z"/></svg>
-			</div>
-		</div>
-		<div class="glass-panel p-4 rounded-xl relative overflow-hidden group">
-			<div class="text-[0.714rem] text-muted-foreground uppercase tracking-widest mb-1">Total PE OI</div>
-			<div class="text-lg text-bullish">{formatLakh(currentData.total_pe_oi)}</div>
-			<div class="absolute right-0 bottom-0 opacity-5 group-hover:opacity-10 transition-opacity">
-				<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"/></svg>
-			</div>
-		</div>
+		<SvaKoshCard
+			label="Spot Price"
+			value={formatCurrency(currentData.spot_price)}
+			ghostIcon={SpotIcon}
+		/>
+		<SvaKoshCard
+			label="Max Pain"
+			value={formatCurrency(currentData.max_pain_strike)}
+			variant="primary"
+			ghostIcon={Info}
+		/>
+		<SvaKoshCard
+			label="PCR"
+			value={currentData.pcr}
+			variant={currentData.pcr > 1 ? 'bullish' : 'bearish'}
+			meta={currentData.pcr_interpretation}
+			ghostIcon={PcrIcon}
+		/>
+		<SvaKoshCard
+			label="ATM Strike"
+			value={formatCurrency(currentData.atm_strike)}
+			ghostIcon={StrikeIcon}
+		/>
+		<SvaKoshCard
+			label="Total CE OI"
+			value={formatLakh(currentData.total_ce_oi)}
+			variant="bearish"
+			ghostIcon={DownArrow}
+		/>
+		<SvaKoshCard
+			label="Total PE OI"
+			value={formatLakh(currentData.total_pe_oi)}
+			variant="bullish"
+			ghostIcon={UpArrow}
+		/>
 	</section>
 
-	<section class="glass-panel p-6 rounded-xl mb-10">
+	<SvaKoshCard class="p-6 mb-10">
 		<div class="flex items-center justify-between mb-2">
 			<div>
 				<h2 class="flex items-center gap-2">
@@ -406,13 +342,14 @@
 			</div>
 		</div>
 		<div bind:this={chartContainer} class="w-full h-[450px]"></div>
-	</section>
+	</SvaKoshCard>
 
 	<section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 		<div>
 			<h3 class="uppercase tracking-widest text-sm text-bullish mb-4 flex items-center gap-2">
-				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+				<span class="w-1 h-4 bg-bullish rounded-full"></span>
 				Top OI Buildup
+				<BullishArrow />
 			</h3>
 			<div class="glass-panel overflow-hidden rounded-xl">
 				<table class="w-full text-left">
@@ -446,8 +383,9 @@
 
 		<div>
 			<h3 class="uppercase tracking-widest text-sm text-bearish mb-4 flex items-center gap-2">
-				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6"/></svg>
+				<span class="w-1 h-4 bg-bearish rounded-full"></span>
 				Significant Unwinding
+				<BearishArrow />
 			</h3>
 			<div class="glass-panel overflow-hidden rounded-xl">
 				<table class="w-full text-left">

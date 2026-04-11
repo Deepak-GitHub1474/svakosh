@@ -104,7 +104,11 @@
 	html {
 		font-size: 0.875rem;
 		font-weight: 400;
-		@apply bg-background text-foreground font-sans antialiased;
+		background-color: var(--background);
+		color: var(--foreground);
+		font-family: var(--font-sans);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
 	}
 
 	table {
@@ -114,15 +118,15 @@
 
 	th, td {
 		font-weight: 400;
-		font-size: 0.857rem;
+		font-size: 0.75rem;
 	}
 
 	button:not(:disabled) {
-		@apply cursor-pointer;
+		cursor: pointer;
 	}
 
 	button:disabled {
-		@apply cursor-not-allowed;
+		cursor: not-allowed;
 	}
 
 	::-webkit-scrollbar {
@@ -143,7 +147,8 @@
 
 @layer components {
 	.glass-panel {
-		@apply border border-glass-border backdrop-blur-xl;
+		border: 1px solid var(--glass-border);
+		backdrop-filter: blur(24px);
 		background: linear-gradient(
 			135deg,
 			rgba(255, 255, 255, 0.05) 0%,

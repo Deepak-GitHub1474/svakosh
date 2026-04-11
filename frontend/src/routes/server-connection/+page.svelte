@@ -2,8 +2,8 @@
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { BRAND } from '$lib/brand';
-	import Pulse from '$lib/components/svakosh/Pulse.svelte';
-	import Background from '$lib/components/svakosh/Background.svelte';
+	import Pulse from '$src/lib/components/Pulse.svelte';
+	import Background from '$src/lib/components/Background.svelte';
 	import { getServerConnectionView } from './_lib/api';
 	import type { THealthResponse } from './_lib/types';
 
