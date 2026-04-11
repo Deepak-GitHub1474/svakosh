@@ -1,4 +1,4 @@
-export interface StrikeOIItem {
+export interface TStrikeOIItem {
 	strike: number;
 	ce_oi: number;
 	ce_oi_change: number;
@@ -6,7 +6,7 @@ export interface StrikeOIItem {
 	pe_oi_change: number;
 }
 
-export interface OptionsAnalyticsData {
+export interface TOptionsAnalyticsData {
 	symbol: string;
 	expiry: string;
 	expiries: string[];
@@ -22,10 +22,10 @@ export interface OptionsAnalyticsData {
 	total_ce_oi: number;
 	total_pe_oi: number;
 	lot_size?: number;
-	strikes: StrikeOIItem[];
+	strikes: TStrikeOIItem[];
 }
 
-export interface OptionUnderlying {
+export interface TOptionUnderlying {
 	symbol: string;
 	exchange: string;
 }

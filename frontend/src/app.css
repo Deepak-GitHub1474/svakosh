@@ -103,6 +103,7 @@
 
 	html {
 		font-size: 14px;
+		font-weight: 400;
 		@apply bg-background text-foreground font-sans antialiased;
 	}
 
@@ -113,11 +114,32 @@
 	button:disabled {
 		@apply cursor-not-allowed;
 	}
+
+	::-webkit-scrollbar {
+		width: 4px;
+		height: 4px;
+	}
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	::-webkit-scrollbar-thumb {
+		background: var(--surface-border);
+		border-radius: 10px;
+	}
+	::-webkit-scrollbar-thumb:hover {
+		background: var(--muted-foreground);
+	}
 }
 
 @layer components {
 	.glass-panel {
-		@apply border-glass-border bg-glass border backdrop-blur-xl;
+		@apply border border-glass-border backdrop-blur-xl;
+		background: linear-gradient(
+			135deg,
+			rgba(255, 255, 255, 0.05) 0%,
+			rgba(255, 255, 255, 0.01) 100%
+		);
+		box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 	}
 
 	.btn-terminal {
@@ -135,7 +157,7 @@
 		background: var(--terminal-bg);
 		padding: 0.5rem 0.75rem;
 		font-size: 0.75rem;
-		font-weight: 800;
+		font-weight: 400;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
 		color: var(--terminal-fg);

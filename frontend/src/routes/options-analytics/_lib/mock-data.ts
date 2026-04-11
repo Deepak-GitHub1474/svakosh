@@ -1,6 +1,6 @@
-import type { OptionsAnalyticsData, OptionUnderlying } from './types';
+import type { TOptionsAnalyticsData, TOptionUnderlying } from './types';
 
-export const UNDERLYINGS: OptionUnderlying[] = [
+export const UNDERLYINGS: TOptionUnderlying[] = [
 	{ symbol: 'NIFTY', exchange: 'NSE' },
 	{ symbol: 'BANKNIFTY', exchange: 'NSE' },
 	{ symbol: 'FINNIFTY', exchange: 'NSE' },
@@ -9,7 +9,7 @@ export const UNDERLYINGS: OptionUnderlying[] = [
 	{ symbol: 'BANKEX', exchange: 'BSE' }
 ];
 
-export const MOCK_DATA: Record<string, OptionsAnalyticsData> = {
+export const MOCK_DATA: Record<string, TOptionsAnalyticsData> = {
 	NIFTY: {
 		symbol: 'NIFTY',
 		expiry: '10-Apr-2026',
@@ -54,7 +54,7 @@ function generateStrikes(center: number, step: number, count: number) {
 		const strike = center + i * step;
 		const distance = Math.abs(i);
 		const baseOI = Math.max(10000, 500000 * Math.exp(-(distance * distance) / 100));
-		
+
 		strikes.push({
 			strike,
 			ce_oi: Math.round(baseOI * (i > 0 ? 1.5 : 0.8)),
