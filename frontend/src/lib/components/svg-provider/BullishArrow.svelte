@@ -4,7 +4,7 @@
 </script>
 
 <svg 
-    class={cn('w-4 h-4', className)}
+    class={cn('w-12 h-12', className)}
     fill="none" 
     viewBox="0 0 24 24" 
     stroke="currentColor">

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Snippet, Component } from 'svelte';
+	import type { Snippet } from 'svelte';
 	import { cn } from '$lib/utils';
 
 	type Variant = 'primary' | 'bullish' | 'bearish' | 'surface';
@@ -13,7 +13,8 @@
 		svgPath,
 		class: className = '',
 		children,
-		mainValueClass = ''
+		valueClass = '',
+		ghostIconClass = ''
 	} = $props<{
 		label?: string;
 		value?: string | number;
@@ -23,7 +24,8 @@
 		svgPath?: string;
 		class?: string;
 		children?: Snippet;
-		mainValueClass?: string;
+		valueClass?: string;
+		ghostIconClass?: string;
 	}>();
 
 	const variantStyles: Record<Variant, string> = {
@@ -41,21 +43,21 @@
 	)}
 >
 	{#if label}
-		<div class="mb-1 select-none text-[0.714rem] uppercase tracking-widest text-muted-foreground">
+		<div class="mb-1 select-none text-xs uppercase tracking-widest text-muted-foreground">
 			{label}
 		</div>
 	{/if}
 
 	<div class="flex items-baseline gap-2">
 		{#if value !== undefined}
-			<div class={cn('text-lg tracking-tight', variantStyles[variant as Variant], mainValueClass)}>
+			<div class={cn('text-lg tracking-tight', variantStyles[variant as Variant], valueClass)}>
 				{value}
 			</div>
 		{/if}
 
 		{#if meta}
 			{#if typeof meta === 'string'}
-				<span class="text-[0.714rem] opacity-60 tabular-nums">({meta})</span>
+				<span class="text-xs opacity-60 tabular-nums">({meta})</span>
 			{:else}
 				{@render meta()}
 			{/if}
@@ -75,9 +77,9 @@
 		>
 			{#if ghostIcon}
 				{@const Icon = ghostIcon}
-				<Icon class="h-12 w-12" />
+				<Icon class={cn('h-12 w-12', ghostIconClass)} />
 			{:else if svgPath}
-				<svg class="h-12 w-12" fill="currentColor" viewBox="0 0 24 24">
+				<svg class={cn('h-12 w-12', ghostIconClass)} fill="currentColor" viewBox="0 0 24 24">
 					<path d={svgPath} />
 				</svg>
 			{/if}
