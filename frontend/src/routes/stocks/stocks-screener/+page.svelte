@@ -7,7 +7,6 @@
 	import ScreenerHeader from './_components/ScreenerHeader.svelte';
 	import ScreenerTable from './_components/ScreenerTable.svelte';
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
-	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
 
 
 	let search = $state('');
