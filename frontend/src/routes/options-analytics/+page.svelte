@@ -349,7 +349,7 @@
 			<h3 class="uppercase tracking-widest text-sm text-bullish mb-4 flex items-center gap-2">
 				<span class="w-1 h-4 bg-bullish rounded-full"></span>
 				Top OI Buildup
-				<BullishArrow />
+				<BullishArrow class="w-4 h-4"/>
 			</h3>
 			<div class="glass-panel overflow-hidden rounded-xl">
 				<table class="w-full text-left">
@@ -385,7 +385,7 @@
 			<h3 class="uppercase tracking-widest text-sm text-bearish mb-4 flex items-center gap-2">
 				<span class="w-1 h-4 bg-bearish rounded-full"></span>
 				Significant Unwinding
-				<BearishArrow />
+				<BearishArrow class="w-4 h-4"/>
 			</h3>
 			<div class="glass-panel overflow-hidden rounded-xl">
 				<table class="w-full text-left">

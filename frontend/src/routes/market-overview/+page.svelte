@@ -62,7 +62,7 @@
 										{index.change >= 0 ? '+' : ''}{formatNumber(index.change)}
 									</span>
 								</div>
-							<div class="mt-4 pt-4 border-t border-glass-border grid grid-cols-2 gap-2 text-[0.714rem] uppercase tracking-wider text-muted-foreground">
+							<div class="mt-4 pt-4 border-t border-glass-border grid grid-cols-2 gap-2 text-xs uppercase tracking-wider text-muted-foreground">
 								<div>Open <span class="text-foreground block">{formatNumber(index.open)}</span></div>
 								<div>Prev Close <span class="text-foreground block">{formatNumber(index.prev_close)}</span></div>
 								</div>
@@ -123,7 +123,7 @@
 							<span class="text-xs text-muted-foreground uppercase tracking-wider"
 								>Cash Market (in Cr)</span
 							>
-							<span class="rounded-full bg-white/5 px-2 py-0.5 text-[0.714rem] text-muted-foreground"
+							<span class="rounded-full bg-white/5 px-2 py-0.5 text-xs text-muted-foreground"
 								>{fii_dii[0].date}</span
 							>
 						</div>
@@ -174,7 +174,7 @@
 									</tr>
 									<tr class="bg-primary/10 text-primary border-t border-primary/20">
 										<td class="py-3 px-4 text-[0.786rem]">Total Flow</td>
-										<td colspan="2" class="py-3 px-4 text-center text-[0.714rem] uppercase tracking-wider italic opacity-60"
+										<td colspan="2" class="py-3 px-4 text-center text-xs uppercase tracking-wider italic opacity-60"
 											>Combined Institutional Activity</td
 										>
 										<td

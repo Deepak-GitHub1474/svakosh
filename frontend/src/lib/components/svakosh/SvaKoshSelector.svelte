@@ -103,6 +103,7 @@
 						bind:value={searchQuery}
 						placeholder="Search..."
 						class="rounded-none border-0 focus:border-0 py-3.5"
+						clearable={true}
 					/>
 				</div>
 			{/if}
@@ -118,13 +119,13 @@
 						)}
 					>
 						<div class="flex items-center gap-2">
-							<span class="text-sm">{option.label}</span>
+							<span class="text-xs tracking-wide">{option.label}</span>
 							{#if value === option.value}
 								<span class="h-1.5 w-1.5 rounded-full bg-primary"></span>
 							{/if}
 						</div>
 						{#if option.meta}
-							<span class="text-[0.714rem] text-muted-foreground">{option.meta}</span>
+							<span class="text-[0.625rem] text-muted-foreground">{option.meta}</span>
 						{/if}
 					</button>
 				{:else}
