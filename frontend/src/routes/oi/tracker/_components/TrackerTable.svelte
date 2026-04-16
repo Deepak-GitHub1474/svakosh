@@ -3,6 +3,8 @@
 	import { TRACKER_TIMEFRAMES, TRACKER_CATEGORIES } from '../_lib/const';
 	import { calculateTrackerTotals } from '../_lib/helper';
 	import { formatNumber } from '$lib/utils/helper';
+	import { cn } from '$lib/utils';
+	import { getValClass } from '../../lookup/_lib/helper';
 
 	interface Props {
 		symbol: string;
@@ -14,56 +16,52 @@
 	let ceTotals = $derived(calculateTrackerTotals(data.CE));
 	let peTotals = $derived(calculateTrackerTotals(data.PE));
 
-	function getColorClass(val: number, side: 'CE' | 'PE') {
-		if (val === 0) return 'text-foreground/60';
-		if (side === 'CE') {
-			return val > 0 ? 'text-bearish' : 'text-bullish';
-		} else {
-			return val > 0 ? 'text-bullish' : 'text-bearish';
-		}
+	function getPCRValue(ce: number, pe: number) {
+		if (!ce || ce === 0) return '0.00';
+		return (pe / ce).toFixed(2);
 	}
 </script>
 
-<div class="glass-panel overflow-hidden rounded-xl border border-white/5 flex flex-col bg-surface/40 backdrop-blur-sm shadow-2xl animate-in fade-in duration-700">
-	<div class="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-white/5">
-		<h3 class="text-primary font-bold tracking-wider flex items-center gap-2">
-			<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-			{symbol}
+{#if data}
+	<div class="mb-2 text-center">
+		<h3 class="text-base text-primary tracking-wide">
+			{symbol} 
+			<span class="text-[0.625rem] text-muted-foreground opacity-60 uppercase cursor-help underline underline-offset-4 decoration-white/10">(Lakhs)</span>
 		</h3>
-		<span class="text-[0.6rem] text-muted-foreground uppercase tracking-widest opacity-60">OI in Lakhs</span>
 	</div>
 
-	<div class="flex flex-col lg:flex-row">
-		<!-- CE Table -->
-		<div class="flex-1 border-b lg:border-b-0 lg:border-r border-white/5">
-			<div class="bg-bearish/10 py-1.5 text-center text-[0.65rem] font-bold text-bearish uppercase tracking-tighter border-b border-white/5">
-				Call Options (CE)
+	<div class="flex flex-col xl:flex-row gap-4 mb-6">
+		<div class="flex-1 glass-panel overflow-hidden rounded-xl border border-white/5 bg-[#14171a]/40 backdrop-blur-sm">
+			<div class="bg-bearish-subtle/20 py-2 border-b border-white/5 text-center text-xs tracking-widest text-bearish uppercase">
+				Call Options
 			</div>
-			<div class="overflow-x-auto custom-scrollbar">
-				<table class="w-full text-[0.7rem] border-separate border-spacing-0">
+			<div class="overflow-x-auto no-scrollbar">
+				<table class="w-full text-xs border-collapse">
 					<thead>
-						<tr class="bg-white/5 text-muted-foreground">
-							<th class="px-3 py-2 text-left font-medium border-b border-white/5">Category</th>
+						<tr class="bg-[#1c1f24] text-muted-foreground border-b border-white/5">
+							<th class="py-2 px-3 border-r border-white/5 text-left">Category</th>
 							{#each TRACKER_TIMEFRAMES as tf}
-								<th class="px-3 py-2 text-right font-medium border-b border-white/5 whitespace-nowrap">{tf}</th>
+								<th class="py-2 px-2 text-center border-r border-white/5">{tf}</th>
 							{/each}
 						</tr>
 					</thead>
 					<tbody>
 						{#each TRACKER_CATEGORIES as cat}
-							<tr class="hover:bg-white/[0.03] transition-colors group">
-								<td class="px-3 py-2 text-foreground/70 font-medium border-b border-white/5">{cat}</td>
+							<tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+								<td class="px-3 py-2 border-r border-white/5 italic group-hover:text-foreground">
+									{cat}
+								</td>
 								{#each TRACKER_TIMEFRAMES as tf}
-									<td class="px-3 py-2 text-right tabular-nums border-b border-white/5 {getColorClass(data.CE[cat]?.[tf] || 0, 'CE')}">
+									<td class={cn('px-2 py-2 text-center border-r border-white/5', getValClass(data.CE[cat]?.[tf] || 0))}>
 										{formatNumber(data.CE[cat]?.[tf] || 0)}
 									</td>
 								{/each}
 							</tr>
 						{/each}
-						<tr class="bg-white/5 font-bold">
-							<td class="px-3 py-2 text-foreground border-t border-white/10 italic">Total</td>
+						<tr class="bg-[#1c1f24]/80 text-primary text-xs">
+							<td class="px-3 py-2 border-r border-white/5 uppercase tracking-tighter">Total</td>
 							{#each TRACKER_TIMEFRAMES as tf}
-								<td class="px-3 py-2 text-right tabular-nums border-t border-white/10 {getColorClass(ceTotals[tf], 'CE')}">
+								<td class={cn('px-2 py-2 text-center border-r border-white/5', getValClass(ceTotals[tf]))}>
 									{formatNumber(ceTotals[tf])}
 								</td>
 							{/each}
@@ -73,36 +71,52 @@
 			</div>
 		</div>
 
-		<!-- PE Table -->
-		<div class="flex-1">
-			<div class="bg-bullish/10 py-1.5 text-center text-[0.65rem] font-bold text-bullish uppercase tracking-tighter border-b border-white/5">
-				Put Options (PE)
+		<div class="hidden xl:flex flex-col bg-[#1c1f24] border border-white/5 rounded-xl divide-y divide-white/10 overflow-hidden">
+			<div class="py-2 px-3 text-xs text-muted-foreground text-center uppercase border-b border-white/5 tracking-widest cursor-help">PCR</div>
+			
+			<div class="py-2 px-3 text-xs text-muted-foreground text-center border-b border-white/5 bg-[#1c1f24]/80 tracking-tighter cursor-help">Ratio</div>
+
+			{#each TRACKER_CATEGORIES as cat}
+				<div class="flex-1 flex items-center justify-center bg-white/[0.02] px-4 group transition-colors hover:bg-white/5">
+					<span class="text-xs">{getPCRValue(data.CE[cat]?.['15 min'] || 0, data.PE[cat]?.['15 min'] || 0)}</span>
+				</div>
+			{/each}
+			<div class="py-2 px-3 flex items-center justify-center bg-primary/5">
+				<span class="text-xs text-primary">{getPCRValue(ceTotals['15 min'], peTotals['15 min'])}</span>
 			</div>
-			<div class="overflow-x-auto custom-scrollbar">
-				<table class="w-full text-[0.7rem] border-separate border-spacing-0">
+		</div>
+
+		<div class="flex-1 glass-panel overflow-hidden rounded-xl border border-white/5 bg-[#14171a]/40 backdrop-blur-sm">
+			<div class="bg-bullish-subtle/20 py-2 border-b border-white/5 text-center text-xs tracking-widest text-bullish uppercase">
+				Put Options
+			</div>
+			<div class="overflow-x-auto no-scrollbar">
+				<table class="w-full text-xs border-collapse">
 					<thead>
-						<tr class="bg-white/5 text-muted-foreground">
-							<th class="px-3 py-2 text-left font-medium border-b border-white/5">Category</th>
+						<tr class="bg-[#1c1f24] text-muted-foreground border-b border-white/5">
+							<th class="py-2 px-3 border-r border-white/5 text-left">Category</th>
 							{#each TRACKER_TIMEFRAMES as tf}
-								<th class="px-3 py-2 text-right font-medium border-b border-white/5 whitespace-nowrap">{tf}</th>
+								<th class="py-2 px-2 text-center border-r border-white/5">{tf}</th>
 							{/each}
 						</tr>
 					</thead>
 					<tbody>
 						{#each TRACKER_CATEGORIES as cat}
-							<tr class="hover:bg-white/[0.03] transition-colors group">
-								<td class="px-3 py-2 text-foreground/70 font-medium border-b border-white/5">{cat}</td>
+							<tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+								<td class="px-3 py-2 border-r border-white/5 italic group-hover:text-foreground">
+									{cat}
+								</td>
 								{#each TRACKER_TIMEFRAMES as tf}
-									<td class="px-3 py-2 text-right tabular-nums border-b border-white/5 {getColorClass(data.PE[cat]?.[tf] || 0, 'PE')}">
+									<td class={cn('px-2 py-2 text-center border-r border-white/5', getValClass(data.PE[cat]?.[tf] || 0))}>
 										{formatNumber(data.PE[cat]?.[tf] || 0)}
 									</td>
 								{/each}
 							</tr>
 						{/each}
-						<tr class="bg-white/5 font-bold">
-							<td class="px-3 py-2 text-foreground border-t border-white/10 italic">Total</td>
+						<tr class="bg-[#1c1f24]/80 text-primary text-xs">
+							<td class="px-3 py-2 border-r border-white/5 uppercase tracking-tighter">Total</td>
 							{#each TRACKER_TIMEFRAMES as tf}
-								<td class="px-3 py-2 text-right tabular-nums border-t border-white/10 {getColorClass(peTotals[tf], 'PE')}">
+								<td class={cn('px-2 py-2 text-center border-r border-white/5', getValClass(peTotals[tf]))}>
 									{formatNumber(peTotals[tf])}
 								</td>
 							{/each}
@@ -112,4 +126,4 @@
 			</div>
 		</div>
 	</div>
-</div>
+{/if}

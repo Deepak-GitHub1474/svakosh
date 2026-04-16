@@ -28,10 +28,12 @@ export const LOADED_TRACKER_DATA: TFullTrackerData = EXPIRIES.reduce((acc, exp) 
 }, {} as any);
 
 export function generateTrackerGraphData(symbol: string, expiry: string) {
-	const timestamps = [];
-	const now = new Date();
-	for (let i = 100; i >= 0; i--) {
-		const t = new Date(now.getTime() - i * 3 * 60000);
+	const timestamps: string[] = [];
+	const marketStart = new Date();
+	marketStart.setHours(9, 15, 0, 0);
+
+	for (let i = 0; i <= 125; i++) {
+		const t = new Date(marketStart.getTime() + i * 3 * 60000);
 		timestamps.push(`${t.getHours().toString().padStart(2, '0')}:${t.getMinutes().toString().padStart(2, '0')}`);
 	}
 

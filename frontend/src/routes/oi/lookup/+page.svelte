@@ -135,8 +135,11 @@
 								{/if}
 							</div>
 						{:else}
-							<div class="p-10 text-center border border-white/5 rounded-xl bg-white/[0.01]">
-								<p class="text-muted-foreground animate-pulse italic">Loading trend data for {sym}...</p>
+							<div class="p-20 text-center border border-white/5 rounded-xl bg-white/[0.02] flex items-center justify-center">
+								<div class="flex flex-col items-center gap-4">
+									<div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+									<p class="text-muted-foreground animate-pulse italic text-xs uppercase tracking-widest">Loading trend data for {sym}...</p>
+								</div>
 							</div>
 						{/if}
 					{/each}
