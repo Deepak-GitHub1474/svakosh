@@ -1,19 +1,21 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import Header from './_components/Header.svelte';
-	import LookupTable from './_components/LookupTable.svelte';
-	import OIChart from './_components/OIChart.svelte';
 	import { LOADED_LOOKUP_DATA, generateGraphData } from './_lib/mock-data';
 	import type { TFullLookupData } from './_lib/types';
 	import { roundLakh } from '$lib/utils';
+	import Header from './_components/Header.svelte';
+	import LookupTable from './_components/LookupTable.svelte';
+	import OIChart from './_components/OIChart.svelte';
 
-	let activeTab = $state<'tables' | 'graphs'>('tables');
+	let activeTab = $state<'tables' | 'graphs'>(page.url.searchParams.get('tab') as any || 'tables');
 	let expiry = $state('CURRENT_WEEK');
 	let selectedSymbols = $state<string[]>(['NIFTY']);
 	
 	let tableData = $state<TFullLookupData>(JSON.parse(JSON.stringify(LOADED_LOOKUP_DATA)));
-	let graphData = $state<any>(null);
+	let graphData = $state<Record<string, any>>({});
 
 	let oiOption = $state('Total OI');
 	let combined = $state(false);
@@ -21,11 +23,23 @@
 	const currentExpiryData = $derived(tableData[expiry] || tableData['CURRENT_WEEK']);
 
 	function handleTabChange(tab: 'tables' | 'graphs') {
-		activeTab = tab;
-		if (tab === 'graphs') {
+		const url = new URL(page.url);
+		url.searchParams.set('tab', tab);
+		goto(url.href, { replaceState: true, noScroll: true });
+	}
+
+	$effect(() => {
+		const tab = page.url.searchParams.get('tab') as 'tables' | 'graphs';
+		if (tab && tab !== activeTab) {
+			activeTab = tab;
+		}
+	});
+
+	$effect(() => {
+		if (activeTab === 'graphs') {
 			refreshGraphData();
 		}
-	}
+	});
 
 	function handleSymbolsChange(symbols: string[]) {
 		selectedSymbols = symbols;
@@ -35,8 +49,11 @@
 	}
 
 	function refreshGraphData() {
-		const sym = selectedSymbols[0] || 'NIFTY';
-		graphData = generateGraphData(sym, expiry);
+		const newGraphData: Record<string, any> = {};
+		selectedSymbols.forEach(sym => {
+			newGraphData[sym] = generateGraphData(sym, expiry);
+		});
+		graphData = newGraphData;
 	}
 
 	onMount(() => {
@@ -57,7 +74,7 @@
 			} else {
 				refreshGraphData();
 			}
-		}, 3000);
+		}, 10000);
 
 		return () => clearInterval(interval);
 	});
@@ -81,40 +98,52 @@
 		onCombinedChange={(val) => combined = val}
 	/>
 
-	<div in:fade={{ delay: 200 }} class="mt-6">
+	<div in:fade={{ delay: 200 }} class="mt-4">
 		{#if activeTab === 'tables'}
-			<div class="flex flex-col gap-10">
+			<div class="flex flex-col gap-4">
 				{#each selectedSymbols as sym}
 					{#if currentExpiryData[sym]}
 						<LookupTable symbol={sym} data={currentExpiryData[sym]} />
 					{:else}
-						<div class="p-20 text-center border border-white/5 rounded-xl bg-white/[0.02]">
+						<div class="p-10 text-center border border-white/5 rounded-xl bg-white/[0.01]">
 							<p class="text-muted-foreground italic">No data available for {sym}</p>
 						</div>
 					{/if}
 				{/each}
 				
 				{#if selectedSymbols.length === 0}
-					<div class="p-20 text-center border border-white/10 border-dashed rounded-xl bg-white/[0.02]">
+					<div class="p-20 text-center border border-white/10 border-dashed rounded-xl bg-white/[0.01]">
 						<p class="text-muted-foreground">Select one or more symbols to view lookup tables</p>
 					</div>
 				{/if}
 			</div>
 		{:else}
-			{#if graphData}
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-					{#if combined}
-						<div class="md:col-span-2">
-							<OIChart data={graphData.data} type="Combined" {oiOption} {combined} />
-						</div>
-					{:else}
-						<OIChart data={graphData.data} type="CE" {oiOption} {combined} />
-						<OIChart data={graphData.data} type="PE" {oiOption} {combined} />
-					{/if}
+			{#if selectedSymbols.length > 0}
+				<div class="flex flex-col gap-8">
+					{#each selectedSymbols as sym}
+						{#if graphData[sym]}
+							<div class="flex flex-col gap-4">
+								{#if combined}
+									<div class="w-full">
+										<OIChart data={graphData[sym].data} {sym} type="Combined" {oiOption} {combined} onRefresh={refreshGraphData} />
+									</div>
+								{:else}
+									<div class="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+										<OIChart data={graphData[sym].data} {sym} type="CE" {oiOption} {combined} onRefresh={refreshGraphData} />
+										<OIChart data={graphData[sym].data} {sym} type="PE" {oiOption} {combined} onRefresh={refreshGraphData} />
+									</div>
+								{/if}
+							</div>
+						{:else}
+							<div class="p-10 text-center border border-white/5 rounded-xl bg-white/[0.01]">
+								<p class="text-muted-foreground animate-pulse italic">Loading trend data for {sym}...</p>
+							</div>
+						{/if}
+					{/each}
 				</div>
 			{:else}
-				<div class="p-20 text-center border border-white/5 rounded-xl bg-white/[0.02]">
-					<p class="text-muted-foreground animate-pulse">Initializing trend charts...</p>
+				<div class="p-20 text-center border border-white/10 border-dashed rounded-xl bg-white/[0.01]">
+					<p class="text-muted-foreground">Select one or more symbols to view trend charts</p>
 				</div>
 			{/if}
 		{/if}

@@ -29,9 +29,11 @@ export const LOADED_LOOKUP_DATA: TFullLookupData = EXPIRIES.reduce((acc, exp) =>
 
 export function generateGraphData(symbol: string, expiry: string) {
 	const timestamps = [];
-	const now = new Date();
-	for (let i = 100; i >= 0; i--) {
-		const t = new Date(now.getTime() - i * 3 * 60000);
+	const marketStart = new Date();
+	marketStart.setHours(9, 15, 0, 0);
+
+	for (let i = 0; i <= 125; i++) {
+		const t = new Date(marketStart.getTime() + i * 3 * 60000);
 		timestamps.push(`${t.getHours().toString().padStart(2, '0')}:${t.getMinutes().toString().padStart(2, '0')}`);
 	}
 

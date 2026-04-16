@@ -3,6 +3,7 @@
 
 	interface Props {
 		id?: string;
+		label?: string;
 		checked: boolean;
 		onCheckedChange?: (val: boolean) => void;
 		class?: string;
@@ -11,6 +12,7 @@
 
 	let { 
 		id, 
+		label = 'Toggle switch',
 		checked = $bindable(false), 
 		onCheckedChange,
 		class: className = '',
@@ -29,10 +31,11 @@
 	type="button"
 	role="switch"
 	aria-checked={checked}
+	aria-label={label}
 	{disabled}
 	onclick={toggle}
 	class={cn(
-		'relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 focus:ring-offset-background',
+		'relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none',
 		checked ? 'bg-primary' : 'bg-white/10',
 		disabled && 'cursor-not-allowed opacity-50',
 		className

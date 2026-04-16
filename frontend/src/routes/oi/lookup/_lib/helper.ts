@@ -1,4 +1,5 @@
 import { LOOKUP_TIMEFRAMES, LOOKUP_CATEGORIES } from './const';
+import { formatNumber } from '$lib/utils/helper';
 
 export function calculateLookupTotals(sideData: Record<string, any>) {
 	const totals: any = { Category: 'Total' };
@@ -15,45 +16,80 @@ export function calculateLookupTotals(sideData: Record<string, any>) {
 	return totals;
 }
 
-import { formatNumber } from '$lib/utils/helper';
-
 export function getPCRValue(ceTotal: number, peTotal: number): string {
 	if (ceTotal === 0) return '0.00';
 	return formatNumber(peTotal / ceTotal);
 }
 
-export function getTrendChartOptions(data: any, type: string, oiOption: string, combined: boolean) {
+export function getTrendChartOptions(
+	data: any, 
+	type: string, 
+	oiOption: string, 
+	combined: boolean, 
+	existingSelection?: Record<string, boolean>
+) {
 	const timestamps = Object.keys(data).sort();
 	const optionKey = oiOption === 'Total OI' ? 'Total' : 'Day';
 	const categories = ['ATM', 'ITM', 'OTM', 'DITM', 'FOTM'];
 	
-	const colors = ['#d4af37', '#00ff88', '#ff3d00', '#7b3de7', '#1ed3af'];
+	const colors = {
+		ATM: '#d4af37',
+		ITM: '#00ff88',
+		OTM: '#ff3d00',
+		DITM: '#7b3de7',
+		FOTM: '#1ed3af'
+	};
 
 	const series: any[] = [];
+	const selectedLegend: Record<string, boolean> = existingSelection || {};
 
 	if (combined) {
 		['CE', 'PE'].forEach((side) => {
-			categories.forEach((cat, catIdx) => {
+			categories.forEach((cat) => {
+				const seriesName = `${side} ${cat}`;
+				if (!existingSelection) {
+					selectedLegend[seriesName] = true;
+				}
+
+				const color = side === 'CE' ? '#21af30' : '#f64343'; 
 				series.push({
-					name: `${side}_${cat}`,
+					name: seriesName,
 					type: 'line',
+					smooth: false,
 					symbol: 'none',
 					data: timestamps.map(ts => data[ts][side][cat][optionKey]),
-					lineStyle: { width: 1.5 },
-					itemStyle: { color: side === 'CE' ? `rgba(255, 61, 0, ${1 - catIdx * 0.15})` : `rgba(0, 255, 136, ${1 - catIdx * 0.15})` }
+					emphasis: {
+						focus: 'series',
+						lineStyle: { width: 0.8, opacity: 1 }
+					},
+					lineStyle: { 
+						width: 0.8,
+						opacity: 0.7
+					},
+					itemStyle: { color }
 				});
 			});
 		});
 	} else {
 		categories.forEach((cat, idx) => {
+			if (!existingSelection) {
+				selectedLegend[cat] = true;
+			}
+
 			series.push({
 				name: cat,
 				type: 'line',
+				smooth: false,
 				symbol: 'none',
 				data: timestamps.map(ts => data[ts][type][cat][optionKey]),
+				emphasis: {
+					focus: 'series',
+					lineStyle: { width: 1.2, opacity: 1 }
+				},
 				lineStyle: { 
-					width: 2,
-					color: colors[idx]
+					width: 1.2,
+					color: Object.values(colors)[idx],
+					opacity: 0.7
 				}
 			});
 		});
@@ -61,40 +97,111 @@ export function getTrendChartOptions(data: any, type: string, oiOption: string, 
 
 	return {
 		backgroundColor: 'transparent',
+		animation: true,
 		tooltip: {
 			trigger: 'axis',
-			backgroundColor: 'rgba(28, 31, 36, 0.9)',
-			borderColor: 'rgba(212, 175, 55, 0.3)',
-			borderWidth: 1,
-			textStyle: { color: '#e2e8f0', fontSize: 11 }
+			backgroundColor: 'rgba(15, 17, 20, 0.98)',
+			borderColor: 'rgba(212, 175, 55, 0.4)',
+			borderWidth: 1.5,
+			padding: [10, 14],
+			textStyle: { color: '#e2e8f0', fontSize: 10 },
+			axisPointer: {
+				type: 'line',
+				lineStyle: { color: 'rgba(212, 175, 55, 0.3)', width: 2, type: 'solid' }
+			},
+			formatter: function(params: any) {
+				const time = params[0].axisValue;
+				let html = `
+					<div class="flex flex-col gap-2.5 min-w-[120px]">
+						<div class="flex items-center gap-2 border-b border-white/5 pb-2 mb-0.5">
+							<svg class="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<circle cx="12" cy="12" r="10"></circle>
+								<polyline points="12 6 12 12 16 14"></polyline>
+							</svg>
+							<span class="text-[10px] text-muted-foreground tracking-wide uppercase">TIME : ${time}</span>
+						</div>
+				`;
+				
+				params.forEach((p: any) => {
+					html += `
+						<div class="flex items-center justify-between gap-4">
+							<div class="flex items-center gap-2">
+								<span class="w-2 h-2 rounded-full" style="background-color: ${p.color}; box-shadow: 0 0 4px ${p.color}80;"></span>
+								<span class="text-[10px] text-slate-300 font-normal">${p.seriesName}</span>
+							</div>
+							<span class="text-[10px] text-slate-50">${formatNumber(p.value)}</span>
+						</div>
+					`;
+				});
+				
+				html += '</div>';
+				return html;
+			}
 		},
 		legend: {
-			data: series.map(s => s.name),
+			show: true,
+			icon: 'circle',
+			itemWidth: 10,
+			itemHeight: 10,
 			textStyle: { color: '#94a3b8', fontSize: 10 },
-			type: 'scroll',
-			bottom: 10
+			top: 0,
+			selected: selectedLegend
 		},
 		grid: {
 			top: '12%',
-			left: '3%',
-			right: '3%',
-			bottom: '15%',
-			containLabel: true
+			left: '4%',
+			right: '2%',
+			bottom: '12%',
+			containLabel: false
 		},
 		xAxis: {
 			type: 'category',
 			data: timestamps,
-			axisLabel: { color: '#94a3b8', fontSize: 10 },
-			axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+			name: 'TIME',
+			nameLocation: 'middle',
+			nameGap: 35,
+			nameTextStyle: { color: '#64748b', fontSize: 10, fontWeight: 'normal', letterSpacing: 1 },
+			axisLabel: { 
+				color: '#64748b', 
+				fontSize: 10, 
+				margin: 15,
+				interval: (index: number) => index % 10 === 0 || index === timestamps.length - 1
+			},
+			axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
+			axisTick: { show: false },
+			boundaryGap: false
 		},
 		yAxis: {
 			type: 'value',
-			name: 'OI (Lakhs)',
-			nameTextStyle: { color: '#94a3b8', fontSize: 10 },
-			axisLabel: { color: '#94a3b8', fontSize: 10 },
-			splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } }
+			position: 'left',
+			name: 'OI (LAKHS)',
+			nameLocation: 'end',
+			nameTextStyle: { color: '#64748b', fontSize: 10, fontWeight: 'normal', letterSpacing: 1, padding: [0, 0, 10, 0] },
+			splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)', type: 'dashed' } },
+			axisLabel: { color: '#64748b', fontSize: 10 },
+			axisLine: { show: false }
 		},
 		series,
-		dataZoom: [{ type: 'inside' }]
+		toolbox: {
+			show: true,
+			right: '2%',
+			top: 0,
+			feature: {
+				saveAsImage: { title: 'Save' },
+				restore: { title: 'Refresh' }
+			},
+			iconStyle: {
+				borderColor: 'rgba(212, 175, 55, 0.5)'
+			}
+		},
+		dataZoom: [
+			{ type: 'inside', start: 0, end: 100 }
+		]
 	};
+}
+
+export function getValClass(val: number) {
+	if (val > 0) return 'text-bullish';
+	if (val < 0) return 'text-bearish';
+	return 'text-muted-foreground';
 }
