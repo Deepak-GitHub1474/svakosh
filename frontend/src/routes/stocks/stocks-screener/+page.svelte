@@ -36,7 +36,7 @@
 	}
 </script>
 
-<div class="min-h-screen bg-background p-4 md:px-8 md:pb-8 text-foreground">
+<div class="min-h-screen bg-background text-foreground">
 	<ScreenerHeader {stats} />
 
 	<div class="mb-6">

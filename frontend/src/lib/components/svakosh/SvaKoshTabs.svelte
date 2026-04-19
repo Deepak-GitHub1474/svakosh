@@ -55,7 +55,7 @@
 <div 
 	bind:this={containerRef}
 	class={cn(
-		'relative flex bg-[#1c1f24]/80 p-1 rounded-full border border-white/5 backdrop-blur-md h-fit items-center overflow-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]',
+		'relative flex bg-[#1c1f24]/80 p-1 rounded-full border border-border-subtle backdrop-blur-md h-fit items-center overflow-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]',
 		className
 	)}
 >

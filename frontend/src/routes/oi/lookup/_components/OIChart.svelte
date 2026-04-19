@@ -137,7 +137,7 @@
 		transition:fly={{ y: '100%', duration: 600, opacity: 1 }}
 	>
 		<SvaKoshCard 
-			class="h-full w-full bg-background/95 backdrop-blur-xl shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden border border-white/10 flex flex-col pt-3"
+			class="h-full w-full bg-background/95 backdrop-blur-xl shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden border border-border-muted flex flex-col pt-3"
 			meta={title}
 		>
 			<div 

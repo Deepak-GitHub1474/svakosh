@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { MARKET_DATA } from './_lib/mock-data';
 	import { formatNumber } from '$lib/utils';
+ 	import { uiState } from '$lib/store/ui.svelte';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 
 	const { indices, breadth, top_gainers, top_losers, fii_dii } = MARKET_DATA.data;
@@ -14,21 +15,15 @@
 	});
 </script>
 
-<div class="min-h-screen bg-background p-4 md:px-8 md:pb-8 text-foreground">
+<div class="min-h-screen text-foreground relative z-[-1]">
 	{#if mounted}
 		<div in:fade={{ duration: 800 }}>
-			<header class="mb-4 flex flex-col md:flex-row md:items-end justify-between gap-6">
-				<div>
-					<h1 class="text-2xl tracking-tight text-primary mb-2">Market Overview</h1>
-				</div>
-			</header>
-
 			<section class="mb-10">
 				<h2 class="mb-4 flex items-center gap-2 opacity-80">
 					<span class="w-1 h-4 bg-primary rounded-full"></span>
 					Major Indices
 				</h2>
-				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+				<div class="grid {uiState.isWatchlistVisible ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' } gap-6">
 					{#each indices as index, i}
 						<div in:fly={{ y: 20, delay: i * 50, duration: 500 }}>
 							<SvaKoshCard

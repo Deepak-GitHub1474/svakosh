@@ -51,10 +51,10 @@
 	};
 
 	const triangleClasses: Record<'top' | 'bottom' | 'left' | 'right', string> = {
-		top: 'top-full left-1/2 -translate-x-1/2 border-t-background/95',
-		bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-background/95',
-		left: 'left-full top-1/2 -translate-y-1/2 border-l-background/95',
-		right: 'right-full top-1/2 -translate-y-1/2 border-r-background/95'
+		top: 'top-full left-1/2 -translate-x-1/2 border-t-white/10',
+		bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-white/10',
+		left: 'left-full top-1/2 -translate-y-1/2 border-l-white/10',
+		right: 'right-full top-1/2 -translate-y-1/2 border-r-white/10'
 	};
 </script>
 
@@ -69,9 +69,10 @@
 	{#if isVisible}
 		<div
 			class={cn(
-				'absolute z-[110] whitespace-nowrap rounded-lg border border-white/10 px-2.5 py-1.5',
-				'bg-background/95 backdrop-blur-md shadow-2xl',
-				'text-[0.625rem] font-medium tracking-wide text-foreground',
+				'absolute z-[110] whitespace-nowrap rounded-md font-medium px-3 py-1.5',
+				'bg-gradient-to-br from-white/10 via-white/5 to-white/[0.02] backdrop-blur-xl',
+				'border-t border-l border-white/20 border-b border-r border-black/60',
+				'text-xs text-foreground shadow-[0_10px_30px_-10px_rgba(0,0,0,0.9),0_0_15px_rgba(255,255,255,0.05)]',
 				positionClasses[position],
 				className
 			)}
@@ -86,7 +87,7 @@
 
 			<div 
 				class={cn(
-					'absolute border-4 border-transparent',
+					'absolute border-[7px] border-transparent z-[-1]',
 					triangleClasses[position]
 				)}
 			></div>

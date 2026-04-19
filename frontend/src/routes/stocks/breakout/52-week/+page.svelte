@@ -56,7 +56,7 @@
 	<title>52-Week Breakout | SvaKosh</title>
 </svelte:head>
 
-<div class="min-h-screen bg-background p-4 md:px-8 md:pb-8 text-foreground">
+<div class="min-h-screen bg-background text-foreground">
 	<Header {stats} />
 
 	<div class="mb-6">
