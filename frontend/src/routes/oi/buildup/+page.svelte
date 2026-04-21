@@ -48,7 +48,7 @@
 	<title>OI Buildup | SvaKosh</title>
 </svelte:head>
 
-<div class="min-h-screen bg-background px-4 md:px-8 md:pb-8 text-foreground">
+<div class="min-h-screen bg-background text-foreground">
 	<Header
 		{time} 
 		{expiry} 

@@ -84,7 +84,7 @@
 	<title>OI Lookup | SvaKosh</title>
 </svelte:head>
 
-<div class="min-h-screen bg-background px-4 md:px-8 md:pb-8 text-foreground">
+<div class="min-h-screen bg-background text-foreground">
 	<Header 
 		{activeTab} 
 		onTabChange={handleTabChange}
@@ -105,14 +105,14 @@
 					{#if currentExpiryData[sym]}
 						<LookupTable symbol={sym} data={currentExpiryData[sym]} />
 					{:else}
-						<div class="p-10 text-center border border-white/5 rounded-xl bg-white/[0.01]">
+						<div class="p-10 text-center border border-border-subtle rounded-xl bg-white/[0.01]">
 							<p class="text-muted-foreground italic">No data available for {sym}</p>
 						</div>
 					{/if}
 				{/each}
 				
 				{#if selectedSymbols.length === 0}
-					<div class="p-20 text-center border border-white/10 border-dashed rounded-xl bg-white/[0.01]">
+					<div class="p-20 text-center border border-border-muted border-dashed rounded-xl bg-white/[0.01]">
 						<p class="text-muted-foreground">Select one or more symbols to view lookup tables</p>
 					</div>
 				{/if}
@@ -135,7 +135,7 @@
 								{/if}
 							</div>
 						{:else}
-							<div class="p-20 text-center border border-white/5 rounded-xl bg-white/[0.02] flex items-center justify-center">
+							<div class="p-20 text-center border border-border-subtle rounded-xl bg-white/[0.02] flex items-center justify-center">
 								<div class="flex flex-col items-center gap-4">
 									<div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
 									<p class="text-muted-foreground animate-pulse italic text-xs uppercase tracking-widest">Loading trend data for {sym}...</p>
@@ -145,7 +145,7 @@
 					{/each}
 				</div>
 			{:else}
-				<div class="p-20 text-center border border-white/10 border-dashed rounded-xl bg-white/[0.01]">
+				<div class="p-20 text-center border border-border-muted border-dashed rounded-xl bg-white/[0.01]">
 					<p class="text-muted-foreground">Select one or more symbols to view trend charts</p>
 				</div>
 			{/if}

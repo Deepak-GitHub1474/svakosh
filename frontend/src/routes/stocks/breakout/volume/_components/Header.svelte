@@ -18,7 +18,7 @@
 
 <div
 	in:fade={{ duration: 800 }}
-	class="bg-background/95 backdrop-blur-md border-b border-white/5 flex flex-col lg:flex-row lg:items-start justify-between gap-6 mb-4 pb-4"
+	class="bg-background/95 backdrop-blur-md border-b border-border-subtle flex flex-col lg:flex-row lg:items-start justify-between gap-6 mb-4 pb-4"
 >
 	<header>
 		<h1 class="text-2xl tracking-tight text-primary mb-1 flex items-center gap-3">

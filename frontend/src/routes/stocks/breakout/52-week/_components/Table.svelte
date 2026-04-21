@@ -16,14 +16,14 @@
 	let { breakouts, sortConfig, onSort }: Props = $props();
 </script>
 
-<div class="glass-panel overflow-hidden rounded-xl border border-white/5 flex flex-col">
+<div class="glass-panel overflow-hidden rounded-xl border border-border-subtle flex flex-col">
 	<div class="overflow-x-auto overflow-y-auto max-h-[calc(100vh-195px)] custom-scrollbar">
 		<table class="w-full text-left border-separate border-spacing-0 select-none">
 			<thead class="sticky top-0 z-20">
-				<tr class="bg-surface text-muted-foreground border-b border-white/5">
+				<tr class="bg-surface text-muted-foreground border-b border-border-subtle">
 					{#each WEEK52_BREAKOUT_COLUMNS as col}
 						<th
-							class="px-6 py-4 font-normal text-sm whitespace-nowrap cursor-pointer hover:text-primary transition-colors bg-[#1c1f24] border-b border-white/5 {col.align ===
+							class="px-6 py-4 font-normal text-sm whitespace-nowrap cursor-pointer hover:text-primary transition-colors bg-[#1c1f24] border-b border-border-subtle {col.align ===
 							'right'
 								? 'text-right'
 								: 'text-left'}"
@@ -50,7 +50,7 @@
 					<tr class="hover:bg-white/5 transition-colors group">
 						{#each WEEK52_BREAKOUT_COLUMNS as col}
 							<td
-								class="px-6 py-2.5 border-b border-white/5 {i === breakouts.length - 1
+								class="px-6 py-2.5 border-b border-border-subtle {i === breakouts.length - 1
 									? 'border-b-0'
 									: ''} {col.align === 'right' ? 'text-right tabular-nums' : 'text-left'}"
 							>
@@ -105,7 +105,7 @@
 								class="flex flex-col items-center justify-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-1000"
 							>
 								<div
-									class="p-4 rounded-full bg-white/5 border border-white/10 text-muted-foreground/40"
+									class="p-4 rounded-full bg-white/5 border border-border-muted text-muted-foreground/40"
 								>
 									<SearchOff class="w-10 h-10" />
 								</div>

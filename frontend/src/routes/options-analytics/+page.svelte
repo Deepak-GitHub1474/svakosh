@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { fade, fly } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 	import { browser } from '$app/environment';
 	import * as echarts from 'echarts/core';
 	import { BarChart, LineChart } from 'echarts/charts';
@@ -123,7 +123,7 @@
 				textStyle: { color: '#e2e8f0', fontSize: 12 },
 				formatter: (params: any) => {
 					const strike = params[0].name;
-					let html = `<div class="mb-2 border-b border-white/10 pb-1">Strike: ${strike}</div>`;
+					let html = `<div class="mb-2 border-b border-border-muted pb-1">Strike: ${strike}</div>`;
 					params.forEach((p: any) => {
 						const color = typeof p.color === 'object' ? p.color.colorStops[0].color : p.color;
 						const val = p.value.toFixed(2);
@@ -215,7 +215,7 @@
 					barCategoryGap: '10%',
 					itemStyle: { 
 						color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-							{ offset: 0, color: 'rgba(0, 255, 136, 0.8)' }, // bullish
+							{ offset: 0, color: 'rgba(0, 255, 136, 0.8)' },
 							{ offset: 1, color: 'rgba(0, 255, 136, 0.1)' }
 						]),
 						borderRadius: [4, 4, 0, 0]
@@ -227,7 +227,7 @@
 					data: ceChange,
 					smooth: true,
 					symbol: 'none',
-					itemStyle: { color: 'rgba(255, 61, 0, 0.7)' }, // bearish
+					itemStyle: { color: 'rgba(255, 61, 0, 0.7)' },
 					lineStyle: { width: 1.5, type: 'dashed', opacity: 0.5 }
 				},
 				{
@@ -236,7 +236,7 @@
 					data: peChange,
 					smooth: true,
 					symbol: 'none',
-					itemStyle: { color: 'rgba(0, 255, 136, 0.7)' }, // bullish
+					itemStyle: { color: 'rgba(0, 255, 136, 0.7)' },
 					lineStyle: { width: 1.5, type: 'dashed', opacity: 0.5 }
 				}
 			]
@@ -264,7 +264,7 @@
 	});
 </script>
 
-<div class="min-h-screen bg-background p-4 md:px-8 md:pb-8 text-foreground">
+<div class="min-h-screen bg-background text-foreground">
 	<header class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
 		<div in:fade>
 			<h1 class="text-2xl tracking-tight text-primary mb-2 flex items-center gap-3">

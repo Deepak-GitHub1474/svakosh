@@ -112,7 +112,7 @@
 			transition:fly={{ y: -10, duration: 200 }}
 		>
 			{#if searchable}
-				<div class="border-b border-white/5">
+				<div class="border-b border-border-subtle">
 					<SvaKoshInput
 						bind:value={searchQuery}
 						placeholder="Search symbols..."
