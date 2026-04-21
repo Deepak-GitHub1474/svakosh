@@ -113,20 +113,20 @@
 	<div class="flex items-center gap-6 flex-1 justify-end">
 		<button 
 			onclick={toggleProfileModal}
-			class="!hidden lg:inline-flex material-symbols-outlined text-muted-foreground hover:text-primary icon-size border border-primary/20 rounded-full p-1"
+			class="hidden lg:inline-flex items-center text-muted-foreground hover:text-primary border border-primary/20 rounded-full p-1 transition-colors"
 		>
-			person
+			<span class="material-symbols-outlined icon-size">person</span>
+		</button>
+
+		<button 
+			type="button"
+			class="lg:hidden flex items-center text-muted-foreground hover:text-primary transition-colors"
+			onclick={() => uiState.toggleMobileMenu()}
+			aria-label="Open menu"
+		>
+			<MenuIcon class="w-6 h-6" />
 		</button>
 	</div>
-
-	<button 
-		type="button"
-		class="lg:hidden flex items-center text-muted-foreground hover:text-primary transition-colors"
-		onclick={() => uiState.toggleMobileMenu()}
-		aria-label="Open menu"
-	>
-		<MenuIcon class="w-6 h-6" />
-	</button>
 </header>
 
 <SvaKoshModal 
