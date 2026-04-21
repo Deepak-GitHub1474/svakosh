@@ -6,6 +6,7 @@
 	import Header from '$lib/components/header/Header.svelte';
 	import Sidebar from '$lib/components/sidebar/Sidebar.svelte';
 	import Watchlist from '$lib/components/watchlist/Watchlist.svelte';
+	import MobileMenu from '$lib/components/MobileMenu.svelte';
 
 	let { children } = $props();
 </script>
@@ -23,14 +24,17 @@
 	<Header />
 	<div class="flex flex-1 pt-4">
 		<Sidebar />
-        <Watchlist />
+        <div class="hidden lg:block">
+            <Watchlist />
+        </div>
 		<main
 			class="flex-1 overflow-y-auto transition-all duration-300 ease-in-out
-            {uiState.isWatchlistVisible ? 'ml-[295px] 2xl:ml-[355px]' : 'ml-40'}"
+            {uiState.isWatchlistVisible ? 'lg:ml-[295px] 2xl:ml-[355px] ml-0' : 'lg:ml-40 ml-0'}"
 >
-			<div class="p-4 pt-10 pl-16">
+			<div class="p-4 pt-10 lg:pl-16">
 				{@render children()}
 			</div>
 		</main>
 	</div>
+	<MobileMenu />
 </div>
