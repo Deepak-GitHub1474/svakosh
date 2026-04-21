@@ -5,6 +5,7 @@
 	import { page } from '$app/state';
 	import { navItems } from './const';
 	import { uiState } from '$lib/store/ui.svelte';
+	import MenuIcon from '../svg-provider/MenuIcon.svelte';
 	import SvaKoshSwitch from '../svakosh/SvaKoshSwitch.svelte';
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
 
@@ -53,18 +54,18 @@
 	<div class="flex items-center h-full">
 		<div 
 			class="flex items-center transition-all duration-300 ease-in-out shrink-0 
-            {uiState.isWatchlistVisible ? 'w-[322px] 2xl:w-[381px]' : 'w-[168px]'}"
+            {uiState.isWatchlistVisible ? 'w-[322px] 2xl:w-[381px]' : 'lg:w-[168px] w-auto'}"
 		>
-			<span class="font-headline text-lg tracking-tighter text-primary uppercase select-none">
+			<span class="text-lg tracking-tighter text-primary uppercase select-none">
 				{BRAND.name}
 			</span>
 		</div>
-		<nav class="relative hidden md:flex gap-8 items-center h-full ml-8">
+		<nav class="relative hidden lg:flex gap-8 items-center h-full ml-8">
 			{#each navItems as item, i}
 				<a
 					bind:this={navRefs[i]}
 					href={item.href}
-					class="flex items-center gap-2 h-full font-headline text-[0.8125rem] tracking-wider transition-colors duration-300
+					class="flex items-center gap-2 h-full text-[0.8125rem] tracking-wider transition-colors duration-300
                     {activeIndex === i ? 'text-primary' : 'text-muted-foreground hover:text-white'}"
 				>
 					<span class="material-symbols-outlined icon-size {activeIndex === i ? 'fill-1' : ''}" style={activeIndex === i ? "font-variation-settings: 'FILL' 1;" : ""}>
@@ -111,11 +112,20 @@
 
 	<div class="flex items-center gap-6 flex-1 justify-end">
 		<button 
-            onclick={toggleProfileModal}
-            class="material-symbols-outlined text-muted-foreground hover:text-primary icon-size border border-primary/20 rounded-full p-1"
-        >
-            person
-        </button>
+			onclick={toggleProfileModal}
+			class="hidden lg:inline-flex items-center text-muted-foreground hover:text-primary border border-primary/20 rounded-full p-1 transition-colors"
+		>
+			<span class="material-symbols-outlined icon-size">person</span>
+		</button>
+
+		<button 
+			type="button"
+			class="lg:hidden flex items-center text-muted-foreground hover:text-primary transition-colors"
+			onclick={() => uiState.toggleMobileMenu()}
+			aria-label="Open menu"
+		>
+			<MenuIcon class="w-6 h-6" />
+		</button>
 	</div>
 </header>
 

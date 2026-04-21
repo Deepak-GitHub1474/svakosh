@@ -6,7 +6,7 @@
 </script>
 
 <aside
-	class="fixed left-0 top-10 h-[calc(100vh-2.5rem)] flex flex-col z-40 border-r border-border-subtle bg-background transition-all duration-300 ease-in-out
+	class="fixed left-0 top-10 h-[calc(100vh-2.5rem)] hidden lg:flex flex-col z-40 border-r border-border-subtle bg-background transition-all duration-300 ease-in-out
     {uiState.isWatchlistVisible ? 'w-16' : 'w-52'}"
 >
 	<nav class="flex-1 px-2 py-4 space-y-2.5">

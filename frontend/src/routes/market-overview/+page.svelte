@@ -18,6 +18,12 @@
 <div class="min-h-screen text-foreground relative z-[-1]">
 	{#if mounted}
 		<div in:fade={{ duration: 800 }}>
+			<header>
+				<h1 class="text-2xl tracking-tight text-primary mb-2 flex items-center gap-3">
+					Market Overview
+				</h1>
+				<p class="text-muted-foreground text-sm">Major Indices, Market Breadth, FII & DII Activity</p>
+			</header>
 			<section class="mb-10">
 				<h2 class="mb-4 flex items-center gap-2 opacity-80">
 					<span class="w-1 h-4 bg-primary rounded-full"></span>
