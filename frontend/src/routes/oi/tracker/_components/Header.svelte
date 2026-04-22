@@ -40,7 +40,14 @@
 </script>
 
 <div in:fade={{ duration: 800 }} class="sticky top-0 z-10 border-b border-border-subtle py-3">
-	<div class="flex flex-col items-center justify-between md:flex-row gap-3">
+	<header>
+		<h1 class="text-2xl tracking-tight text-primary mb-1 flex items-center gap-3">
+			OI Tracker
+		</h1>
+		<p class="text-muted-foreground text-sm">Categorized view of OI Writing and Unwinding sentiment</p>
+	</header>
+
+	<div class="flex flex-col items-center justify-between md:flex-row gap-3 mt-4">
 		<div class="flex items-center gap-4 w-full">
 			<SvaKoshTabs 
 				tabs={[

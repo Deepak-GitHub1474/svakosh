@@ -39,7 +39,7 @@
 	let isOiOpen = $state(false);
 </script>
 
-<div in:fade={{ duration: 800 }} class="sticky top-0 z-[60] bg-background/95 backdrop-blur-md border-b border-border-subtle flex flex-col gap-4 mb-2 pb-3 pt-3">
+<div in:fade={{ duration: 800 }} class="sticky top-0 z-10 border-b border-border-subtle py-3">
 	<header>
 		<h1 class="text-2xl tracking-tight text-primary mb-1 flex items-center gap-3">
 			OI Lookup
@@ -47,7 +47,7 @@
 		<p class="text-muted-foreground text-sm">Market Intelligence System</p>
 	</header>
 
-	<div class="flex flex-col items-center justify-between md:flex-row gap-3">
+	<div class="flex flex-col items-center justify-between md:flex-row gap-3 mt-4">
 		<div class="flex items-center gap-4 w-full">
 			<SvaKoshTabs 
 				tabs={[

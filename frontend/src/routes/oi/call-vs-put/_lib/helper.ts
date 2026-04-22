@@ -1,0 +1,148 @@
+import type { OIDataMap } from './types';
+
+const formatNumber = (val: number) => {
+	if (val >= 10000000) return (val / 10000000).toFixed(2) + ' Cr';
+	if (val >= 100000) return (val / 100000).toFixed(2) + ' L';
+	if (val >= 1000) return (val / 1000).toFixed(1) + ' K';
+	return val.toString();
+};
+
+export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string = '#00ff88', bearishColor: string = '#ff3d00') {
+	const timestamps = Object.keys(data).sort();
+	const ceData = timestamps.map((t) => data[t].ceOI);
+	const peData = timestamps.map((t) => data[t].peOI);
+
+	return {
+		backgroundColor: 'transparent',
+		tooltip: {
+			trigger: 'axis',
+			backgroundColor: 'rgba(15, 17, 20, 0.98)',
+			borderColor: 'rgba(212, 175, 55, 0.4)',
+			borderWidth: 1.5,
+			padding: [10, 14],
+			textStyle: { color: '#e2e8f0', fontSize: 10 },
+			axisPointer: {
+				type: 'line',
+				lineStyle: { color: 'rgba(212, 175, 55, 0.3)', width: 2, type: 'solid' }
+			},
+			formatter: function(params: any) {
+				const time = params[0].axisValue;
+				let html = `
+					<div class="flex flex-col gap-2.5 min-w-[140px]">
+						<div class="flex items-center gap-2 border-b border-white/5 pb-2 mb-0.5">
+							<svg class="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<circle cx="12" cy="12" r="10"></circle>
+								<polyline points="12 6 12 12 16 14"></polyline>
+							</svg>
+							<span class="text-[10px] text-muted-foreground tracking-wide uppercase font-medium">TIME : ${time}</span>
+						</div>
+				`;
+				
+				params.forEach((p: any) => {
+					html += `
+						<div class="flex items-center justify-between gap-4">
+							<div class="flex items-center gap-2">
+								<span class="w-2 h-2 rounded-full" style="background-color: ${p.color}; box-shadow: 0 0 4px ${p.color}80;"></span>
+								<span class="text-[10px] text-slate-300 font-normal">${p.seriesName}</span>
+							</div>
+							<span class="text-[10px] text-slate-50 font-mono">${formatNumber(p.value)}</span>
+						</div>
+					`;
+				});
+				
+				html += '</div>';
+				return html;
+			}
+		},
+		legend: {
+			data: ['Call OI', 'Put OI'],
+			textStyle: { color: '#94a3b8' },
+			top: 0
+		},
+		grid: {
+			left: '3%',
+			right: '4%',
+			bottom: '10%',
+			top: '15%',
+			containLabel: true
+		},
+		xAxis: {
+			type: 'category',
+			data: timestamps,
+			axisLine: { lineStyle: { color: 'rgba(226, 232, 240, 0.1)' } },
+			axisLabel: { color: '#94a3b8' }
+		},
+		yAxis: {
+			type: 'value',
+			splitLine: { lineStyle: { color: 'rgba(226, 232, 240, 0.05)' } },
+			axisLabel: { 
+				color: '#94a3b8',
+				formatter: (value: number) => {
+					if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+					if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+					return value;
+				}
+			}
+		},
+		dataZoom: [
+			{ type: 'inside', start: 0, end: 100 },
+			{ type: 'slider', height: 20, bottom: 10, borderColor: 'transparent', backgroundColor: 'rgba(255,255,255,0.05)', fillerColor: 'rgba(212, 175, 55, 0.1)' }
+		],
+		series: [
+			{
+				name: 'Call OI',
+				type: 'line',
+				data: ceData,
+				smooth: true,
+				showSymbol: false,
+				lineStyle: { width: 1.6, color: bearishColor },
+				itemStyle: { color: bearishColor },
+				emphasis: {
+					focus: 'series',
+					lineStyle: { width: 2, opacity: 1 }
+				},
+				areaStyle: {
+					color: {
+						type: 'linear',
+						x: 0, y: 0, x2: 0, y2: 1,
+						colorStops: [
+							{ offset: 0, color: `${bearishColor}33` },
+							{ offset: 1, color: `${bearishColor}00` }
+						]
+					}
+				}
+			},
+			{
+				name: 'Put OI',
+				type: 'line',
+				data: peData,
+				smooth: true,
+				showSymbol: false,
+				lineStyle: { width: 1.6, color: bullishColor },
+				itemStyle: { color: bullishColor },
+				emphasis: {
+					focus: 'series',
+					lineStyle: { width: 2, opacity: 1 }
+				},
+				areaStyle: {
+					color: {
+						type: 'linear',
+						x: 0, y: 0, x2: 0, y2: 1,
+						colorStops: [
+							{ offset: 0, color: `${bullishColor}33` },
+							{ offset: 1, color: `${bullishColor}00` }
+						]
+					}
+				}
+			}
+		]
+	};
+}
+
+export function generateStrikeList(atmStrike: number, difference: number): number[] {
+	const strikes = [];
+	for (let i = -30; i <= 30; i++) {
+		strikes.push(atmStrike + i * difference);
+	}
+	return strikes.sort((a, b) => a - b);
+}
