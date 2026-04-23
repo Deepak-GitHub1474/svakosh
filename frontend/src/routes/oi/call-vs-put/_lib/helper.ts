@@ -7,7 +7,7 @@ const formatNumber = (val: number) => {
 	return val.toString();
 };
 
-export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string = '#00ff88', bearishColor: string = '#ff3d00') {
+export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string = '#00ff88', bearishColor: string = '#ff3d00', chartType: 'line' | 'bar' = 'line') {
 	const timestamps = Object.keys(data).sort();
 	const ceData = timestamps.map((t) => data[t].ceOI);
 	const peData = timestamps.map((t) => data[t].peOI);
@@ -79,7 +79,7 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 			axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
 			axisLabel: { color: '#64748b', fontSize: 10, margin: 12 },
 			axisTick: { show: false },
-			boundaryGap: false
+			boundaryGap: chartType === 'bar'
 		},
 		yAxis: {
 			type: 'value',
@@ -104,17 +104,22 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 		series: [
 			{
 				name: 'Call OI',
-				type: 'line',
+				type: chartType,
 				data: ceData,
 				smooth: true,
 				showSymbol: false,
+				barGap: '0%',
+				barCategoryGap: '30%',
 				lineStyle: { width: 1.6, color: bullishColor },
-				itemStyle: { color: bullishColor },
+				itemStyle: { 
+					color: bullishColor,
+					borderRadius: chartType === 'bar' ? [2, 2, 0, 0] : 0
+				},
 				emphasis: {
 					focus: 'series',
 					lineStyle: { width: 2, opacity: 1 }
 				},
-				areaStyle: {
+				areaStyle: chartType === 'line' ? {
 					color: {
 						type: 'linear',
 						x: 0, y: 0, x2: 0, y2: 1,
@@ -123,21 +128,26 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 							{ offset: 1, color: `${bullishColor}00` }
 						]
 					}
-				}
+				} : undefined
 			},
 			{
 				name: 'Put OI',
-				type: 'line',
+				type: chartType,
 				data: peData,
 				smooth: true,
 				showSymbol: false,
+				barGap: '0%',
+				barCategoryGap: '30%',
 				lineStyle: { width: 1.6, color: bearishColor },
-				itemStyle: { color: bearishColor },
+				itemStyle: { 
+					color: bearishColor,
+					borderRadius: chartType === 'bar' ? [2, 2, 0, 0] : 0
+				},
 				emphasis: {
 					focus: 'series',
 					lineStyle: { width: 2, opacity: 1 }
 				},
-				areaStyle: {
+				areaStyle: chartType === 'line' ? {
 					color: {
 						type: 'linear',
 						x: 0, y: 0, x2: 0, y2: 1,
@@ -146,7 +156,7 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 							{ offset: 1, color: `${bearishColor}00` }
 						]
 					}
-				}
+				} : undefined
 			}
 		]
 	};

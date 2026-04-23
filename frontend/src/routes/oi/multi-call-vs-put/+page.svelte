@@ -7,6 +7,7 @@
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshMultiSelector from '$lib/components/svakosh/SvaKoshMultiSelector.svelte';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
+	import SvaKoshBadge from '$lib/components/svakosh/SvaKoshBadge.svelte';
 	import MultiCallVsPutChart from './_components/MultiCallVsPutChart.svelte';
 
 	let selectedSymbol = $state('NIFTY');
@@ -23,6 +24,7 @@
 	let isExpiryOpen = $state(false);
 	let isCallStrikesOpen = $state(false);
 	let isPutStrikesOpen = $state(false);
+	let intervalId: any;
 
 	$effect(() => {
 		if (isSymbolOpen) {
@@ -56,7 +58,6 @@
 		}
 	});
 
-	
 
 	let strikeOptions = $derived.by(() => {
 		if (atmStrike === 0) return [];
@@ -94,8 +95,6 @@
 	function handleSelectionChange() {
 		updateAggregatedData();
 	}
-
-	let intervalId: any;
 
 	onMount(() => {
 		const initial = getBaseStrike(selectedSymbol);
@@ -167,26 +166,30 @@
 		</div>
 	</div>
 
-	<div class="flex flex-wrap gap-4 px-4 py-3 rounded-xl glass-panel border border-border-subtle">
-		<div class="flex items-center gap-3">
-			<span class="text-[0.625rem] text-muted-foreground uppercase tracking-widest text-nowrap">CALL SELECTIONS:</span>
-			<div class="flex flex-wrap gap-1">
+	<div class="flex flex-wrap items-center gap-4 px-4 py-3 rounded-xl glass-panel border border-border-subtle bg-surface/5">
+		<div class="flex items-center gap-1">
+			<SvaKoshBadge label="CALL SELECTIONS:" variant="bullish" class="bg-transparent border-none" />
+			<div class="flex flex-wrap gap-1.5">
 				{#each selectedCallStrikes as s}
-					<span class="px-2 py-0.5 rounded bg-bullish/10 border border-bullish/20 text-[0.625rem] text-bullish">{s}</span>
-				{:else}
-					<span class="text-[0.625rem] text-foreground/50 italic">None (Showing All)</span>
+					<SvaKoshBadge label={s} variant="bullish" />
 				{/each}
+				{#if selectedCallStrikes.length === 0}
+					<span class="text-[0.625rem] text-muted-foreground italic">None Selected (Showing All)</span>
+				{/if}
 			</div>
 		</div>
-		<div class="h-4 w-px bg-border-subtle hidden md:block"></div>
-		<div class="flex items-center gap-3">
-			<span class="text-[0.625rem] text-muted-foreground uppercase tracking-widest text-nowrap">PUT SELECTIONS:</span>
-			<div class="flex flex-wrap gap-1">
+		
+		<div class="h-4 w-px bg-border-subtle hidden md:block mx-2"></div>
+		
+		<div class="flex items-center gap-1">
+			<SvaKoshBadge label="PUT SELECTIONS:" variant="bearish" class="bg-transparent border-none" />
+			<div class="flex flex-wrap gap-1.5">
 				{#each selectedPutStrikes as s}
-					<span class="px-2 py-0.5 rounded bg-bearish/10 border border-bearish/20 text-[0.625rem] text-bearish">{s}</span>
-				{:else}
-					<span class="text-[0.625rem] text-foreground/50 italic">None (Showing All)</span>
+					<SvaKoshBadge label={s} variant="bearish" />
 				{/each}
+				{#if selectedPutStrikes.length === 0}
+					<span class="text-[0.625rem] text-muted-foreground italic">None Selected (Showing All)</span>
+				{/if}
 			</div>
 		</div>
 	</div>

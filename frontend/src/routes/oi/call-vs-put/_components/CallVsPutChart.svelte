@@ -3,7 +3,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { cubicInOut } from 'svelte/easing';
 	import * as echarts from 'echarts/core';
-	import { LineChart } from 'echarts/charts';
+	import { LineChart, BarChart } from 'echarts/charts';
 	import {
 		TooltipComponent,
 		GridComponent,
@@ -13,13 +13,16 @@
 	} from 'echarts/components';
 	import { CanvasRenderer } from 'echarts/renderers';
 	import { getCallVsPutChartOptions } from '../_lib/helper';
+	import { chartTypeTabs } from '../_lib/const';
 	import type { OIDataMap } from '../_lib/types';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
+	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import MaximizeIcon from '$lib/components/svg-provider/MaximizeIcon.svelte';
 	import MinimizeIcon from '$lib/components/svg-provider/MinimizeIcon.svelte';
 
 	echarts.use([
 		LineChart,
+		BarChart,
 		TooltipComponent,
 		GridComponent,
 		LegendComponent,
@@ -39,6 +42,7 @@
 
 	let chartContainer = $state<HTMLDivElement | null>(null);
 	let chart: echarts.ECharts | null = null;
+	let chartType = $state<'line' | 'bar'>('line');
 	let isMaximized = $state(false);
 	let resizeObserver: ResizeObserver | null = null;
 
@@ -73,8 +77,8 @@
 	}
 
 	function updateOptions() {
-		if (!chart || !data) return;
-		const options = getCallVsPutChartOptions(data, bullishColor, bearishColor);
+		if (!chart || chart.isDisposed() || !data) return;
+		const options = getCallVsPutChartOptions(data, bullishColor, bearishColor, chartType);
 		chart.setOption(options, true);
 	}
 
@@ -89,7 +93,9 @@
 	});
 
 	$effect(() => {
-		if (data && bullishColor && bearishColor) {
+		data; chartType; bullishColor; bearishColor;
+		
+		if (chart && !chart.isDisposed()) {
 			updateOptions();
 		}
 	});
@@ -148,6 +154,13 @@
 		</div>
 		
 		<div class="flex items-center gap-3">
+			<SvaKoshTabs 
+				tabs={chartTypeTabs}
+				activeTab={chartType}
+				onTabChange={(val) => chartType = val}
+				class="scale-[0.8] origin-right mr-0.5"
+			/>
+
 			<button 
 				type="button"
 				onclick={toggleMaximize}
