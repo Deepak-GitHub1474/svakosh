@@ -35,14 +35,14 @@
 {#if uiState.isMobileMenuOpen}
 	<button
 		type="button"
-		class="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm lg:hidden"
+		class="fixed inset-0 z-[1100] bg-black/60 backdrop-blur-sm lg:hidden"
 		onclick={closeMenu}
 		transition:fade={{ duration: 300 }}
 		aria-label="Close menu"
 	></button>
 
 	<div
-		class="fixed inset-y-0 right-0 z-[2001] flex h-full w-72 flex-col border-l border-border-subtle bg-background lg:hidden shadow-[-20px_0_50px_rgba(0,0,0,0.5)]"
+		class="fixed inset-y-0 right-0 z-[1110] flex h-full w-72 flex-col border-l border-border-subtle bg-background lg:hidden shadow-[-20px_0_50px_rgba(0,0,0,0.5)]"
 		transition:fly={{ x: 300, duration: 400, easing: cubicInOut }}
 	>
 		<div class="flex items-center justify-between border-b border-border-subtle px-6 py-4">

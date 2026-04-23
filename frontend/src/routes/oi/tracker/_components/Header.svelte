@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { fade } from 'svelte/transition';
+	import { TRACKER_SYMBOLS, EXPIRIES, TABS } from '../_lib/const';
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshMultiSelector from '$lib/components/svakosh/SvaKoshMultiSelector.svelte';
 	import SvaKoshSwitch from '$lib/components/svakosh/SvaKoshSwitch.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
-	import { TRACKER_SYMBOLS, EXPIRIES } from '../_lib/const';
-	import { fade } from 'svelte/transition';
 
 	interface Props {
 		activeTab: 'tables' | 'graphs';
@@ -40,21 +40,17 @@
 </script>
 
 <div in:fade={{ duration: 800 }} class="sticky top-0 z-10 border-b border-border-subtle py-3">
-	<div class="flex flex-col items-center justify-between md:flex-row gap-3">
+	<header>
+		<h1 class="text-2xl tracking-tight text-primary mb-1 flex items-center gap-3">
+			OI Tracker
+		</h1>
+		<p class="text-muted-foreground text-sm">Categorized view of OI Writing and Unwinding sentiment</p>
+	</header>
+
+	<div class="flex flex-col items-center justify-between md:flex-row gap-3 mt-4">
 		<div class="flex items-center gap-4 w-full">
 			<SvaKoshTabs 
-				tabs={[
-					{ 
-						label: 'Tables', 
-						value: 'tables',
-						svgPath: 'M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z' 
-					},
-					{ 
-						label: 'Graphs', 
-						value: 'graphs',
-						svgPath: 'M3 3v18h18V3H3zm16 16H5V5h14v14zM7 10l3 3 4-4 3 3' 
-					}
-				]}
+				tabs={TABS}
 				activeTab={activeTab} 
 				onTabChange={(id) => onTabChange(id as any)} 
 			/>
