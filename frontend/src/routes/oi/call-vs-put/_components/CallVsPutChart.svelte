@@ -121,20 +121,18 @@
 		>
 			<div 
 				bind:this={chartContainer} 
-				style="height: calc(100vh - 14rem);"
-				class="w-full mt-2"
+				class="w-full mt-2 h-[calc(100vh-11rem)]"
 			></div>
 		</SvaKoshCard>
 	</div>
 {:else}
 	<SvaKoshCard 
-		class="transition-all duration-500 ease-in-out hover:border-primary/20 flex flex-col pt-3 h-[500px] relative"
+		class="transition-all duration-500 ease-in-out hover:border-primary/20 flex flex-col pt-3 h-[539px] relative"
 		meta={title}
 	>
 		<div 
 			bind:this={chartContainer} 
-			style="height: 440px;"
-			class="w-full mt-2"
+			class="w-full mt-2 h-[535px]"
 		></div>
 	</SvaKoshCard>
 {/if}

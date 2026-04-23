@@ -56,66 +56,56 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 		},
 		legend: {
 			data: ['Call OI', 'Put OI'],
-			textStyle: { color: '#94a3b8' },
+			icon: 'circle',
+			itemWidth: 10,
+			itemHeight: 10,
+			textStyle: { color: '#94a3b8', fontSize: 10 },
 			top: 0
 		},
 		grid: {
-			left: '3%',
-			right: '4%',
-			bottom: '10%',
 			top: '15%',
+			left: '4%',
+			right: '4%',
+			bottom: '15%',
 			containLabel: true
 		},
 		xAxis: {
 			type: 'category',
+			name: 'TIME',
+			nameLocation: 'middle',
+			nameGap: 35,
+			nameTextStyle: { color: '#64748b', fontSize: 10, fontWeight: 'normal' },
 			data: timestamps,
-			axisLine: { lineStyle: { color: 'rgba(226, 232, 240, 0.1)' } },
-			axisLabel: { color: '#94a3b8' }
+			axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
+			axisLabel: { color: '#64748b', fontSize: 10, margin: 12 },
+			axisTick: { show: false },
+			boundaryGap: false
 		},
 		yAxis: {
 			type: 'value',
-			splitLine: { lineStyle: { color: 'rgba(226, 232, 240, 0.05)' } },
+			name: 'OI (LAKHS)',
+			nameLocation: 'end',
+			nameTextStyle: { color: '#64748b', fontSize: 10, fontWeight: 'normal', padding: [0, 0, 10, 0] },
+			splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)', type: 'dashed' } },
 			axisLabel: { 
-				color: '#94a3b8',
+				color: '#64748b',
+				fontSize: 10,
 				formatter: (value: number) => {
-					if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+					if (value >= 10000000) return (value / 10000000).toFixed(1) + 'Cr';
+					if (value >= 100000) return (value / 100000).toFixed(1) + 'L';
 					if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
 					return value;
 				}
 			}
 		},
 		dataZoom: [
-			{ type: 'inside', start: 0, end: 100 },
-			{ type: 'slider', height: 20, bottom: 10, borderColor: 'transparent', backgroundColor: 'rgba(255,255,255,0.05)', fillerColor: 'rgba(212, 175, 55, 0.1)' }
+			{ type: 'inside', start: 0, end: 100 }
 		],
 		series: [
 			{
 				name: 'Call OI',
 				type: 'line',
 				data: ceData,
-				smooth: true,
-				showSymbol: false,
-				lineStyle: { width: 1.6, color: bearishColor },
-				itemStyle: { color: bearishColor },
-				emphasis: {
-					focus: 'series',
-					lineStyle: { width: 2, opacity: 1 }
-				},
-				areaStyle: {
-					color: {
-						type: 'linear',
-						x: 0, y: 0, x2: 0, y2: 1,
-						colorStops: [
-							{ offset: 0, color: `${bearishColor}33` },
-							{ offset: 1, color: `${bearishColor}00` }
-						]
-					}
-				}
-			},
-			{
-				name: 'Put OI',
-				type: 'line',
-				data: peData,
 				smooth: true,
 				showSymbol: false,
 				lineStyle: { width: 1.6, color: bullishColor },
@@ -131,6 +121,29 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 						colorStops: [
 							{ offset: 0, color: `${bullishColor}33` },
 							{ offset: 1, color: `${bullishColor}00` }
+						]
+					}
+				}
+			},
+			{
+				name: 'Put OI',
+				type: 'line',
+				data: peData,
+				smooth: true,
+				showSymbol: false,
+				lineStyle: { width: 1.6, color: bearishColor },
+				itemStyle: { color: bearishColor },
+				emphasis: {
+					focus: 'series',
+					lineStyle: { width: 2, opacity: 1 }
+				},
+				areaStyle: {
+					color: {
+						type: 'linear',
+						x: 0, y: 0, x2: 0, y2: 1,
+						colorStops: [
+							{ offset: 0, color: `${bearishColor}33` },
+							{ offset: 1, color: `${bearishColor}00` }
 						]
 					}
 				}

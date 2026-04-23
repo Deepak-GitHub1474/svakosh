@@ -52,6 +52,16 @@
 		bearishColor = style.getPropertyValue('--bearish').trim() || '#ff3d00';
 	});
 
+	function updateOptions() {
+		if (!chart || !data) return;
+		const options = getMultiCallVsPutChartOptions(data, bullishColor, bearishColor);
+		chart.setOption(options, true);
+	}
+
+	function toggleMaximize() {
+		isMaximized = !isMaximized;
+	}
+
 	async function initChart() {
 		if (!chartContainer) return;
 		
@@ -71,16 +81,6 @@
 			chart?.resize();
 		});
 		resizeObserver.observe(chartContainer);
-	}
-
-	function updateOptions() {
-		if (!chart || !data) return;
-		const options = getMultiCallVsPutChartOptions(data, bullishColor, bearishColor);
-		chart.setOption(options, true);
-	}
-
-	function toggleMaximize() {
-		isMaximized = !isMaximized;
 	}
 
 	$effect(() => {
@@ -122,20 +122,18 @@
 		>
 			<div 
 				bind:this={chartContainer} 
-				style="height: calc(100vh - 14rem);"
-				class="w-full mt-2"
+				class="w-full mt-2 h-[calc(100vh-11rem)]"
 			></div>
 		</SvaKoshCard>
 	</div>
 {:else}
 	<SvaKoshCard 
-		class="transition-all duration-500 ease-in-out hover:border-primary/20 flex flex-col pt-3 h-[500px] relative"
+		class="transition-all duration-500 ease-in-out hover:border-primary/20 flex flex-col pt-3 h-[477px] relative"
 		meta={title}
 	>
 		<div 
 			bind:this={chartContainer} 
-			style="height: 440px;"
-			class="w-full mt-2"
+			class="w-full mt-2 h-[465px]"
 		></div>
 	</SvaKoshCard>
 {/if}

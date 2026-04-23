@@ -18,6 +18,43 @@
 	let rawStrikeData = $state<Record<string, any>>({});
 	let aggregatedData = $state<MultiOIDataMap>({});
 	let lastUpdated = $state<string>('');
+	
+	let isSymbolOpen = $state(false);
+	let isExpiryOpen = $state(false);
+	let isCallStrikesOpen = $state(false);
+	let isPutStrikesOpen = $state(false);
+
+	$effect(() => {
+		if (isSymbolOpen) {
+			isExpiryOpen = false;
+			isCallStrikesOpen = false;
+			isPutStrikesOpen = false;
+		}
+	});
+
+	$effect(() => {
+		if (isExpiryOpen) {
+			isSymbolOpen = false;
+			isCallStrikesOpen = false;
+			isPutStrikesOpen = false;
+		}
+	});
+
+	$effect(() => {
+		if (isCallStrikesOpen) {
+			isSymbolOpen = false;
+			isExpiryOpen = false;
+			isPutStrikesOpen = false;
+		}
+	});
+
+	$effect(() => {
+		if (isPutStrikesOpen) {
+			isSymbolOpen = false;
+			isExpiryOpen = false;
+			isCallStrikesOpen = false;
+		}
+	});
 
 	
 
@@ -49,8 +86,8 @@
 		selectedSymbol = val;
 		const initial = getBaseStrike(val);
 		atmStrike = initial;
-		selectedCallStrikes = [];
-		selectedPutStrikes = [];
+		selectedCallStrikes = [String(initial)];
+		selectedPutStrikes = [String(initial)];
 		fetchData();
 	}
 
@@ -63,6 +100,8 @@
 	onMount(() => {
 		const initial = getBaseStrike(selectedSymbol);
 		atmStrike = initial;
+		selectedCallStrikes = [String(initial)];
+		selectedPutStrikes = [String(initial)];
 		fetchData();
 
 		intervalId = setInterval(() => {
@@ -87,36 +126,40 @@
 		<p class="text-muted-foreground text-sm">Cumulative Open Interest trend for multiple strike selections</p>
 	</header>
 
-	<div class="flex flex-wrap items-center gap-4">
+	<div class="flex flex-wrap items-center justify-end gap-4">
 		<div class="w-full sm:w-40">
 			<SvaKoshSelector 
 				options={symbols} 
 				bind:value={selectedSymbol} 
+				bind:isOpen={isSymbolOpen}
 				onSelect={handleSymbolChange}
 				placeholder="Symbol"
 			/>
 		</div>
-		<div class="w-full sm:w-48">
+		<div class="w-full sm:w-44">
 			<SvaKoshSelector 
 				options={expiries} 
 				bind:value={selectedExpiry} 
+				bind:isOpen={isExpiryOpen}
 				onSelect={fetchData}
 				placeholder="Expiry"
 			/>
 		</div>
-		<div class="w-full sm:w-48">
+		<div class="w-full sm:w-36">
 			<SvaKoshMultiSelector 
 				options={strikeOptions} 
 				bind:value={selectedCallStrikes} 
+				bind:isOpen={isCallStrikesOpen}
 				onSelect={handleSelectionChange}
 				searchable={true}
 				placeholder="Call Strikes"
 			/>
 		</div>
-		<div class="w-full sm:w-48">
+		<div class="w-full sm:w-36">
 			<SvaKoshMultiSelector 
 				options={strikeOptions} 
 				bind:value={selectedPutStrikes} 
+				bind:isOpen={isPutStrikesOpen}
 				onSelect={handleSelectionChange}
 				searchable={true}
 				placeholder="Put Strikes"
@@ -124,12 +167,12 @@
 		</div>
 	</div>
 
-	<div class="flex flex-wrap gap-4 px-4 py-3 rounded-xl glass-panel bg-surface-elevated/30 border border-border-subtle">
+	<div class="flex flex-wrap gap-4 px-4 py-3 rounded-xl glass-panel border border-border-subtle">
 		<div class="flex items-center gap-3">
-			<span class="text-[0.625rem] text-muted-foreground uppercase tracking-widest">CALL SELECTIONS:</span>
+			<span class="text-[0.625rem] text-muted-foreground uppercase tracking-widest text-nowrap">CALL SELECTIONS:</span>
 			<div class="flex flex-wrap gap-1">
 				{#each selectedCallStrikes as s}
-					<span class="px-2 py-0.5 rounded bg-bearish/10 border border-bearish/20 text-[0.625rem] text-bearish">{s}</span>
+					<span class="px-2 py-0.5 rounded bg-bullish/10 border border-bullish/20 text-[0.625rem] text-bullish">{s}</span>
 				{:else}
 					<span class="text-[0.625rem] text-foreground/50 italic">None (Showing All)</span>
 				{/each}
@@ -137,10 +180,10 @@
 		</div>
 		<div class="h-4 w-px bg-border-subtle hidden md:block"></div>
 		<div class="flex items-center gap-3">
-			<span class="text-[0.625rem] text-muted-foreground uppercase tracking-widest">PUT SELECTIONS:</span>
+			<span class="text-[0.625rem] text-muted-foreground uppercase tracking-widest text-nowrap">PUT SELECTIONS:</span>
 			<div class="flex flex-wrap gap-1">
 				{#each selectedPutStrikes as s}
-					<span class="px-2 py-0.5 rounded bg-bullish/10 border border-bullish/20 text-[0.625rem] text-bullish">{s}</span>
+					<span class="px-2 py-0.5 rounded bg-bearish/10 border border-bearish/20 text-[0.625rem] text-bearish">{s}</span>
 				{:else}
 					<span class="text-[0.625rem] text-foreground/50 italic">None (Showing All)</span>
 				{/each}
@@ -158,7 +201,7 @@
 				onRefresh={fetchData}
 			/>
 		{:else}
-			<SvaKoshCard class="h-[500px] flex items-center justify-center">
+			<SvaKoshCard class="h-[480px] flex items-center justify-center">
 				<div class="flex flex-col items-center gap-4">
 					<div class="h-10 w-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin"></div>
 					<p class="text-xs text-muted-foreground uppercase tracking-[0.2em]">Calculating Aggregations...</p>
