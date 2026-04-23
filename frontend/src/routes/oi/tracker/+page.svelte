@@ -77,7 +77,7 @@
 			} else {
 				refreshGraphData();
 			}
-		}, 2000);
+		}, 10000);
 
 		return () => clearInterval(interval);
 	});
@@ -87,7 +87,7 @@
 	<title>OI Tracker | SvaKosh</title>
 </svelte:head>
 
-<div class="min-h-screen bg-background text-foreground">
+<div class="bg-background text-foreground">
 	<Header 
 		{activeTab} 
 		onTabChange={handleTabChange}

@@ -84,7 +84,7 @@
 	<title>OI Lookup | SvaKosh</title>
 </svelte:head>
 
-<div class="min-h-screen bg-background text-foreground">
+<div class="bg-background text-foreground">
 	<Header 
 		{activeTab} 
 		onTabChange={handleTabChange}
