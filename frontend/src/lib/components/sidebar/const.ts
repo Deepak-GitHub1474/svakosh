@@ -9,4 +9,5 @@ export const menuItems = [
     { icon: 'screen_search_desktop', label: 'Stocks Screeners', href: '/stocks/stocks-screener' },
     { icon: 'trending_up', label: '52-Week Breakout', href: '/stocks/breakout/52-week' },
     { icon: 'bar_chart', label: 'Volume Breakout', href: '/stocks/breakout/volume' },
+    { icon: 'monitor_heart', label: 'Market Pulse', href: '/market-pulse' },
 ];
