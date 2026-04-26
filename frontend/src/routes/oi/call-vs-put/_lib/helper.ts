@@ -7,6 +7,24 @@ const formatNumber = (val: number) => {
 	return val.toString();
 };
 
+function addAlpha(hex: string, alpha: number): string {
+	if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return hex;
+	const cleanHex = hex.replace('#', '');
+	let r, g, b;
+	if (cleanHex.length === 3) {
+		r = parseInt(cleanHex[0] + cleanHex[0], 16);
+		g = parseInt(cleanHex[1] + cleanHex[1], 16);
+		b = parseInt(cleanHex[2] + cleanHex[2], 16);
+	} else if (cleanHex.length === 6) {
+		r = parseInt(cleanHex.substring(0, 2), 16);
+		g = parseInt(cleanHex.substring(2, 4), 16);
+		b = parseInt(cleanHex.substring(4, 6), 16);
+	} else {
+		return hex;
+	}
+	return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string = '#00ff88', bearishColor: string = '#ff3d00', chartType: 'line' | 'bar' = 'line') {
 	const timestamps = Object.keys(data).sort();
 	const ceData = timestamps.map((t) => data[t].ceOI);
@@ -42,7 +60,7 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 					html += `
 						<div class="flex items-center justify-between gap-4">
 							<div class="flex items-center gap-2">
-								<span class="w-2 h-2 rounded-full" style="background-color: ${p.color}; box-shadow: 0 0 4px ${p.color}80;"></span>
+								<span class="w-2 h-2 rounded-full" style="background-color: ${p.color}; box-shadow: 0 0 4px ${addAlpha(p.color, 0.5)};"></span>
 								<span class="text-[10px] text-slate-300 font-normal">${p.seriesName}</span>
 							</div>
 							<span class="text-[10px] text-slate-50 font-mono">${formatNumber(p.value)}</span>
@@ -110,10 +128,17 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 				showSymbol: false,
 				barGap: '0%',
 				barCategoryGap: '30%',
-				lineStyle: { width: 1.6, color: bullishColor },
+				lineStyle: { width: 1.6, color: bearishColor },
 				itemStyle: { 
-					color: bullishColor,
-					borderRadius: chartType === 'bar' ? [2, 2, 0, 0] : 0
+					color: chartType === 'bar' ? {
+						type: 'linear',
+						x: 0, y: 0, x2: 0, y2: 1,
+						colorStops: [
+							{ offset: 0, color: addAlpha(bearishColor, 0.8) },
+							{ offset: 1, color: addAlpha(bearishColor, 0.1) }
+						]
+					} : bearishColor,
+					borderRadius: chartType === 'bar' ? [4, 4, 0, 0] : 0
 				},
 				emphasis: {
 					focus: 'series',
@@ -124,8 +149,8 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 						type: 'linear',
 						x: 0, y: 0, x2: 0, y2: 1,
 						colorStops: [
-							{ offset: 0, color: `${bullishColor}33` },
-							{ offset: 1, color: `${bullishColor}00` }
+							{ offset: 0, color: addAlpha(bullishColor, 0.2) },
+							{ offset: 1, color: addAlpha(bullishColor, 0) }
 						]
 					}
 				} : undefined
@@ -138,10 +163,17 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 				showSymbol: false,
 				barGap: '0%',
 				barCategoryGap: '30%',
-				lineStyle: { width: 1.6, color: bearishColor },
+				lineStyle: { width: 1.6, color: bullishColor },
 				itemStyle: { 
-					color: bearishColor,
-					borderRadius: chartType === 'bar' ? [2, 2, 0, 0] : 0
+					color: chartType === 'bar' ? {
+						type: 'linear',
+						x: 0, y: 0, x2: 0, y2: 1,
+						colorStops: [
+							{ offset: 0, color: addAlpha(bullishColor, 0.8) },
+							{ offset: 1, color: addAlpha(bullishColor, 0.1) }
+						]
+					} : bullishColor,
+					borderRadius: chartType === 'bar' ? [4, 4, 0, 0] : 0
 				},
 				emphasis: {
 					focus: 'series',
@@ -152,8 +184,8 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 						type: 'linear',
 						x: 0, y: 0, x2: 0, y2: 1,
 						colorStops: [
-							{ offset: 0, color: `${bearishColor}33` },
-							{ offset: 1, color: `${bearishColor}00` }
+							{ offset: 0, color: addAlpha(bearishColor, 0.2) },
+							{ offset: 1, color: addAlpha(bearishColor, 0) }
 						]
 					}
 				} : undefined

@@ -35,14 +35,14 @@
 		data: OIDataMap;
 		symbol: string;
 		strike: number;
+		chartType?: 'line' | 'bar';
 		onRefresh?: () => void;
 	}
 
-	let { data, symbol, strike, onRefresh }: Props = $props();
+	let { data, symbol, strike, chartType = $bindable('line'), onRefresh }: Props = $props();
 
 	let chartContainer = $state<HTMLDivElement | null>(null);
 	let chart: echarts.ECharts | null = null;
-	let chartType = $state<'line' | 'bar'>('line');
 	let isMaximized = $state(false);
 	let resizeObserver: ResizeObserver | null = null;
 
@@ -127,7 +127,7 @@
 		>
 			<div 
 				bind:this={chartContainer} 
-				class="w-full mt-2 h-[calc(100vh-11rem)]"
+				class="w-full h-[calc(100vh-11rem)]"
 			></div>
 		</SvaKoshCard>
 	</div>
@@ -138,7 +138,7 @@
 	>
 		<div 
 			bind:this={chartContainer} 
-			class="w-full mt-2 h-[535px]"
+			class="w-full h-[535px]"
 		></div>
 	</SvaKoshCard>
 {/if}
