@@ -2,44 +2,58 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
-	import type { StraddleDataMap } from './_lib/types';
+	import type { StrangleDataMap } from './_lib/types';
 	import { DEFAULT_SYMBOL, DEFAULT_EXPIRY, STRIKE_DIFFERENCES } from './_lib/const';
-	import { generateMockStraddleData, getBaseStrike } from './_lib/mock-data';
+	import { generateMockStrangleData, getBaseStrike } from './_lib/mock-data';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
-	import StraddleChart from './_components/StraddleChart.svelte';
-	import StraddleControls from './_components/StraddleControls.svelte';
+	import StrangleChart from './_components/StrangleChart.svelte';
+	import StrangleControls from './_components/StrangleControls.svelte';
 
 	let selectedSymbol = $state(DEFAULT_SYMBOL);
 	let selectedExpiry = $state(DEFAULT_EXPIRY);
 	let initialStrike = getBaseStrike(DEFAULT_SYMBOL);
 	let atmStrike = $state(initialStrike);
-	let currentStrike = $state(initialStrike);
-	let straddleData = $state<StraddleDataMap>({});
+	let ceStrike = $state(initialStrike + (STRIKE_DIFFERENCES[DEFAULT_SYMBOL] || 50));
+	let peStrike = $state(initialStrike - (STRIKE_DIFFERENCES[DEFAULT_SYMBOL] || 50));
+	
+	let strangleData = $state<StrangleDataMap>({});
 	let chartType = $state<'line' | 'bar'>(page.url.searchParams.get('type') as any || 'line');
 	let intervalId: any;
 
 	let isSymbolOpen = $state(false);
 	let isExpiryOpen = $state(false);
-	let isStrikeOpen = $state(false);
+	let isCeStrikeOpen = $state(false);
+	let isPeStrikeOpen = $state(false);
 
 	$effect(() => {
 		if (isSymbolOpen) {
 			isExpiryOpen = false;
-			isStrikeOpen = false;
+			isCeStrikeOpen = false;
+			isPeStrikeOpen = false;
 		}
 	});
 
 	$effect(() => {
 		if (isExpiryOpen) {
 			isSymbolOpen = false;
-			isStrikeOpen = false;
+			isCeStrikeOpen = false;
+			isPeStrikeOpen = false;
 		}
 	});
 
 	$effect(() => {
-		if (isStrikeOpen) {
+		if (isCeStrikeOpen) {
 			isSymbolOpen = false;
 			isExpiryOpen = false;
+			isPeStrikeOpen = false;
+		}
+	});
+
+	$effect(() => {
+		if (isPeStrikeOpen) {
+			isSymbolOpen = false;
+			isExpiryOpen = false;
+			isCeStrikeOpen = false;
 		}
 	});
 
@@ -55,29 +69,22 @@
 	const strikes = $derived.by(() => {
 		const base = atmStrike;
 		const diff = strikeDifference;
-		const lower = Array.from({ length: 15 }, (_, i) => base - diff * (i + 1));
-		const upper = Array.from({ length: 15 }, (_, i) => base + diff * (i + 1));
+		const lower = Array.from({ length: 30 }, (_, i) => base - diff * (i + 1));
+		const upper = Array.from({ length: 30 }, (_, i) => base + diff * (i + 1));
 		return [...lower, base, ...upper].sort((a, b) => a - b);
 	});
 
 	function updateData() {
-		straddleData = generateMockStraddleData(selectedSymbol, currentStrike, selectedExpiry);
+		strangleData = generateMockStrangleData(selectedSymbol, ceStrike, peStrike, selectedExpiry);
 	}
 
 	function handleSymbolChange(val: string) {
 		selectedSymbol = val;
-		atmStrike = getBaseStrike(val);
-		currentStrike = atmStrike;
-		updateData();
-	}
-
-	function handleExpiryChange(val: string) {
-		selectedExpiry = val;
-		updateData();
-	}
-
-	function handleStrikeChange(val: number) {
-		currentStrike = val;
+		const base = getBaseStrike(val);
+		const diff = STRIKE_DIFFERENCES[val] || 50;
+		atmStrike = base;
+		ceStrike = base + diff;
+		peStrike = base - diff;
 		updateData();
 	}
 
@@ -92,37 +99,42 @@
 </script>
 
 <svelte:head>
-	<title>Straddle Chart | SvaKosh</title>
+	<title>Strangle Chart | SvaKosh</title>
 </svelte:head>
 
 <div class="flex flex-col gap-6">
 	<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 		<header>
 			<h1 class="text-2xl tracking-tight text-primary mb-1 flex items-center gap-3">
-				Straddle Analysis
+				Strangle Analysis
 			</h1>
-			<p class="text-muted-foreground text-sm">Real-time Options Sentiment & Rate Tracking</p>
+			<p class="text-muted-foreground text-sm">Open Interest trend for custom Call & Put strikes</p>
 		</header>
-		<StraddleControls 
+
+		<StrangleControls 
 			bind:symbol={selectedSymbol}
 			bind:expiry={selectedExpiry}
-			bind:strike={currentStrike}
+			bind:ceStrike
+			bind:peStrike
 			bind:isSymbolOpen
 			bind:isExpiryOpen
-			bind:isStrikeOpen
+			bind:isCeStrikeOpen
+			bind:isPeStrikeOpen
 			{strikes}
 			onSymbolChange={handleSymbolChange}
-			onExpiryChange={handleExpiryChange}
-			onStrikeChange={handleStrikeChange}
+			onExpiryChange={updateData}
+			onCeStrikeChange={updateData}
+			onPeStrikeChange={updateData}
 		/>
 	</div>
 
 	<div class="w-full">
-		{#if Object.keys(straddleData).length > 0}
-			<StraddleChart 
-				data={straddleData}
+		{#if Object.keys(strangleData).length > 0}
+			<StrangleChart 
+				data={strangleData}
 				symbol={selectedSymbol} 
-				strike={currentStrike} 
+				ceStrike={ceStrike}
+				peStrike={peStrike}
 				bind:chartType
 			/>
 		{:else}
@@ -135,5 +147,3 @@
 		{/if}
 	</div>
 </div>
-
-
