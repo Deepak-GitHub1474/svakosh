@@ -134,27 +134,27 @@
 	</div>
 {:else}
 	<SvaKoshCard 
-		class="transition-all duration-500 ease-in-out hover:border-primary/20 flex flex-col pt-3 h-[477px] relative"
+		class="transition-all duration-500 ease-in-out hover:border-primary/20 flex flex-col pt-3 h-[540px] relative"
 		meta={title}
 	>
 		<div 
 			bind:this={chartContainer} 
-			class="w-full h-[465px]"
+			class="w-full h-[540px]"
 		></div>
 	</SvaKoshCard>
 {/if}
 
 {#snippet title()}
-	<div class="flex items-center justify-between w-full gap-2 -mt-1">
+	<div class="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-3 -mt-1 sm:mt-0 pb-2 sm:pb-0">
 		<div class="flex items-center gap-3">
-			<h4 class="text-[0.625rem] text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2 whitespace-nowrap">
-				<span class="bg-primary w-1 h-3.5 rounded-full"></span>
-				<span class="text-foreground font-normal">{symbol} MULTI OI - CALL VS PUT</span> 
-				<span class="text-primary-muted ml-2">CE: {selectedCallCount} | PE: {selectedPutCount}</span>
+			<h4 class="text-[0.625rem] text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+				<span class="bg-primary w-1 h-3.5 rounded-full shrink-0"></span>
+				<span class="text-foreground font-normal whitespace-nowrap">{symbol} MULTI OI - CALL VS PUT</span> 
+				<span class="text-primary-muted ml-1 whitespace-nowrap">CE: {selectedCallCount} | PE: {selectedPutCount}</span>
 			</h4>
 		</div>
 		
-		<div class="flex items-center gap-3">
+		<div class="flex items-center gap-3 self-end sm:self-auto">
 			<SvaKoshTabs 
 				tabs={chartTypeTabs}
 				activeTab={chartType}
