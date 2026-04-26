@@ -2,6 +2,7 @@
 	import { formatNumber } from '$lib/utils/helper';
 	import type { TMarketPulseData, TMarketPulseRow } from '../_lib/types';
 	import { PULSE_COLUMNS } from '../_lib/const';
+	import { getSignalVariant, isNumericColumn, isSignalColumn } from '../_lib/helper';
 	import SvaKoshBadge from '$lib/components/svakosh/SvaKoshBadge.svelte';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import HighIcon from '$lib/components/svg-provider/MaximizeIcon.svelte';
@@ -14,30 +15,21 @@
 	let { pulseData, liveRow }: Props = $props();
 
 	const sortedTimes: string[] = $derived(Object.keys(pulseData).sort((a: string, b: string) => b.localeCompare(a)));
-
-	function getSignalVariant(signal: string): "primary" | "bullish" | "bearish" {
-		if (signal === 'Bullish' || signal === 'Strong' || signal === 'High') return 'bullish';
-		if (signal === 'Bearish' || signal === 'Weak' || signal === 'Low') return 'bearish';
-		return 'primary';
-	}
-
-	const isNumeric = (index: number): boolean => [1, 2, 3, 4, 7, 10, 11].includes(index);
-	const isSignal = (index: number): boolean => [6, 8, 9].includes(index);
 </script>
 
-<SvaKoshCard class="!p-0 !overflow-hidden border-border-subtle bg-[#14171a]/40 shadow-2xl">
+<SvaKoshCard class="!p-0 !overflow-hidden border-border-subtle bg-surface/40 shadow-2xl">
 	<div class="overflow-x-auto no-scrollbar">
 		<table class="w-full text-xs border-collapse">
-			<thead class="bg-[#1c1f24]">
+			<thead class="bg-surface">
 				<tr class="text-muted-foreground border-b border-border-subtle">
 					{#each PULSE_COLUMNS as col, i}
-						<th class="py-3 px-4 uppercase tracking-wider whitespace-nowrap {isNumeric(i) ? 'text-right' : 'text-left'} {isSignal(i) ? 'text-center' : ''}">
+						<th class="py-[0.875rem] px-4 uppercase tracking-wider whitespace-nowrap {isNumericColumn(i) ? 'text-right' : 'text-left'} {isSignalColumn(i) ? 'text-center' : ''}">
 							{col}
 						</th>
 					{/each}
 				</tr>
 			</thead>
-			<tbody class="divide-y divide-white/5">
+			<tbody class="divide-y divide-border-subtle">
 				{#if liveRow}
 					<tr class="bg-primary/10 border-b border-primary/20 group animate-pulse">
 						<td class="px-4 py-3 whitespace-nowrap text-primary">
@@ -51,7 +43,7 @@
 							{#if liveRow.dayHL !== 'Normal'}
 								<SvaKoshBadge label={liveRow.dayHL} variant={getSignalVariant(liveRow.dayHL)} class="scale-90" />
 							{:else}
-								<span class="px-2 text-muted-foreground/40 text-[10px]">-</span>
+								<span class="px-2 text-muted-foreground/40 text-[0.625rem]">-</span>
 							{/if}
 						</td>
 						<td class="px-4 py-3 text-center">
@@ -71,7 +63,7 @@
 
 				{#each sortedTimes as time}
 					{@const row = pulseData[time]}
-					<tr class="hover:bg-white/[0.03] transition-colors group">
+					<tr class="hover:bg-border-subtle/50 transition-colors group">
 						<td class="px-4 py-3 text-muted-foreground whitespace-nowrap group-hover:text-foreground">
 							{row.time}
 						</td>
@@ -87,7 +79,7 @@
 							{#if row.dayHL !== 'Normal'}
 								<SvaKoshBadge label={row.dayHL} variant={getSignalVariant(row.dayHL)} class="scale-90" />
 							{:else}
-								<span class="px-2 text-muted-foreground/40 text-[10px]">-</span>
+								<span class="px-2 text-muted-foreground/40 text-[0.625rem]">-</span>
 							{/if}
 						</td>
 						<td class="px-4 py-3 text-center">
