@@ -2,7 +2,8 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
 	import type { TMarketPulseData, TMarketPulseRow } from './_lib/types';
-	import { PULSE_SYMBOLS } from './_lib/const';
+	import { PULSE_SYMBOLS, PULSE_REFRESH_INTERVAL } from './_lib/const';
+	import { isMarketHours } from './_lib/helper';
 	import { generatePulseMockData, generateLivePulseRow } from './_lib/mock-data';
 	import MarketPulseTable from './_components/MarketPulseTable.svelte';
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
@@ -27,12 +28,10 @@
 	onMount(() => {
 		refreshData();
 		intervalId = setInterval(() => {
-			const now: Date = new Date();
-			const hours: number = now.getHours();
-			if (hours >= 9 && hours <= 16) {
+			if (isMarketHours()) {
 				liveRow = generateLivePulseRow(selectedSymbol);
 			}
-		}, 10000);
+		}, PULSE_REFRESH_INTERVAL);
 	});
 
 	onDestroy(() => {
@@ -56,7 +55,7 @@
 		</div>
 
 		<div class="flex items-center gap-3">
-			<div class="w-full sm:w-48">
+			<div class="w-full sm:w-40">
 				<SvaKoshSelector 
 					options={PULSE_SYMBOLS} 
 					bind:value={selectedSymbol} 

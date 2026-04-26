@@ -18,3 +18,5 @@ export const PULSE_COLUMNS = [
     'Fut COI',
     'ATM Straddle'
 ];
+
+export const PULSE_REFRESH_INTERVAL = 10000;

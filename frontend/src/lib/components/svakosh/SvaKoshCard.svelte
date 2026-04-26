@@ -65,7 +65,7 @@
 	</div>
 
 	{#if children}
-		<div class="mt-2">
+		<div class={cn((label || value !== undefined) && 'mt-2')}>
 			{@render children()}
 		</div>
 	{/if}
