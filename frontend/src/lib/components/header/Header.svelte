@@ -54,11 +54,11 @@
 	<div class="flex items-center h-full">
 		<div 
 			class="flex items-center transition-all duration-300 ease-in-out shrink-0 
-            {uiState.isWatchlistVisible ? 'w-[322px] 2xl:w-[381px]' : 'lg:w-[168px] w-auto'}"
+            {uiState.isWatchlistVisible ? 'w-[296px] 2xl:w-[355px]' : 'lg:w-[142px] w-auto'}"
 		>
-			<span class="text-lg tracking-tighter text-primary uppercase select-none">
+			<a href="/" class="text-lg tracking-tighter text-primary uppercase select-none hover:opacity-80 transition-opacity">
 				{BRAND.name}
-			</span>
+			</a>
 		</div>
 		<nav class="relative hidden lg:flex gap-8 items-center h-full ml-8">
 			{#each navItems as item, i}
@@ -156,4 +156,3 @@
         Logout
     </button>
 </SvaKoshModal>
-

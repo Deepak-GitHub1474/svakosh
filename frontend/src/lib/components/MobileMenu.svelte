@@ -46,9 +46,13 @@
 		transition:fly={{ x: 300, duration: 400, easing: cubicInOut }}
 	>
 		<div class="flex items-center justify-between border-b border-border-subtle px-6 py-4">
-			<span class="text-xs tracking-tighter text-primary uppercase select-none">
+			<a 
+				href="/" 
+				onclick={handleNavigate}
+				class="text-xs tracking-tighter text-primary uppercase select-none hover:opacity-80 transition-opacity"
+			>
 				{BRAND.name}
-			</span>
+			</a>
 			<button 
 				onclick={closeMenu}
 				class="text-muted-foreground hover:text-primary transition-colors"
