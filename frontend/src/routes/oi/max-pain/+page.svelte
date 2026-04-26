@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import type { TMaxPainData } from './_lib/types';
 	import { calculateStrikes } from './_lib/helper';
@@ -45,8 +45,15 @@
 		}
 	});
 
+	let intervalId: any;
+
 	onMount(() => {
 		refreshData();
+		intervalId = setInterval(refreshData, 10000);
+	});
+
+	onDestroy(() => {
+		if (intervalId) clearInterval(intervalId);
 	});
 </script>
 

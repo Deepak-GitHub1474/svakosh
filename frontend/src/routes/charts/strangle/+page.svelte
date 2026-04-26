@@ -90,7 +90,7 @@
 
 	onMount(() => {
 		updateData();
-		intervalId = setInterval(updateData, 60000);
+		intervalId = setInterval(updateData, 10000);
 	});
 
 	onDestroy(() => {
