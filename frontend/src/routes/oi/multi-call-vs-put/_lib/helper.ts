@@ -128,10 +128,17 @@ export function getMultiCallVsPutChartOptions(data: MultiOIDataMap, bullishColor
 				showSymbol: false,
 				barGap: '0%',
 				barCategoryGap: '30%',
-				lineStyle: { width: 1.6, color: bullishColor },
+				lineStyle: { width: 1.6, color: bearishColor },
 				itemStyle: { 
-					color: bullishColor,
-					borderRadius: chartType === 'bar' ? [2, 2, 0, 0] : 0
+					color: chartType === 'bar' ? {
+						type: 'linear',
+						x: 0, y: 0, x2: 0, y2: 1,
+						colorStops: [
+							{ offset: 0, color: addAlpha(bearishColor, 0.8) },
+							{ offset: 1, color: addAlpha(bearishColor, 0.1) }
+						]
+					} : bearishColor,
+					borderRadius: chartType === 'bar' ? [4, 4, 0, 0] : 0
 				},
 				emphasis: {
 					focus: 'series',
@@ -156,10 +163,17 @@ export function getMultiCallVsPutChartOptions(data: MultiOIDataMap, bullishColor
 				showSymbol: false,
 				barGap: '0%',
 				barCategoryGap: '30%',
-				lineStyle: { width: 1.6, color: bearishColor },
+				lineStyle: { width: 1.6, color: bullishColor },
 				itemStyle: { 
-					color: bearishColor,
-					borderRadius: chartType === 'bar' ? [2, 2, 0, 0] : 0
+					color: chartType === 'bar' ? {
+						type: 'linear',
+						x: 0, y: 0, x2: 0, y2: 1,
+						colorStops: [
+							{ offset: 0, color: addAlpha(bullishColor, 0.8) },
+							{ offset: 1, color: addAlpha(bullishColor, 0.1) }
+						]
+					} : bullishColor,
+					borderRadius: chartType === 'bar' ? [4, 4, 0, 0] : 0
 				},
 				emphasis: {
 					focus: 'series',

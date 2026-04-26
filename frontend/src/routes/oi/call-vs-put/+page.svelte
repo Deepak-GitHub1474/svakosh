@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import type { OIDataMap } from './_lib/types';
 	import { symbols, expiries, strikeDifferences } from './_lib/const';
@@ -12,9 +14,11 @@
 	let selectedExpiry = $state('CURRENT_WEEK');
 	let selectedStrike = $state(0);
 	let atmStrike = $state(0);
+	let chartType = $state<'line' | 'bar'>(page.url.searchParams.get('type') as any || 'line');
 	let isSymbolOpen = $state(false);
 	let isExpiryOpen = $state(false);
 	let isStrikeOpen = $state(false);
+	let oiData = $state<OIDataMap>({});
 
 	$effect(() => {
 		if (isSymbolOpen) {
@@ -36,8 +40,14 @@
 			isExpiryOpen = false;
 		}
 	});
-	let oiData = $state<OIDataMap>({});
-	let lastUpdated = $state<string>('');
+
+	$effect(() => {
+		const url = new URL(page.url);
+		if (url.searchParams.get('type') !== chartType) {
+			url.searchParams.set('type', chartType);
+			goto(url.href, { replaceState: true, noScroll: true });
+		}
+	});
 
 	let strikeOptions = $derived.by(() => {
 		if (atmStrike === 0) return [];
@@ -48,7 +58,6 @@
 
 	function updateData() {
 		oiData = generateSingleStrikeMockData(selectedSymbol, selectedStrike, selectedExpiry);
-		lastUpdated = new Date().toLocaleTimeString();
 	}
 
 	function handleSymbolChange(val: string) {
@@ -131,6 +140,7 @@
 				data={oiData} 
 				symbol={selectedSymbol} 
 				strike={selectedStrike} 
+				bind:chartType
 				onRefresh={updateData}
 			/>
 		{:else}

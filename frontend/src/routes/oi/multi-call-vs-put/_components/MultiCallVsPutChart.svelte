@@ -36,14 +36,14 @@
 		symbol: string;
 		selectedCallCount: number;
 		selectedPutCount: number;
+		chartType?: 'line' | 'bar';
 		onRefresh?: () => void;
 	}
 
-	let { data, symbol, selectedCallCount, selectedPutCount, onRefresh }: Props = $props();
+	let { data, symbol, selectedCallCount, selectedPutCount, chartType = $bindable('line'), onRefresh }: Props = $props();
 
 	let chartContainer = $state<HTMLDivElement | null>(null);
 	let chart: echarts.ECharts | null = null;
-	let chartType = $state<'line' | 'bar'>('line');
 	let isMaximized = $state(false);
 	let resizeObserver: ResizeObserver | null = null;
 	

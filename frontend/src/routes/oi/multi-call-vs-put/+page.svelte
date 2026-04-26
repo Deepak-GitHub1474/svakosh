@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import type { MultiOIDataMap } from './_lib/types';
 	import { symbols, expiries, strikeDifferences } from './_lib/const';
@@ -15,10 +17,10 @@
 	let selectedCallStrikes = $state<string[]>([]);
 	let selectedPutStrikes = $state<string[]>([]);
 	let atmStrike = $state(0);
+	let chartType = $state<'line' | 'bar'>(page.url.searchParams.get('type') as any || 'line');
 	
 	let rawStrikeData = $state<Record<string, any>>({});
 	let aggregatedData = $state<MultiOIDataMap>({});
-	let lastUpdated = $state<string>('');
 	
 	let isSymbolOpen = $state(false);
 	let isExpiryOpen = $state(false);
@@ -58,6 +60,14 @@
 		}
 	});
 
+	$effect(() => {
+		const url = new URL(page.url);
+		if (url.searchParams.get('type') !== chartType) {
+			url.searchParams.set('type', chartType);
+			goto(url.href, { replaceState: true, noScroll: true });
+		}
+	});
+
 
 	let strikeOptions = $derived.by(() => {
 		if (atmStrike === 0) return [];
@@ -76,7 +86,6 @@
 
 		rawStrikeData = generateMultiStrikeMockData(selectedSymbol, strikesToFetch, selectedExpiry);
 		updateAggregatedData();
-		lastUpdated = new Date().toLocaleTimeString();
 	}
 
 	function updateAggregatedData() {
@@ -201,6 +210,7 @@
 				symbol={selectedSymbol} 
 				selectedCallCount={selectedCallStrikes.length}
 				selectedPutCount={selectedPutStrikes.length}
+				bind:chartType
 				onRefresh={fetchData}
 			/>
 		{:else}
