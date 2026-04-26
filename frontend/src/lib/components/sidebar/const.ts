@@ -9,6 +9,7 @@ export const menuItems = [
     { icon: 'query_stats', label: 'Straddle Analysis', href: '/charts/straddle' },
     { icon: 'stacked_line_chart', label: 'Strangle Analysis', href: '/charts/strangle' },
     { icon: 'waves', label: 'Air In Premiums', href: '/charts/air-in-premiums' },
+    { icon: 'legend_toggle', label: 'Options Chart', href: '/charts/options-chart' },
     { icon: 'screen_search_desktop', label: 'Stocks Screeners', href: '/stocks/stocks-screener' },
     { icon: 'trending_up', label: '52-Week Breakout', href: '/stocks/breakout/52-week' },
     { icon: 'bar_chart', label: 'Volume Breakout', href: '/stocks/breakout/volume' },
