@@ -3,41 +3,42 @@
 	import { fade, fly } from 'svelte/transition';
 	import { cubicInOut } from 'svelte/easing';
 	import * as echarts from 'echarts/core';
-	import { LineChart, BarChart } from 'echarts/charts';
+	import { BarChart, LineChart } from 'echarts/charts';
 	import {
 		TooltipComponent,
 		GridComponent,
 		LegendComponent,
-		DataZoomComponent
+		DataZoomComponent,
+		MarkPointComponent
 	} from 'echarts/components';
 	import { CanvasRenderer } from 'echarts/renderers';
-	import { getStrangleChartOptions } from '../_lib/helper';
+	import { getAirInPremiumsOptions } from '../_lib/helper';
 	import { chartTypeTabs } from '../_lib/const';
-	import type { StrangleDataMap } from '../_lib/types';
+	import type { AirInPremiumsData } from '../_lib/types';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import MaximizeIcon from '$lib/components/svg-provider/MaximizeIcon.svelte';
 	import MinimizeIcon from '$lib/components/svg-provider/MinimizeIcon.svelte';
 
 	echarts.use([
-		LineChart,
 		BarChart,
+		LineChart,
 		TooltipComponent,
 		GridComponent,
 		LegendComponent,
 		DataZoomComponent,
+		MarkPointComponent,
 		CanvasRenderer
 	]);
 
 	interface Props {
-		data: StrangleDataMap;
+		data: AirInPremiumsData;
 		symbol: string;
-		ceStrike: number;
-		peStrike: number;
+		strikes: number[];
 		chartType?: 'line' | 'bar';
 	}
 
-	let { data, symbol, ceStrike, peStrike, chartType = $bindable('line') }: Props = $props();
+	let { data, symbol, strikes, chartType = $bindable('bar') }: Props = $props();
 
 	let chartContainer = $state<HTMLDivElement | null>(null);
 	let chart: echarts.ECharts | null = null;
@@ -48,8 +49,7 @@
 		bullish: '#00ff88',
 		bearish: '#ff3d00',
 		primary: '#d4af37',
-		foreground: '#e2e8f0',
-		surfaceBorder: 'rgba(226, 232, 240, 0.3)'
+		foreground: '#e2e8f0'
 	});
 
 	onMount(() => {
@@ -58,8 +58,7 @@
 			bullish: style.getPropertyValue('--bullish').trim() || '#00ff88',
 			bearish: style.getPropertyValue('--bearish').trim() || '#ff3d00',
 			primary: style.getPropertyValue('--primary').trim() || '#d4af37',
-			foreground: style.getPropertyValue('--foreground').trim() || '#e2e8f0',
-			surfaceBorder: style.getPropertyValue('--surface-border').trim() || 'rgba(226, 232, 240, 0.3)'
+			foreground: style.getPropertyValue('--foreground').trim() || '#e2e8f0'
 		};
 	});
 
@@ -71,7 +70,6 @@
 
 		await tick();
 		chart = echarts.init(chartContainer, 'dark');
-		
 		updateOptions();
 
 		resizeObserver = new ResizeObserver(() => {
@@ -82,7 +80,7 @@
 
 	function updateOptions() {
 		if (!chart || chart.isDisposed() || !data) return;
-		const options = getStrangleChartOptions(data, colors, chartType);
+		const options = getAirInPremiumsOptions(data, strikes, colors, chartType);
 		chart.setOption(options, true);
 	}
 
@@ -97,7 +95,7 @@
 	});
 
 	$effect(() => {
-		data; colors; chartType;
+		data; colors; strikes; chartType;
 		if (chart && !chart.isDisposed()) {
 			updateOptions();
 		}
@@ -151,8 +149,8 @@
 		<div class="flex items-center gap-3">
 			<h4 class="text-[0.625rem] text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
 				<span class="bg-primary w-1 h-3.5 rounded-full shrink-0"></span>
-				<span class="text-foreground font-normal whitespace-nowrap">{symbol} Strangle Analysis</span> 
-				<span class="text-primary-muted ml-1 whitespace-nowrap">CE: {ceStrike} | PE: {peStrike}</span>
+				<span class="text-foreground font-normal whitespace-nowrap">{symbol} Air in Premiums</span> 
+				<span class="text-primary-muted ml-1 whitespace-nowrap">ATM: {data.atm_strike}</span>
 			</h4>
 		</div>
 		

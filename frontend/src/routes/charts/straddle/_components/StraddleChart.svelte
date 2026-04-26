@@ -12,6 +12,7 @@
 	} from 'echarts/components';
 	import { CanvasRenderer } from 'echarts/renderers';
 	import { getStraddleChartOptions } from '../_lib/helper';
+	import { chartTypeTabs } from '../_lib/const';
 	import type { StraddleDataMap } from '../_lib/types';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
@@ -139,7 +140,7 @@
 	>
 		<div 
 			bind:this={chartContainer} 
-			class="w-full h-[580px]"
+			class="w-full h-[560px] lg:h-[580px]"
 		></div>
 	</SvaKoshCard>
 {/if}
@@ -156,7 +157,7 @@
 		
 		<div class="flex items-center gap-3 self-end sm:self-auto">
 			<SvaKoshTabs 
-				tabs={[{ label: 'Line', value: 'line' }, { label: 'Bar', value: 'bar' }]}
+				tabs={chartTypeTabs}
 				activeTab={chartType}
 				onTabChange={(val) => chartType = val}
 				class="scale-[0.8] origin-right mr-0.5"

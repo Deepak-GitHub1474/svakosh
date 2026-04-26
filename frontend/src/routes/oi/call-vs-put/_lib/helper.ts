@@ -128,16 +128,16 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 				showSymbol: false,
 				barGap: '0%',
 				barCategoryGap: '30%',
-				lineStyle: { width: 1.6, color: bearishColor },
+				lineStyle: { width: 1.6, color: bullishColor },
 				itemStyle: { 
 					color: chartType === 'bar' ? {
 						type: 'linear',
 						x: 0, y: 0, x2: 0, y2: 1,
 						colorStops: [
-							{ offset: 0, color: addAlpha(bearishColor, 0.8) },
-							{ offset: 1, color: addAlpha(bearishColor, 0.1) }
+							{ offset: 0, color: addAlpha(bullishColor, 0.8) },
+							{ offset: 1, color: addAlpha(bullishColor, 0.1) }
 						]
-					} : bearishColor,
+					} : bullishColor,
 					borderRadius: chartType === 'bar' ? [4, 4, 0, 0] : 0
 				},
 				emphasis: {
@@ -163,16 +163,16 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 				showSymbol: false,
 				barGap: '0%',
 				barCategoryGap: '30%',
-				lineStyle: { width: 1.6, color: bullishColor },
+				lineStyle: { width: 1.6, color: bearishColor },
 				itemStyle: { 
 					color: chartType === 'bar' ? {
 						type: 'linear',
 						x: 0, y: 0, x2: 0, y2: 1,
 						colorStops: [
-							{ offset: 0, color: addAlpha(bullishColor, 0.8) },
-							{ offset: 1, color: addAlpha(bullishColor, 0.1) }
+							{ offset: 0, color: addAlpha(bearishColor, 0.8) },
+							{ offset: 1, color: addAlpha(bearishColor, 0.1) }
 						]
-					} : bullishColor,
+					} : bearishColor,
 					borderRadius: chartType === 'bar' ? [4, 4, 0, 0] : 0
 				},
 				emphasis: {

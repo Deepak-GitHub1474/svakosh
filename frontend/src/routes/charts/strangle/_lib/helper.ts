@@ -154,16 +154,16 @@ export const getStrangleChartOptions = (
 				smooth: true,
 				barGap: '0%',
 				barCategoryGap: '30%',
-				lineStyle: { width: 1.6, color: colors.bearish },
+				lineStyle: { width: 1.6, color: colors.bullish },
 				itemStyle: { 
 					color: chartType === 'bar' ? {
 						type: 'linear',
 						x: 0, y: 0, x2: 0, y2: 1,
 						colorStops: [
-							{ offset: 0, color: addAlpha(colors.bearish, 0.8) },
-							{ offset: 1, color: addAlpha(colors.bearish, 0.1) }
+							{ offset: 0, color: addAlpha(colors.bullish, 0.8) },
+							{ offset: 1, color: addAlpha(colors.bullish, 0.1) }
 						]
-					} : colors.bearish,
+					} : colors.bullish,
 					borderRadius: chartType === 'bar' ? [4, 4, 0, 0] : 0
 				},
 				emphasis: { focus: 'series' }
@@ -176,16 +176,16 @@ export const getStrangleChartOptions = (
 				smooth: true,
 				barGap: '0%',
 				barCategoryGap: '30%',
-				lineStyle: { width: 1.6, color: colors.bullish },
+				lineStyle: { width: 1.6, color: colors.bearish },
 				itemStyle: { 
 					color: chartType === 'bar' ? {
 						type: 'linear',
 						x: 0, y: 0, x2: 0, y2: 1,
 						colorStops: [
-							{ offset: 0, color: addAlpha(colors.bullish, 0.8) },
-							{ offset: 1, color: addAlpha(colors.bullish, 0.1) }
+							{ offset: 0, color: addAlpha(colors.bearish, 0.8) },
+							{ offset: 1, color: addAlpha(colors.bearish, 0.1) }
 						]
-					} : colors.bullish,
+					} : colors.bearish,
 					borderRadius: chartType === 'bar' ? [4, 4, 0, 0] : 0
 				},
 				emphasis: { focus: 'series' }
