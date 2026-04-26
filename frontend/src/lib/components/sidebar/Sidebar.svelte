@@ -9,7 +9,7 @@
 	class="fixed left-0 top-10 h-[calc(100vh-2.5rem)] hidden lg:flex flex-col z-40 border-r border-border-subtle bg-background transition-all duration-300 ease-in-out
     {uiState.isWatchlistVisible ? 'w-16' : 'w-52'}"
 >
-	<nav class="flex-1 px-2 py-4 space-y-2.5">
+	<nav class="flex-1 px-2 py-4 space-y-2.5 overflow-y-auto hide-scrollbar">
 
 		{#each menuItems as item}
 			<a
@@ -39,7 +39,7 @@
 		{/each}
 	</nav>
 
-	<div class="p-2 border-t border-border-subtle space-y-3">
+	<div class="p-2 border-t border-border-subtle space-y-3 flex-shrink-0">
 		<div class="relative group">
 			<SvaKoshButton 
 				shine
