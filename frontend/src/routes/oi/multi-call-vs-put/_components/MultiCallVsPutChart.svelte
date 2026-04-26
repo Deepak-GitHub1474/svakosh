@@ -128,7 +128,7 @@
 		>
 			<div 
 				bind:this={chartContainer} 
-				class="w-full mt-2 h-[calc(100vh-11rem)]"
+				class="w-full h-[calc(100vh-11rem)]"
 			></div>
 		</SvaKoshCard>
 	</div>
@@ -139,7 +139,7 @@
 	>
 		<div 
 			bind:this={chartContainer} 
-			class="w-full mt-2 h-[465px]"
+			class="w-full h-[465px]"
 		></div>
 	</SvaKoshCard>
 {/if}

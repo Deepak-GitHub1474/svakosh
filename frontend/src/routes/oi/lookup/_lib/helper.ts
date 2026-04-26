@@ -21,6 +21,24 @@ export function getPCRValue(ceTotal: number, peTotal: number): string {
 	return formatNumber(peTotal / ceTotal);
 }
 
+function addAlpha(hex: string, alpha: number): string {
+	if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return hex;
+	const cleanHex = hex.replace('#', '');
+	let r, g, b;
+	if (cleanHex.length === 3) {
+		r = parseInt(cleanHex[0] + cleanHex[0], 16);
+		g = parseInt(cleanHex[1] + cleanHex[1], 16);
+		b = parseInt(cleanHex[2] + cleanHex[2], 16);
+	} else if (cleanHex.length === 6) {
+		r = parseInt(cleanHex.substring(0, 2), 16);
+		g = parseInt(cleanHex.substring(2, 4), 16);
+		b = parseInt(cleanHex.substring(4, 6), 16);
+	} else {
+		return hex;
+	}
+	return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function getTrendChartOptions(
 	data: any, 
 	type: string, 
@@ -126,7 +144,7 @@ export function getTrendChartOptions(
 					html += `
 						<div class="flex items-center justify-between gap-4">
 							<div class="flex items-center gap-2">
-								<span class="w-2 h-2 rounded-full" style="background-color: ${p.color}; box-shadow: 0 0 4px ${p.color}80;"></span>
+								<span class="w-2 h-2 rounded-full" style="background-color: ${p.color}; box-shadow: 0 0 4px ${addAlpha(p.color, 0.5)};"></span>
 								<span class="text-[10px] text-slate-300 font-normal">${p.seriesName}</span>
 							</div>
 							<span class="text-[10px] text-slate-50">${formatNumber(p.value)}</span>
