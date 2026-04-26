@@ -264,10 +264,10 @@
 	});
 </script>
 
-<div class="min-h-screen bg-background text-foreground">
+<div class="min-h-dvh bg-background text-foreground py-2">
 	<header class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
 		<div in:fade>
-			<h1 class="text-2xl tracking-tight text-primary mb-2 flex items-center gap-3">
+			<h1 class="text-2xl tracking-tight text-primary mb-1">
 				Options Analytics
 			</h1>
 			<p class="text-muted-foreground text-sm">Advanced Open Interest and Strike Analysis</p>

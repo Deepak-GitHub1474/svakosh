@@ -15,11 +15,11 @@
 	});
 </script>
 
-<div class="min-h-screen text-foreground relative z-[-1]">
+<div class="min-h-dvh text-foreground relative z-[-1] py-2">
 	{#if mounted}
 		<div in:fade={{ duration: 800 }}>
 			<header>
-				<h1 class="text-2xl tracking-tight text-primary mb-2 flex items-center gap-3">
+				<h1 class="text-2xl tracking-tight text-primary mb-1">
 					Market Overview
 				</h1>
 				<p class="text-muted-foreground text-sm">Major Indices, Market Breadth, FII & DII Activity</p>
