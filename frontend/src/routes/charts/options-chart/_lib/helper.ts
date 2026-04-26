@@ -92,9 +92,10 @@ export const getOptionsChartOptions = (
 					</div>`;
 				params.forEach((p: any) => {
 					if (p.value !== null) {
+						const dotColor = typeof p.color === 'string' ? p.color : (p.color?.colorStops?.[0]?.color || sideColor);
 						html += `<div class="flex items-center justify-between gap-4">
 							<div class="flex items-center gap-2">
-								<span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${p.color};"></span>
+								<span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${dotColor};"></span>
 								<span class="text-[10px] text-slate-300 font-normal">${p.seriesName}</span>
 							</div>
 							<span class="text-[10px] text-slate-50 font-mono">${formatNumber(p.value)}</span>
