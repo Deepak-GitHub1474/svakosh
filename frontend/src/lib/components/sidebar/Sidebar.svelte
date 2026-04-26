@@ -11,9 +11,10 @@
 >
 	<nav class="flex-1 px-2 py-4 space-y-2.5 overflow-y-auto hide-scrollbar">
 
-		{#each menuItems as item}
+		{#each menuItems as item, i}
 			<a
 				href={item.href}
+				style="--item-index: {i}"
 				class="flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 group relative
                 {page.url.pathname === item.href 
                     ? 'text-primary bg-primary-subtle border-r border-primary' 
@@ -30,7 +31,8 @@
 				{/if}
                 
                 {#if uiState.isWatchlistVisible}
-                    <div class="absolute left-14 hidden group-hover:block whitespace-nowrap rounded-md font-medium bg-gradient-to-br from-white/10 via-white/5 to-white/[0.02] backdrop-blur-xl border-t border-l border-white/20 border-b border-r border-black/60 px-3 py-1.5 text-xs text-foreground z-50 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.9),0_0_15px_rgba(255,255,255,0.05)]">
+                    <div class="fixed left-16 hidden group-hover:block whitespace-nowrap rounded-md font-medium bg-gradient-to-br from-white/10 via-white/5 to-white/[0.02] backdrop-blur-xl border-t border-l border-white/20 border-b border-r border-black/60 px-3 py-1.5 text-xs text-foreground z-50 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.9),0_0_15px_rgba(255,255,255,0.05)] -translate-y-1/2"
+                        style="top: calc(3.5rem + (var(--item-index) * 3rem) + 1.1875rem)">
                         {item.label}
                         <div class="absolute right-full top-1/2 -translate-y-1/2 border-[7px] border-transparent border-r-white/10 z-[-1]"></div>
                     </div>
