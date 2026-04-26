@@ -1,4 +1,4 @@
-import type { OIDataMap } from './types';
+import type { StraddleDataMap } from './types';
 
 const formatNumber = (val: number) => {
 	if (val >= 10000000) return (val / 10000000).toFixed(2) + ' Cr';
@@ -25,10 +25,22 @@ function addAlpha(hex: string, alpha: number): string {
 	return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string = '#00ff88', bearishColor: string = '#ff3d00', chartType: 'line' | 'bar' = 'line') {
+export const getStraddleChartOptions = (
+	data: StraddleDataMap,
+	colors: {
+		bullish: string;
+		bearish: string;
+		primary: string;
+		foreground: string;
+		surfaceBorder: string;
+	},
+	chartType: 'line' | 'bar' = 'line'
+) => {
 	const timestamps = Object.keys(data).sort();
-	const ceData = timestamps.map((t) => data[t].ceOI);
-	const peData = timestamps.map((t) => data[t].peOI);
+	const ceOI = timestamps.map((t) => data[t].ceOI);
+	const peOI = timestamps.map((t) => data[t].peOI);
+	const straddleRate = timestamps.map((t) => data[t].straddleRate);
+	const straddleATP = timestamps.map((t) => data[t].straddleATP);
 
 	return {
 		backgroundColor: 'transparent',
@@ -63,7 +75,7 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 								<span class="w-2 h-2 rounded-full" style="background-color: ${p.color}; box-shadow: 0 0 4px ${addAlpha(p.color, 0.5)};"></span>
 								<span class="text-[10px] text-slate-300 font-normal">${p.seriesName}</span>
 							</div>
-							<span class="text-[10px] text-slate-50 font-mono">${formatNumber(p.value)}</span>
+							<span class="text-[10px] text-slate-50 font-mono">${p.seriesIndex < 2 ? formatNumber(p.value) : p.value.toFixed(2)}</span>
 						</div>
 					`;
 				});
@@ -73,7 +85,7 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 			}
 		},
 		legend: {
-			data: ['Call OI', 'Put OI'],
+			data: ['CE OI', 'PE OI', 'Straddle Rate', 'Straddle ATP'],
 			icon: 'circle',
 			itemWidth: 10,
 			itemHeight: 10,
@@ -81,123 +93,125 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 			top: 0
 		},
 		grid: {
-			top: '15%',
 			left: '4%',
 			right: '4%',
+			top: '15%',
 			bottom: '15%',
 			containLabel: true
 		},
 		xAxis: {
 			type: 'category',
-			name: 'TIME',
-			nameLocation: 'middle',
-			nameGap: 35,
-			nameTextStyle: { color: '#64748b', fontSize: 10, fontWeight: 'normal' },
 			data: timestamps,
 			axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
 			axisLabel: { color: '#64748b', fontSize: 10, margin: 12 },
 			axisTick: { show: false },
+			name: 'TIME',
+			nameLocation: 'middle',
+			nameGap: 45,
+			nameTextStyle: { color: '#64748b', fontSize: 10, fontWeight: 'normal' },
 			boundaryGap: chartType === 'bar'
 		},
-		yAxis: {
-			type: 'value',
-			name: 'OI (LAKHS)',
-			nameLocation: 'end',
-			nameTextStyle: { color: '#64748b', fontSize: 10, fontWeight: 'normal', padding: [0, 0, 10, 0] },
-			splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)', type: 'dashed' } },
-			axisLabel: { 
-				color: '#64748b',
-				fontSize: 10,
-				formatter: (value: number) => {
-					if (value >= 10000000) return (value / 10000000).toFixed(1) + 'Cr';
-					if (value >= 100000) return (value / 100000).toFixed(1) + 'L';
-					if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
-					return value;
-				}
+		yAxis: [
+			{
+				type: 'value',
+				name: 'OI',
+				position: 'right',
+				splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)', type: 'dashed' } },
+				axisLabel: {
+					color: '#64748b',
+					fontSize: 10,
+					formatter: (value: number) => {
+						if (value >= 10000000) return (value / 10000000).toFixed(1) + 'Cr';
+						if (value >= 100000) return (value / 100000).toFixed(1) + 'L';
+						if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+						return value;
+					}
+				},
+				nameTextStyle: { color: '#64748b', fontSize: 10, fontWeight: 'normal', padding: [0, 0, 10, 0] }
+			},
+			{
+				type: 'value',
+				name: 'RATE',
+				position: 'left',
+				splitLine: { show: false },
+				axisLabel: { color: '#64748b', fontSize: 10 },
+				nameTextStyle: { color: '#64748b', fontSize: 10, fontWeight: 'normal', padding: [0, 0, 10, 0] }
 			}
-		},
+		],
 		dataZoom: [
-			{ type: 'inside', start: 0, end: 100 }
+			{
+				type: 'inside',
+				start: 0,
+				end: 100
+			}
 		],
 		series: [
 			{
-				name: 'Call OI',
+				name: 'CE OI',
 				type: chartType,
-				data: ceData,
+				data: ceOI,
+				symbol: 'none',
 				smooth: true,
-				showSymbol: false,
 				barGap: '0%',
 				barCategoryGap: '30%',
-				lineStyle: { width: 1.6, color: bullishColor },
+				lineStyle: { width: 1.6, color: colors.bullish },
 				itemStyle: { 
 					color: chartType === 'bar' ? {
 						type: 'linear',
 						x: 0, y: 0, x2: 0, y2: 1,
 						colorStops: [
-							{ offset: 0, color: addAlpha(bullishColor, 0.8) },
-							{ offset: 1, color: addAlpha(bullishColor, 0.1) }
+							{ offset: 0, color: addAlpha(colors.bullish, 0.8) },
+							{ offset: 1, color: addAlpha(colors.bullish, 0.1) }
 						]
-					} : bullishColor,
+					} : colors.bullish,
 					borderRadius: chartType === 'bar' ? [4, 4, 0, 0] : 0
 				},
-				emphasis: {
-					focus: 'series',
-					lineStyle: { width: 2, opacity: 1 }
-				},
-				areaStyle: chartType === 'line' ? {
-					color: {
-						type: 'linear',
-						x: 0, y: 0, x2: 0, y2: 1,
-						colorStops: [
-							{ offset: 0, color: addAlpha(bullishColor, 0.2) },
-							{ offset: 1, color: addAlpha(bullishColor, 0) }
-						]
-					}
-				} : undefined
+				emphasis: { focus: 'series' }
 			},
 			{
-				name: 'Put OI',
+				name: 'PE OI',
 				type: chartType,
-				data: peData,
+				data: peOI,
+				symbol: 'none',
 				smooth: true,
-				showSymbol: false,
 				barGap: '0%',
 				barCategoryGap: '30%',
-				lineStyle: { width: 1.6, color: bearishColor },
+				lineStyle: { width: 1.6, color: colors.bearish },
 				itemStyle: { 
 					color: chartType === 'bar' ? {
 						type: 'linear',
 						x: 0, y: 0, x2: 0, y2: 1,
 						colorStops: [
-							{ offset: 0, color: addAlpha(bearishColor, 0.8) },
-							{ offset: 1, color: addAlpha(bearishColor, 0.1) }
+							{ offset: 0, color: addAlpha(colors.bearish, 0.8) },
+							{ offset: 1, color: addAlpha(colors.bearish, 0.1) }
 						]
-					} : bearishColor,
+					} : colors.bearish,
 					borderRadius: chartType === 'bar' ? [4, 4, 0, 0] : 0
 				},
-				emphasis: {
-					focus: 'series',
-					lineStyle: { width: 2, opacity: 1 }
-				},
-				areaStyle: chartType === 'line' ? {
-					color: {
-						type: 'linear',
-						x: 0, y: 0, x2: 0, y2: 1,
-						colorStops: [
-							{ offset: 0, color: addAlpha(bearishColor, 0.2) },
-							{ offset: 1, color: addAlpha(bearishColor, 0) }
-						]
-					}
-				} : undefined
+				emphasis: { focus: 'series' }
+			},
+			{
+				name: 'Straddle Rate',
+				type: 'line',
+				yAxisIndex: 1,
+				data: straddleRate,
+				symbol: 'none',
+				smooth: true,
+				lineStyle: { width: 2, color: colors.primary },
+				itemStyle: { color: colors.primary },
+				emphasis: { focus: 'series' }
+			},
+			{
+				name: 'Straddle ATP',
+				type: 'line',
+				yAxisIndex: 1,
+				data: straddleATP,
+				symbol: 'none',
+				smooth: true,
+				lineStyle: { width: 1.5, color: colors.foreground, type: 'dashed' },
+				itemStyle: { color: colors.foreground },
+				emphasis: { focus: 'series' }
 			}
 		]
 	};
-}
-
-export function generateStrikeList(atmStrike: number, difference: number): number[] {
-	const strikes = [];
-	for (let i = -30; i <= 30; i++) {
-		strikes.push(atmStrike + i * difference);
-	}
-	return strikes.sort((a, b) => a - b);
-}
+};

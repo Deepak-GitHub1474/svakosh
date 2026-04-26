@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import type { TMaxPainData } from './_lib/types';
 	import { calculateStrikes } from './_lib/helper';
@@ -45,8 +45,15 @@
 		}
 	});
 
+	let intervalId: any;
+
 	onMount(() => {
 		refreshData();
+		intervalId = setInterval(refreshData, 10000);
+	});
+
+	onDestroy(() => {
+		if (intervalId) clearInterval(intervalId);
 	});
 </script>
 
@@ -65,19 +72,18 @@
 			</p>
 		</div>
 
-		<div class="flex flex-wrap items-center gap-3">
-			<div class="w-full sm:w-36">
-				<SvaKoshSelector 
+		<div class="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end justify-start">
+			<div class="flex items-center gap-3 w-full sm:w-auto">
+				<SvaKoshSelector
+					class="w-full sm:w-40" 
 					options={MAX_PAIN_SYMBOLS} 
 					bind:value={selectedSymbol} 
 					bind:isOpen={isSymbolOpen}
 					onSelect={handleUpdate}
 					placeholder="Symbol"
 				/>
-			</div>
-			
-			<div class="w-full sm:w-36">
-				<SvaKoshSelector 
+				<SvaKoshSelector
+					class="w-full sm:w-44" 
 					options={MAX_PAIN_EXPIRIES} 
 					bind:value={selectedExpiry} 
 					bind:isOpen={isExpiryOpen}
@@ -85,7 +91,6 @@
 					placeholder="Expiry"
 				/>
 			</div>
-
 			<SvaKoshNumberInput 
 				label="Strikes" 
 				bind:value={strikeCount} 
