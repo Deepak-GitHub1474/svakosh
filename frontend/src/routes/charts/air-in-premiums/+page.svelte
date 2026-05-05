@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import type { AirInPremiumsData } from './_lib/types';
-	import { DEFAULT_SYMBOL, DEFAULT_EXPIRY, DEFAULT_STRIKE_COUNT, STRIKE_DIFFERENCES } from './_lib/const';
+	import { DEFAULT_SYMBOL, DEFAULT_EXPIRY, DEFAULT_STRIKE_COUNT, STRIKE_DIFFERENCES } from '$lib/utils/const';
 	import { generateMockAirData, getBaseStrike } from './_lib/mock-data';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import AirInPremiumsChart from './_components/AirInPremiumsChart.svelte';

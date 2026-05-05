@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import type { StraddleDataMap } from './_lib/types';
-	import { DEFAULT_SYMBOL, DEFAULT_EXPIRY, STRIKE_DIFFERENCES } from './_lib/const';
+	import { DEFAULT_SYMBOL, DEFAULT_EXPIRY, STRIKE_DIFFERENCES } from '$lib/utils/const';
 	import { generateMockStraddleData, getBaseStrike } from './_lib/mock-data';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import StraddleChart from './_components/StraddleChart.svelte';

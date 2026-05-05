@@ -1,6 +1,7 @@
 <script lang="ts">
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
-	import { OPTIONS_SYMBOLS, OPTIONS_EXPIRIES, OPTION_METRICS } from '../_lib/const';
+	import { OPTION_METRICS } from '../_lib/const';
+	import { SYMBOLS, EXPIRIES } from '$lib/utils/const';
 	import type { MetricType } from '../_lib/types';
 
 	interface Props {
@@ -22,9 +23,9 @@
 		onMetric2Change: (val: MetricType) => void;
 	}
 
-	let { 
-		symbol = $bindable(), 
-		expiry = $bindable(), 
+	let {
+		symbol = $bindable(),
+		expiry = $bindable(),
 		strike = $bindable(),
 		strikeOptions,
 		metric1 = $bindable(),
@@ -48,46 +49,46 @@
 
 <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto lg:justify-end justify-start">
 	<div class="flex items-center gap-3 w-full sm:w-auto">
-		<SvaKoshSelector 
+		<SvaKoshSelector
 			class="w-full lg:w-40"
-			options={OPTIONS_SYMBOLS} 
-			bind:value={symbol} 
+			options={SYMBOLS}
+			bind:value={symbol}
 			bind:isOpen={isSymbolOpen}
 			onSelect={onSymbolChange}
 			placeholder="Symbol"
 		/>
-		<SvaKoshSelector 
+		<SvaKoshSelector
 			class="w-full lg:w-44"
-			options={OPTIONS_EXPIRIES} 
-			bind:value={expiry} 
+			options={EXPIRIES}
+			bind:value={expiry}
 			bind:isOpen={isExpiryOpen}
 			onSelect={onExpiryChange}
 			placeholder="Expiry"
 		/>
 	</div>
-	<SvaKoshSelector 
+	<SvaKoshSelector
 		class="w-full sm:w-32"
-		options={strikeOptions} 
-		bind:value={strike} 
+		options={strikeOptions}
+		bind:value={strike}
 		bind:isOpen={isStrikeOpen}
 		onSelect={onStrikeChange}
 		searchable={true}
 		placeholder="Strike"
 	/>
 	<div class="flex items-center gap-3 w-full sm:w-auto">
-		<SvaKoshSelector 
+		<SvaKoshSelector
 			class="w-full lg:w-36"
-			options={filteredMetrics1} 
-			bind:value={metric1} 
+			options={filteredMetrics1}
+			bind:value={metric1}
 			bind:isOpen={isMetric1Open}
 			onSelect={(v) => onMetric1Change(v as MetricType)}
 			placeholder="Metric 1"
 		/>
 		<span class="text-muted-foreground/30 text-[10px] font-medium italic px-0.5">VS</span>
-		<SvaKoshSelector 
+		<SvaKoshSelector
 			class="w-full lg:w-36"
-			options={filteredMetrics2} 
-			bind:value={metric2} 
+			options={filteredMetrics2}
+			bind:value={metric2}
 			bind:isOpen={isMetric2Open}
 			onSelect={(v) => onMetric2Change(v as MetricType)}
 			placeholder="Metric 2"

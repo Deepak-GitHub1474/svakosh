@@ -2,7 +2,8 @@
 	import { fade } from 'svelte/transition';
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
-	import { OI_TIMEFRAMES, EXPIRIES } from '../_lib/const';
+	import { EXPIRIES } from '../_lib/const';
+	import { OI_TIMEFRAMES } from '$lib/utils/const';
 	import type { TTimeFrame } from '../_lib/types';
 
 	interface Props {

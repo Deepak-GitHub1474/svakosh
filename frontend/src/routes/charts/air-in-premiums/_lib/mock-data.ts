@@ -1,5 +1,5 @@
 import type { AirInPremiumsData } from './types';
-import { STRIKE_DIFFERENCES } from './const';
+import { STRIKE_DIFFERENCES } from '$lib/utils/const';
 
 export function getBaseStrike(symbol: string): number {
 	const dummyStrikeMap: Record<string, number> = {

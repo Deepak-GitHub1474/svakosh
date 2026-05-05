@@ -4,7 +4,8 @@
 	import type { TMaxPainData } from './_lib/types';
 	import { calculateStrikes } from './_lib/helper';
 	import { generateMaxPainMockData } from './_lib/mock-data';
-	import { MAX_PAIN_SYMBOLS, MAX_PAIN_EXPIRIES } from './_lib/const';
+	import { MAX_PAIN_EXPIRIES } from './_lib/const';
+	import { SYMBOLS } from '$lib/utils/const';
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import SvaKoshNumberInput from '$lib/components/svakosh/SvaKoshNumberInput.svelte';
@@ -76,7 +77,7 @@
 			<div class="flex items-center gap-3 w-full sm:w-auto">
 				<SvaKoshSelector
 					class="w-full sm:w-40" 
-					options={MAX_PAIN_SYMBOLS} 
+					options={SYMBOLS}
 					bind:value={selectedSymbol} 
 					bind:isOpen={isSymbolOpen}
 					onSelect={handleUpdate}

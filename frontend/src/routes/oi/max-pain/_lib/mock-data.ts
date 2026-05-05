@@ -1,5 +1,5 @@
 import type { TMaxPainData } from './types';
-import { STRIKE_DIFFERENCES } from './const';
+import { STRIKE_DIFFERENCES } from '$lib/utils/const';
 
 export function generateMaxPainMockData(symbol: string): { data: TMaxPainData; maxPainStrike: number } {
     const baseStrikes: Record<string, number> = {

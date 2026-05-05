@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import type { MultiOIDataMap } from './_lib/types';
-	import { symbols, expiries, strikeDifferences } from './_lib/const';
+	import { SYMBOLS as symbols, EXPIRIES as expiries, STRIKE_DIFFERENCES as strikeDifferences } from '$lib/utils/const';
 	import { generateStrikeList, aggregateStrikeData } from './_lib/helper';
 	import { generateMultiStrikeMockData, getBaseStrike } from './_lib/mock-data';
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';

@@ -12,7 +12,7 @@
 	} from 'echarts/components';
 	import { CanvasRenderer } from 'echarts/renderers';
 	import { getStraddleChartOptions } from '../_lib/helper';
-	import { chartTypeTabs } from '../_lib/const';
+	import { chartTypeTabs } from '$lib/utils/const';
 	import type { StraddleDataMap } from '../_lib/types';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';

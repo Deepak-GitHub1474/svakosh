@@ -2,7 +2,8 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
 	import type { TMarketPulseData, TMarketPulseRow } from './_lib/types';
-	import { PULSE_SYMBOLS, PULSE_REFRESH_INTERVAL } from './_lib/const';
+	import { PULSE_SYMBOLS } from './_lib/const';
+	import { REFRESH_INTERVAL } from '$lib/utils/const';
 	import { isMarketHours } from './_lib/helper';
 	import { generatePulseMockData, generateLivePulseRow } from './_lib/mock-data';
 	import MarketPulseTable from './_components/MarketPulseTable.svelte';
@@ -31,7 +32,7 @@
 			if (isMarketHours()) {
 				liveRow = generateLivePulseRow(selectedSymbol);
 			}
-		}, PULSE_REFRESH_INTERVAL);
+		}, REFRESH_INTERVAL);
 	});
 
 	onDestroy(() => {

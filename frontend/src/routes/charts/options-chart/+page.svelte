@@ -3,10 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import type { OptionsChartDataMap, MetricType } from './_lib/types';
-	import { 
-		DEFAULT_SYMBOL, DEFAULT_EXPIRY, DEFAULT_METRIC_ONE, DEFAULT_METRIC_TWO, 
-		STRIKE_DIFFERENCES 
-	} from './_lib/const';
+	import { DEFAULT_METRIC_ONE, DEFAULT_METRIC_TWO } from './_lib/const';
+	import { DEFAULT_SYMBOL, DEFAULT_EXPIRY, STRIKE_DIFFERENCES } from '$lib/utils/const';
 	import { generateMockOptionsData, getBaseStrike } from './_lib/mock-data';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import OptionsChartControls from './_components/OptionsChartControls.svelte';

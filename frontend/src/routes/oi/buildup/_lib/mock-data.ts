@@ -1,5 +1,6 @@
 import type { TFullOIData, TOISymbolDetail, TOIEntry } from './types';
-import { OI_SYMBOLS, OI_TIMEFRAMES } from './const';
+import { OI_SYMBOLS } from './const';
+import { OI_TIMEFRAMES } from '$lib/utils/const';
 import { roundLakh } from '$lib/utils';
 
 function generateRandomEntries(baseStrike: number, count: number, direction: 1 | -1): TOIEntry[] {

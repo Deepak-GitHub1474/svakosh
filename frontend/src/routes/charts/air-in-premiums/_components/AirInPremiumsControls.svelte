@@ -1,7 +1,7 @@
 <script lang="ts">
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshNumberInput from '$lib/components/svakosh/SvaKoshNumberInput.svelte';
-	import { AIR_SYMBOLS, AIR_EXPIRIES } from '../_lib/const';
+	import { SYMBOLS, EXPIRIES } from '$lib/utils/const';
 
 	interface Props {
 		symbol: string;
@@ -31,7 +31,7 @@
 	<div class="flex items-center gap-3 w-full sm:w-auto">
 		<SvaKoshSelector
 			class="w-full sm:w-40" 
-			options={AIR_SYMBOLS} 
+			options={SYMBOLS}
 			bind:value={symbol} 
 			bind:isOpen={isSymbolOpen}
 			onSelect={onSymbolChange}
@@ -39,7 +39,7 @@
 		/>
 		<SvaKoshSelector 
 			class="w-full sm:w-44"
-			options={AIR_EXPIRIES} 
+			options={EXPIRIES}
 			bind:value={expiry} 
 			bind:isOpen={isExpiryOpen}
 			onSelect={onExpiryChange}

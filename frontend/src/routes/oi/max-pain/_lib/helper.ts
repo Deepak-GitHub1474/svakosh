@@ -1,6 +1,6 @@
 import * as echarts from 'echarts';
 import type { TMaxPainData } from './types';
-import { STRIKE_DIFFERENCES } from './const';
+import { STRIKE_DIFFERENCES } from '$lib/utils/const';
 
 export const formatVal = (val: number): string => {
 	if (Math.abs(val) >= 10000000) return (val / 10000000).toFixed(2) + ' Cr';

@@ -1,5 +1,6 @@
 import type { TFullGlimpseData, TGlimpseSymbolDetail, TMetricDetails } from './types';
-import { OI_SYMBOLS, OI_TIMEFRAMES, EXPIRIES, GLIMPSE_CATEGORIES } from './const';
+import { OI_SYMBOLS, EXPIRIES, GLIMPSE_CATEGORIES } from './const';
+import { OI_TIMEFRAMES } from '$lib/utils/const';
 import { roundLakh } from '$lib/utils';
 
 function generateRandomMetrics(): TMetricDetails {
