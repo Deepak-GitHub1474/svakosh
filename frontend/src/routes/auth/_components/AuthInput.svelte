@@ -61,7 +61,7 @@
 		{autocomplete}
 		{required}
 		bind:value
-		class={isPassword ? 'pl-10 pr-10' : 'pl-10'}
+		class="py-3.5 {isPassword ? 'pl-10 pr-10' : 'pl-10'}"
 	/>
 
 	{#if isPassword}

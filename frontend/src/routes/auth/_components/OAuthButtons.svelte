@@ -7,7 +7,7 @@
 	let { onGoogle, onGithub }: Props = $props();
 
 	const baseClass =
-		'flex flex-1 items-center justify-center gap-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] py-2.5 text-[0.82rem] font-medium text-foreground transition-colors duration-150 hover:border-primary/30 hover:bg-[rgba(255,255,255,0.04)]';
+		'flex flex-1 items-center justify-center gap-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] py-3.5 text-sm text-muted-foreground hover:text-white';
 </script>
 
 <div class="flex w-full gap-3">

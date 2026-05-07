@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { BRAND } from '$lib/brand';
-	import AuricLogo from '../_components/AuricLogo.svelte';
+	import SvaKoshLogo from '../_components/SvaKoshLogo.svelte';
 	import IllustrationPanel from '../_components/IllustrationPanel.svelte';
 	import AuthInput from '../_components/AuthInput.svelte';
 	import OAuthButtons from '../_components/OAuthButtons.svelte';
 	import FeaturesBar from '../_components/FeaturesBar.svelte';
-	import AuthCard from '../_components/AuthCard.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import bullImage from '../_assets/bull.png';
 
@@ -21,35 +20,34 @@
 	<title>Sign in | {BRAND.name}</title>
 </svelte:head>
 
-<main class="min-h-dvh bg-background text-foreground">
-	<div class="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-10 lg:py-12">
-		<AuthCard>
-			{#snippet illustration()}
-				<IllustrationPanel
-					image={bullImage}
-					alt="Golden bull on a rocky outcrop with candlestick chart in the background"
-					caption="Momentum Rise"
-					index={1}
-					class="lg:rounded-r-none lg:min-h-full"
-				/>
-			{/snippet}
+<main class="relative min-h-dvh bg-[#101216] text-foreground">
+	<div class="grid min-h-dvh grid-cols-1 lg:grid-cols-2">
+		<IllustrationPanel
+			image={bullImage}
+			alt="Golden bull on a rocky outcrop with candlestick chart in the background"
+			caption="Momentum Rise"
+			index={1}
+			class="h-[32vh] w-full rounded-b-3xl lg:h-full lg:rounded-b-none"
+		/>
 
-			{#snippet form()}
+		<div class="flex w-full items-center justify-center p-4 lg:h-full lg:pb-32">
+			<div class="w-full max-w-[26rem]">
 				<div class="flex flex-col">
-					<AuricLogo class="self-end" />
-
-					<h1 class="mt-8 text-[1.6rem] font-semibold leading-tight text-foreground">
+					<SvaKoshLogo class="self-start" />
+					<div class="mt-8 hidden lg:block">
+						<h1 class="text-2xl font-semibold leading-tight text-foreground">
 						Welcome back <span aria-hidden="true">👋</span>
-					</h1>
-					<p class="mt-1.5 text-[0.85rem] text-muted-foreground">
-						Sign in to continue to your account
-					</p>
+						</h1>
+						<p class="mt-1.5 text-sm text-muted-foreground">
+							Sign in to continue to your account
+						</p>
+					</div>
 
-					<form class="mt-7 space-y-4" onsubmit={handleSubmit}>
+					<form class="mt-8 space-y-4" onsubmit={handleSubmit}>
 						<div>
 							<label
 								for="signin-email"
-								class="mb-1.5 block text-[0.72rem] font-medium tracking-wide text-muted-foreground"
+								class="mb-1.5 block text-sm font-medium tracking-wide text-muted-foreground"
 							>
 								Email address
 							</label>
@@ -67,7 +65,7 @@
 						<div>
 							<label
 								for="signin-password"
-								class="mb-1.5 block text-[0.72rem] font-medium tracking-wide text-muted-foreground"
+								class="mb-1.5 block text-sm font-medium tracking-wide text-muted-foreground"
 							>
 								Password
 							</label>
@@ -94,7 +92,7 @@
 							type="submit"
 							variant="primary"
 							label="Continue"
-							class="auth-cta w-full [--terminal-bg:var(--primary)] [--terminal-border:var(--primary)] [--terminal-bg-hover:#e6c54a] [--terminal-border-hover:#e6c54a] [--terminal-fg:#08090a]"
+							class="w-full py-3.5 text-sm font-medium [--terminal-bg:var(--primary)] [--terminal-border:var(--primary)] [--terminal-bg-hover:#e6c54a] [--terminal-border-hover:#e6c54a] [--terminal-fg:#08090a]"
 						>
 							{#snippet icon()}
 								<span class="material-symbols-outlined icon-size">arrow_forward</span>
@@ -104,7 +102,7 @@
 
 					<div class="my-5 flex items-center gap-3">
 						<span class="h-px flex-1 bg-[rgba(255,255,255,0.06)]"></span>
-						<span class="text-[0.72rem] text-muted-foreground">or continue with</span>
+						<span class="text-xs text-muted-foreground">or continue with</span>
 						<span class="h-px flex-1 bg-[rgba(255,255,255,0.06)]"></span>
 					</div>
 
@@ -115,17 +113,10 @@
 						<a href="/auth/signup" class="font-medium text-primary hover:underline">Sign up</a>
 					</p>
 				</div>
-			{/snippet}
-		</AuthCard>
-
-		<div class="mt-8">
-			<FeaturesBar />
+			</div>
 		</div>
 	</div>
+	<div class="pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden bg-gradient-to-t from-black/85 via-black/55 to-transparent px-4 pb-8 pt-24 lg:block [&>*]:pointer-events-auto">
+		<FeaturesBar />
+	</div>
 </main>
-
-<style>
-	:global(.auth-cta .btn-terminal__icon) {
-		opacity: 0.9;
-	}
-</style>

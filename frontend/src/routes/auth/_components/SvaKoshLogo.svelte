@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
+	import { BRAND } from '$lib/brand';
 
 	let { class: className = '' }: { class?: string } = $props();
 </script>
@@ -32,10 +33,10 @@
 			stroke-linejoin="round"
 		/>
 	</svg>
-	<div class="flex flex-col leading-none">
-		<span class="text-[1.05rem] font-semibold tracking-[0.18em] text-foreground">AURIC</span>
-		<span class="mt-0.5 text-[0.6rem] tracking-[0.12em] text-muted-foreground">
-			Trade. Invest. Grow.
+	<div class="flex flex-col leading-snug">
+		<span class="text-[1.05rem] font-semibold tracking-wider text-foreground">{BRAND.name}</span>
+		<span class="text-[0.6rem] tracking-wider text-muted-foreground">
+			{BRAND.tagline}
 		</span>
 	</div>
 </div>
