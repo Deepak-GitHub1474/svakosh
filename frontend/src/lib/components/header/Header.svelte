@@ -3,8 +3,10 @@
 	import { Spring } from 'svelte/motion';
 	import { BRAND } from '$lib/brand';
 	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import { navItems } from './const';
 	import { uiState } from '$lib/store/ui.svelte';
+	import { authState } from '$lib/store/auth.svelte';
 	import MenuIcon from '../svg-provider/MenuIcon.svelte';
 	import SvaKoshSwitch from '../svakosh/SvaKoshSwitch.svelte';
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
@@ -151,8 +153,21 @@
 		<SvaKoshSwitch checked size="sm" />
     </div>
     <div class="h-[0.0625rem] bg-white/5 my-1 mx-2"></div>
-    <button class="flex w-full items-center gap-3 px-3 py-2 text-xs text-bearish/80 hover:bg-bearish-subtle hover:text-bearish rounded-md transition-all duration-200 group">
-        <span class="material-symbols-outlined icon-size">logout</span>
-        Logout
-    </button>
+    {#if authState.isAuthenticated}
+        <button
+            onclick={() => { authState.logout(); isProfileModalOpen = false; }}
+            class="flex w-full items-center gap-3 px-3 py-2 text-xs text-bearish/80 hover:bg-bearish-subtle hover:text-bearish rounded-md transition-all duration-200 group"
+        >
+            <span class="material-symbols-outlined icon-size">logout</span>
+            Logout
+        </button>
+    {:else}
+        <button
+            onclick={() => { isProfileModalOpen = false; goto('/auth/signin'); }}
+            class="flex w-full items-center gap-3 px-3 py-2 text-xs text-primary/80 hover:bg-primary-subtle hover:text-primary rounded-md transition-all duration-200 group"
+        >
+            <span class="material-symbols-outlined icon-size">login</span>
+            Sign In
+        </button>
+    {/if}
 </SvaKoshModal>

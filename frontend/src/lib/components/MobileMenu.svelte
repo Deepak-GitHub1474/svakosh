@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import { cubicInOut } from 'svelte/easing';
 	import { fade, fly } from 'svelte/transition';
 	import { uiState } from '$lib/store/ui.svelte';
+	import { authState } from '$lib/store/auth.svelte';
 	import { navItems } from './header/const';
 	import { menuItems } from './sidebar/const';
 	import { BRAND } from '$lib/brand';
@@ -82,16 +84,23 @@
 		</div>
 
 		<div class="border-t border-border-subtle p-6">
-			<SvaKoshButton 
-				variant="bearish" 
-				label="Logout"
+			<SvaKoshButton
+				variant={authState.isAuthenticated ? 'bearish' : 'primary'}
+				label={authState.isAuthenticated ? 'Logout' : 'Sign In'}
 				class="w-full justify-center normal-case text-xs h-10"
 				onclick={() => {
+					if (authState.isAuthenticated) {
+						authState.logout();
+					} else {
+						goto('/auth/signin');
+					}
 					closeMenu();
 				}}
 			>
 				{#snippet icon()}
-					<span class="material-symbols-outlined icon-size">logout</span>
+					<span class="material-symbols-outlined icon-size">
+						{authState.isAuthenticated ? 'logout' : 'login'}
+					</span>
 				{/snippet}
 			</SvaKoshButton>
 		</div>
