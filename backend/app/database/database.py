@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated
+from typing import Annotated, Any, TypeVar
 
 import redis.asyncio as aioredis
 from fastapi import Depends, FastAPI, HTTPException, Request, status
@@ -15,34 +15,36 @@ logger = logging.getLogger("svakosh.database")
 MONGO_SERVER_SELECTION_TIMEOUT_MS = 10_000
 REDIS_SOCKET_CONNECT_TIMEOUT = 10.0
 
+T = TypeVar("T")
 
-def _exc_reason(exc: BaseException) -> str:
+
+def exc_reason(exc: BaseException) -> str:
     return f"{type(exc).__name__}: {exc}"
 
 
-async def _discard_mongo_client(client: AsyncIOMotorClient) -> None:
+async def discard_mongo_client(client: Any) -> None:
     try:
-        await client.close()  # pyright: ignore[reportGeneralTypeIssues]
+        await client.close()
     except Exception as e:
         logger.warning(
             "MongoDB: connection closed after failed connect.\nReason: %s",
-            _exc_reason(e),
+            exc_reason(e),
             exc_info=True,
         )
 
 
-async def _discard_redis_client(client: Redis) -> None:
+async def discard_redis_client(client: Any) -> None:
     try:
         await client.aclose()
     except Exception as e:
         logger.warning(
             "Redis: connection closed after failed connect.\nReason: %s",
-            _exc_reason(e),
+            exc_reason(e),
             exc_info=True,
         )
 
 
-def _service_or_503[T](
+def service_or_503(
     request: Request,
     client: T | None,
     error_attr: str,
@@ -72,9 +74,9 @@ async def connect_mongo_db(app: FastAPI, settings: Settings) -> None:
         settings.MONGODB_DB_NAME,
         MONGO_SERVER_SELECTION_TIMEOUT_MS,
     )
-    mongo_client: AsyncIOMotorClient | None = None
+    mongo_client: Any = None
     try:
-        mongo_client = AsyncIOMotorClient(
+        mongo_client: Any = AsyncIOMotorClient(
             settings.MONGODB_URI,
             serverSelectionTimeoutMS=MONGO_SERVER_SELECTION_TIMEOUT_MS,
         )
@@ -88,7 +90,7 @@ async def connect_mongo_db(app: FastAPI, settings: Settings) -> None:
             settings.MONGODB_DB_NAME,
         )
     except Exception as e:
-        reason = _exc_reason(e)
+        reason = exc_reason(e)
         app.state.mongodb_error = reason
         logger.error(
             "MongoDB: connection failed.\nReason: %s",
@@ -96,25 +98,25 @@ async def connect_mongo_db(app: FastAPI, settings: Settings) -> None:
             exc_info=True,
         )
         if mongo_client is not None:
-            await _discard_mongo_client(mongo_client)
+            await discard_mongo_client(mongo_client)
 
 
 async def connect_redis(app: FastAPI, settings: Settings) -> None:
     logger.info("Redis: attempting connection.")
-    redis_client: Redis | None = None
+    redis_client: Any = None
     try:
-        redis_client = aioredis.from_url(
+        redis_client: Any = aioredis.from_url(
             settings.REDIS_URL,
             decode_responses=True,
             socket_connect_timeout=REDIS_SOCKET_CONNECT_TIMEOUT,
         )
-        await redis_client.ping()  # pyright: ignore[reportGeneralTypeIssues]
+        await redis_client.ping()
         app.state.redis = redis_client
         app.state.redis_error = None
         redis_client = None
         logger.info("Redis: connected successfully.")
     except Exception as e:
-        reason = _exc_reason(e)
+        reason = exc_reason(e)
         app.state.redis_error = reason
         logger.error(
             "Redis: connection failed.\nReason: %s",
@@ -122,11 +124,11 @@ async def connect_redis(app: FastAPI, settings: Settings) -> None:
             exc_info=True,
         )
         if redis_client is not None:
-            await _discard_redis_client(redis_client)
+            await discard_redis_client(redis_client)
 
 
 async def disconnect_redis(app: FastAPI) -> None:
-    redis_client: Redis | None = getattr(app.state, "redis", None)
+    redis_client: Any = getattr(app.state, "redis", None)
     if redis_client is not None:
         try:
             await redis_client.aclose()
@@ -134,7 +136,7 @@ async def disconnect_redis(app: FastAPI) -> None:
         except Exception as e:
             logger.warning(
                 "Redis: connection closed.\nReason: %s",
-                _exc_reason(e),
+                exc_reason(e),
                 exc_info=True,
             )
         finally:
@@ -143,15 +145,15 @@ async def disconnect_redis(app: FastAPI) -> None:
 
 
 async def disconnect_mongo_db(app: FastAPI) -> None:
-    mongo_client: AsyncIOMotorClient | None = getattr(app.state, "mongo_client", None)
+    mongo_client: Any = getattr(app.state, "mongo_client", None)
     if mongo_client is not None:
         try:
-            await mongo_client.close()  # pyright: ignore[reportGeneralTypeIssues]
+            await mongo_client.close()
             logger.info("MongoDB: connection closed.")
         except Exception as e:
             logger.warning(
                 "MongoDB: connection closed.\nReason: %s",
-                _exc_reason(e),
+                exc_reason(e),
                 exc_info=True,
             )
         finally:
@@ -161,7 +163,7 @@ async def disconnect_mongo_db(app: FastAPI) -> None:
 
 
 def get_mongo_db(request: Request) -> AsyncIOMotorDatabase:
-    return _service_or_503(
+    return service_or_503(
         request,
         getattr(request.app.state, "mongo_db", None),
         "mongodb_error",
@@ -170,7 +172,7 @@ def get_mongo_db(request: Request) -> AsyncIOMotorDatabase:
 
 
 def get_redis(request: Request) -> Redis:
-    return _service_or_503(
+    return service_or_503(
         request,
         getattr(request.app.state, "redis", None),
         "redis_error",

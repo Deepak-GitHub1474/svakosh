@@ -1,5 +1,5 @@
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.endpoints import health
+from app.api.endpoints.auth.routes import router as auth
 from app.config import get_settings
 from app.database import (
     connect_mongo_db,
@@ -22,12 +23,12 @@ logger = logging.getLogger("svakosh.main")
 settings = get_settings()
 
 
-def _cors_origins() -> list[str]:
+def cors_origins() -> list[str]:
     return [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     init_database_state(app)
     await connect_mongo_db(app, settings)
     await connect_redis(app, settings)
@@ -60,10 +61,11 @@ app = FastAPI(
 register_exception_handlers(app)
 
 app.include_router(health.router)
+app.include_router(auth)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cors_origins(),
+    allow_origins=cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
