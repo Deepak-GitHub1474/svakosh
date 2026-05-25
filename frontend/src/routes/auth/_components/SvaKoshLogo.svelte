@@ -34,8 +34,8 @@
 		/>
 	</svg>
 	<div class="flex flex-col leading-snug">
-		<span class="text-[1.05rem] font-semibold tracking-wider text-foreground">{BRAND.name}</span>
-		<span class="text-[0.6rem] tracking-wider text-muted-foreground">
+		<span class="text-lg font-semibold tracking-wider text-foreground">{BRAND.name}</span>
+		<span class="text-sm tracking-wider text-muted-foreground">
 			{BRAND.tagline}
 		</span>
 	</div>

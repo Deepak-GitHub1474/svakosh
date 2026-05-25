@@ -22,6 +22,7 @@ from app.api.endpoints.auth.utils import (
     assert_no_collision,
     block_existing_user_if_locked,
     build_new_user_doc,
+    build_otp_error_detail,
     check_otp,
     clear_auth_cookies,
     create_access_token,
@@ -29,6 +30,7 @@ from app.api.endpoints.auth.utils import (
     generate_otp,
     get_client_ip,
     get_client_ua,
+    get_otp_status,
     is_locked,
     is_otp_locked,
     issue_token_pair,
@@ -101,11 +103,21 @@ async def verify_otp(
     ident_type = detect_identifier(body.identifier)
     identifier = body.identifier
 
-    if not await check_otp(redis, identifier, body.otp):
-        await block_existing_user_if_locked(mongo, redis, ident_type, identifier)
-        raise HTTPException(status_code=400, detail="Invalid or expired OTP.")
-
     users = mongo["users"]
+
+    if not await check_otp(redis, identifier, body.otp):
+        existing = await users.find_one(
+            mongo_query_for_identifier(ident_type, identifier),
+            projection={"_id": 1, "blocked": 1},
+        )
+        existing = await block_existing_user_if_locked(mongo, redis, ident_type, identifier, user=existing)
+        status = await get_otp_status(redis, identifier)
+        raise HTTPException(status_code=400, detail=build_otp_error_detail(
+            status,
+            is_new_user=existing is None,
+            is_blocked=bool(existing and existing.get("blocked")),
+        ))
+
     user = await users.find_one(mongo_query_for_identifier(ident_type, identifier))
     is_new_user = user is None
     ip = get_client_ip(request)
@@ -129,7 +141,7 @@ async def verify_otp(
         assert user is not None
         if is_locked(user):
             raise HTTPException(status_code=423, detail="Account temporarily locked.")
-        await record_login_in_users(mongo, str(user["_id"]), ip=ip)
+        await record_login_in_users(mongo, str(user["_id"]), ip=ip, ua=ua)
         user = await users.find_one({"_id": user["_id"]})
 
     if user is None:
@@ -202,8 +214,12 @@ async def add_channel_verify(
     await assert_channel_pending(user, ident_type)
 
     if not await check_otp(redis, identifier, body.otp):
-        await block_existing_user_if_locked(mongo, redis, ident_type, identifier)
-        raise HTTPException(status_code=400, detail="Invalid or expired OTP.")
+        status = await get_otp_status(redis, identifier)
+        raise HTTPException(status_code=400, detail=build_otp_error_detail(
+            status,
+            is_new_user=False,
+            is_blocked=False,
+        ))
 
     await assert_no_collision(users, ident_type, identifier, user_id)
 
@@ -284,7 +300,7 @@ async def google_auth(
         if is_locked(user):
             raise HTTPException(status_code=423, detail="Account temporarily locked.")
         await link_google_account(users, user, provider_user_id, email)
-        await record_login_in_users(mongo, str(user["_id"]), ip=ip)
+        await record_login_in_users(mongo, str(user["_id"]), ip=ip, ua=ua)
         user = await users.find_one({"_id": user["_id"]})
 
     if user is None:

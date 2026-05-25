@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { enhance } from '$app/forms';
 	import { cubicInOut } from 'svelte/easing';
 	import { fade, fly } from 'svelte/transition';
 	import { uiState } from '$lib/store/ui.svelte';
-	import { authState } from '$lib/store/auth.svelte';
 	import { navItems } from './header/const';
 	import { menuItems } from './sidebar/const';
 	import { BRAND } from '$lib/brand';
@@ -84,25 +83,27 @@
 		</div>
 
 		<div class="border-t border-border-subtle p-6">
-			<SvaKoshButton
-				variant={authState.isAuthenticated ? 'bearish' : 'primary'}
-				label={authState.isAuthenticated ? 'Logout' : 'Sign In'}
-				class="w-full justify-center normal-case text-xs h-10"
-				onclick={() => {
-					if (authState.isAuthenticated) {
-						authState.logout();
-					} else {
-						goto('/auth/signin');
-					}
+			<form
+				method="POST"
+				action="/auth/logout"
+				use:enhance={() => {
 					closeMenu();
+					return async ({ update }) => {
+						await update();
+					};
 				}}
 			>
-				{#snippet icon()}
-					<span class="material-symbols-outlined icon-size">
-						{authState.isAuthenticated ? 'logout' : 'login'}
-					</span>
-				{/snippet}
-			</SvaKoshButton>
+				<SvaKoshButton
+					type="submit"
+					variant="bearish"
+					label="Logout"
+					class="w-full justify-center normal-case text-xs h-10"
+				>
+					{#snippet icon()}
+						<span class="material-symbols-outlined icon-size">logout</span>
+					{/snippet}
+				</SvaKoshButton>
+			</form>
 		</div>
 	</div>
 {/if}

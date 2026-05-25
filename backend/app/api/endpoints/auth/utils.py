@@ -24,7 +24,7 @@ NS = "SK"
 OTP_TTL_SECONDS = 300
 REFERRAL_LENGTH = 6
 REFERRAL_ALPHABET = string.ascii_uppercase + string.digits
-REFERRAL_MAX_TRIES = 8
+REFERRAL_MAX_TRIES = 50
 
 
 # --------------------------------------------------------------------------
@@ -96,6 +96,40 @@ def detect_device_type(ua: str) -> str:
     return "unknown"
 
 
+def detect_browser(ua: str) -> str | None:
+    if not ua:
+        return None
+    if "Edg/" in ua:
+        return "edge"
+    if "OPR/" in ua or "Opera" in ua:
+        return "opera"
+    if "Firefox/" in ua:
+        return "firefox"
+    if "Chrome/" in ua:
+        return "chrome"
+    if "Safari/" in ua:
+        return "safari"
+    return None
+
+
+def detect_device(ua: str) -> str | None:
+    if not ua:
+        return None
+    if "iPhone" in ua:
+        return "iphone"
+    if "iPad" in ua:
+        return "ipad"
+    if "Android" in ua:
+        return "android"
+    if "Windows NT" in ua:
+        return "windows"
+    if "Mac OS X" in ua or "Macintosh" in ua:
+        return "mac"
+    if "Linux" in ua:
+        return "linux"
+    return None
+
+
 # --------------------------------------------------------------------------
 # Referral code
 # --------------------------------------------------------------------------
@@ -106,11 +140,16 @@ def generate_referral_code() -> str:
 
 async def generate_unique_referral_code(mongo: AsyncIOMotorDatabase) -> str:
     users = mongo["users"]
+    tried: set[str] = set()
     for _ in range(REFERRAL_MAX_TRIES):
         code = generate_referral_code()
+        if code in tried:
+            continue
+        tried.add(code)
         existing = await users.find_one({"referral_code": code}, projection={"_id": 1})
         if existing is None:
             return code
+    logger.error("referral exhausted after %d tries", REFERRAL_MAX_TRIES)
     raise RuntimeError("Failed to generate unique referral code after retries.")
 
 
@@ -410,6 +449,36 @@ async def is_otp_locked(redis: Any, identifier: str) -> bool:
     return int(attempts_raw or 0) >= s.OTP_LOCKOUT_FAIL_THRESHOLD
 
 
+async def get_otp_status(redis: Any, identifier: str) -> dict[str, Any]:
+    s = get_settings()
+    key = otp_key(identifier)
+    attempts_raw = await redis.hget(key, "attempts")
+    attempts = int(attempts_raw or 0)
+    remaining = max(0, s.OTP_LOCKOUT_FAIL_THRESHOLD - attempts)
+    retry_after: int | None = None
+    if remaining == 0:
+        ttl = await redis.ttl(key)
+        retry_after = int(ttl) if isinstance(ttl, int) and ttl > 0 else s.OTP_LOCKOUT_MINUTES * 60
+    return {
+        "attempts_used": attempts,
+        "attempts_remaining": remaining,
+        "retry_after_seconds": retry_after,
+        "locked": remaining == 0,
+    }
+
+
+def build_otp_error_detail(
+    status: dict[str, Any], *, is_new_user: bool, is_blocked: bool,
+) -> dict[str, Any]:
+    return {
+        "code": "OTP_LOCKED" if status["locked"] else "INVALID_OTP",
+        "message": "Too many wrong attempts. Try again later." if status["locked"] else "Invalid or expired OTP.",
+        "is_new_user": is_new_user,
+        "is_blocked": is_blocked,
+        **status,
+    }
+
+
 async def check_otp(redis: Any, identifier: str, presented_otp: str) -> bool:
     key = otp_key(identifier)
     record = await redis.hgetall(key)
@@ -444,13 +513,13 @@ async def check_otp(redis: Any, identifier: str, presented_otp: str) -> bool:
 # --------------------------------------------------------------------------
 
 async def send_otp_email(email: str, otp: str) -> None:
-    # TODO: wire later.
-    logger.info("[DEV] otp.email to=%s otp=%s", email, otp)
+    # TODO: wire later. Dev: print so it always shows in uvicorn stdout.
+    print(f"[DEV] otp.email to={email} otp={otp}", flush=True)
 
 
 async def send_otp_mobile(mobile: str, otp: str) -> None:
-    # TODO: wire later.
-    logger.info("[DEV] otp.mobile to=%s otp=%s", mobile, otp)
+    # TODO: wire later. Dev: print so it always shows in uvicorn stdout.
+    print(f"[DEV] otp.mobile to={mobile} otp={otp}", flush=True)
 
 
 # --------------------------------------------------------------------------
@@ -546,7 +615,7 @@ def read_refresh_cookie(request: Request) -> str:
 # --------------------------------------------------------------------------
 
 async def record_login_in_users(
-    mongo: AsyncIOMotorDatabase, user_id: str, *, ip: str | None,
+    mongo: AsyncIOMotorDatabase, user_id: str, *, ip: str | None, ua: str = "",
 ) -> None:
     if not ObjectId.is_valid(user_id):
         return
@@ -558,6 +627,9 @@ async def record_login_in_users(
                 "auth.last_login": now,
                 "auth.login_info.date": now,
                 "auth.login_info.ip_address": ip,
+                "auth.login_info.browser": detect_browser(ua),
+                "auth.login_info.device": detect_device(ua),
+                "auth.login_info.device_type": detect_device_type(ua),
                 "updated_at": now,
             },
             "$inc": {"auth.login_count": 1},
@@ -566,16 +638,23 @@ async def record_login_in_users(
 
 
 async def block_existing_user_if_locked(
-    mongo: AsyncIOMotorDatabase, redis: Any, ident_type: str, identifier: str,
-) -> None:
+    mongo: AsyncIOMotorDatabase,
+    redis: Any,
+    ident_type: str,
+    identifier: str,
+    *,
+    user: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    """Block existing user in Mongo if Redis lockout triggered. Returns the user (or None)."""
     if not await is_otp_locked(redis, identifier):
-        return
-    user = await mongo["users"].find_one(
-        mongo_query_for_identifier(ident_type, identifier),
-        projection={"_id": 1, "blocked": 1},
-    )
+        return user
+    if user is None:
+        user = await mongo["users"].find_one(
+            mongo_query_for_identifier(ident_type, identifier),
+            projection={"_id": 1, "blocked": 1},
+        )
     if user is None or user.get("blocked"):
-        return
+        return user
     await mongo["users"].update_one(
         {"_id": user["_id"]},
         {
@@ -583,6 +662,8 @@ async def block_existing_user_if_locked(
             "$inc": {"auth.blocked_count": 1},
         },
     )
+    user["blocked"] = True
+    return user
 
 
 async def assert_channel_pending(user: dict[str, Any], ident_type: str) -> None:
@@ -637,8 +718,8 @@ async def build_new_user_doc(
             "blocked_count": 0,
             "login_info": {
                 "date": now,
-                "browser": None,
-                "device": None,
+                "browser": detect_browser(ua),
+                "device": detect_device(ua),
                 "device_type": detect_device_type(ua),
                 "ip_address": ip,
             },
