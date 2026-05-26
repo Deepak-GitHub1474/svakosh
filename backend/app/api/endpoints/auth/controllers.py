@@ -21,6 +21,7 @@ from app.api.endpoints.auth.utils import (
     assert_channel_pending,
     assert_no_collision,
     block_existing_user_if_locked,
+    build_blocked_detail,
     build_new_user_doc,
     build_otp_error_detail,
     check_otp,
@@ -31,8 +32,8 @@ from app.api.endpoints.auth.utils import (
     get_client_ip,
     get_client_ua,
     get_otp_status,
-    is_locked,
     is_otp_locked,
+    is_user_blocked,
     issue_token_pair,
     link_google_account,
     list_user_sessions,
@@ -68,10 +69,10 @@ async def send_otp(
 
     user = await mongo["users"].find_one(
         mongo_query_for_identifier(ident_type, identifier),
-        projection={"_id": 1, "auth.locked_until": 1},
+        projection={"_id": 1, "blocked": 1},
     )
-    if user is not None and is_locked(user):
-        raise HTTPException(status_code=423, detail="Account temporarily locked.")
+    if is_user_blocked(user):
+        raise HTTPException(status_code=403, detail=build_blocked_detail())
     if await is_otp_locked(redis, identifier):
         raise HTTPException(
             status_code=429,
@@ -105,20 +106,19 @@ async def verify_otp(
 
     users = mongo["users"]
 
+    user = await users.find_one(mongo_query_for_identifier(ident_type, identifier))
+    if is_user_blocked(user):
+        raise HTTPException(status_code=403, detail=build_blocked_detail())
+
     if not await check_otp(redis, identifier, body.otp):
-        existing = await users.find_one(
-            mongo_query_for_identifier(ident_type, identifier),
-            projection={"_id": 1, "blocked": 1},
-        )
-        existing = await block_existing_user_if_locked(mongo, redis, ident_type, identifier, user=existing)
+        existing = await block_existing_user_if_locked(mongo, redis, ident_type, identifier, user=user)
         status = await get_otp_status(redis, identifier)
         raise HTTPException(status_code=400, detail=build_otp_error_detail(
             status,
-            is_new_user=existing is None,
-            is_blocked=bool(existing and existing.get("blocked")),
+            is_new_user=user is None,
+            is_blocked=is_user_blocked(existing),
         ))
 
-    user = await users.find_one(mongo_query_for_identifier(ident_type, identifier))
     is_new_user = user is None
     ip = get_client_ip(request)
     ua = get_client_ua(request)
@@ -139,8 +139,6 @@ async def verify_otp(
         user = await users.find_one({"_id": result.inserted_id})
     else:
         assert user is not None
-        if is_locked(user):
-            raise HTTPException(status_code=423, detail="Account temporarily locked.")
         await record_login_in_users(mongo, str(user["_id"]), ip=ip, ua=ua)
         user = await users.find_one({"_id": user["_id"]})
 
@@ -171,10 +169,12 @@ async def add_channel_send_otp(
     users = mongo["users"]
     user = await users.find_one(
         {"_id": user_id},
-        projection={"email_verified": 1, "mobile_number_verified": 1},
+        projection={"email_verified": 1, "mobile_number_verified": 1, "blocked": 1},
     )
     if user is None:
         raise HTTPException(status_code=404, detail="User not found.")
+    if is_user_blocked(user):
+        raise HTTPException(status_code=403, detail=build_blocked_detail())
 
     await assert_channel_pending(user, ident_type)
     await assert_no_collision(users, ident_type, identifier, user_id)
@@ -210,6 +210,8 @@ async def add_channel_verify(
     user = await users.find_one({"_id": user_id})
     if user is None:
         raise HTTPException(status_code=404, detail="User not found.")
+    if is_user_blocked(user):
+        raise HTTPException(status_code=403, detail=build_blocked_detail())
 
     await assert_channel_pending(user, ident_type)
 
@@ -272,6 +274,9 @@ async def google_auth(
         }
     }) or await users.find_one({"email": email})
 
+    if is_user_blocked(user):
+        raise HTTPException(status_code=403, detail=build_blocked_detail())
+
     ip = get_client_ip(request)
     ua = get_client_ua(request)
 
@@ -297,8 +302,6 @@ async def google_auth(
         user = await users.find_one({"_id": result.inserted_id})
     else:
         assert user is not None
-        if is_locked(user):
-            raise HTTPException(status_code=423, detail="Account temporarily locked.")
         await link_google_account(users, user, provider_user_id, email)
         await record_login_in_users(mongo, str(user["_id"]), ip=ip, ua=ua)
         user = await users.find_one({"_id": user["_id"]})

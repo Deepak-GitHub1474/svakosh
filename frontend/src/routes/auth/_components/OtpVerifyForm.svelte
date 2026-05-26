@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { cn } from '$lib/utils';
+	import { cn, safeSubmit } from '$lib/utils';
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
 	import OtpFeedback from './OtpFeedback.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import type { TOtpVerifyingForm } from '../_lib/types';
 
 	const RESEND_SECONDS = 60;
+	const OTP_LENGTH = 6;
 
 	let {
 		verifyAction,
@@ -22,10 +23,17 @@
 
 	let otp = $state('');
 	let submitting = $state(false);
+	let resending = $state(false);
 	let secondsLeft = $state(0);
 	let resendKey = $state(0);
-
+	
 	const canResend = $derived(secondsLeft <= 0);
+	const isValidOtp = $derived(/^\d{6}$/.test(otp));
+
+	$effect(() => {
+		const cleaned = otp.replace(/\D/g, '').slice(0, OTP_LENGTH);
+		if (cleaned !== otp) otp = cleaned;
+	});
 
 	$effect(() => {
 		resendKey;
@@ -42,13 +50,7 @@
 	class="space-y-4"
 	method="POST"
 	action={verifyAction}
-	use:enhance={() => {
-		submitting = true;
-		return async ({ update }) => {
-			await update();
-			submitting = false;
-		};
-	}}
+	use:enhance={safeSubmit((b) => (submitting = b))}
 >
 	<div>
 		<label for="otp-input" class="mb-1.5 block text-sm tracking-wide text-muted-foreground">
@@ -69,7 +71,12 @@
 				id="otp-input"
 				type="text"
 				placeholder="123456"
+				autofocus
 				autocomplete="one-time-code"
+				inputmode="numeric"
+				pattern={`[0-9]{${OTP_LENGTH}}`}
+				title="Enter the 6-digit code"
+				maxlength={OTP_LENGTH}
 				required
 				bind:value={otp}
 				class="py-[13.5px] pl-10"
@@ -88,6 +95,7 @@
 	<SvaKoshButton
 		type="submit"
 		variant="primary"
+		disabled={submitting || !isValidOtp}
 		label={submitting ? 'Verifying…' : ctaLabel}
 		class="w-full py-3.5 text-sm font-medium [--terminal-bg:var(--primary)] [--terminal-border:var(--primary)] [--terminal-bg-hover:#e6c54a] [--terminal-border-hover:#e6c54a] [--terminal-fg:#08090a]"
 	>
@@ -106,17 +114,21 @@
 		<form
 			method="POST"
 			action={resendAction}
-			use:enhance={() => {
-				return async ({ update, result }) => {
-					await update();
-					if (result.type === 'success') resendKey++;
-				};
-			}}
+			use:enhance={safeSubmit(
+				(b) => (resending = b),
+				() => resendKey++
+			)}
 			class="inline"
 		>
 			<input type="hidden" name="identifier" value={identifier} />
 			<input type="hidden" name="redirect" value={redirectTo} />
-			<button type="submit" class="hover:text-primary transition-colors">Resend OTP</button>
+			<button
+				type="submit"
+				disabled={resending}
+				class="hover:text-primary transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+			>
+				{resending ? 'Resending…' : 'Resend OTP'}
+			</button>
 		</form>
 	{:else}
 		<span>Resend in {secondsLeft}s</span>

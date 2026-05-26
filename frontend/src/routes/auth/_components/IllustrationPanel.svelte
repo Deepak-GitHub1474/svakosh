@@ -1,15 +1,8 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
+	import type { TIllustrationPanel } from '../_lib/types';
 
-	type Props = {
-		image: string;
-		alt: string;
-		caption: string;
-		index: number;
-		class?: string;
-	};
-
-	let { image, alt, caption, index, class: className = '' }: Props = $props();
+	let { image, alt, caption, index, class: className = '' }: TIllustrationPanel = $props();
 </script>
 
 <div

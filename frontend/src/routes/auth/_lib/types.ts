@@ -1,5 +1,13 @@
 export type TIconType = 'mail' | 'lock' | 'user';
 
+export	type TIllustrationPanel = {
+	image: string;
+	alt: string;
+	caption: string;
+	index: number;
+	class?: string;
+};
+
 export type TOtpErrorData = {
 	code?: string;
 	message?: string;

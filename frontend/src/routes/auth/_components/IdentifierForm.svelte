@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { cn } from '$lib/utils';
+	import { cn, safeSubmit } from '$lib/utils';
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
 	import OtpFeedback from './OtpFeedback.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
@@ -20,19 +20,15 @@
 
 	let identifier = $state('');
 	let submitting = $state(false);
+
+	const isValid = $derived(identifier.trim().length > 0);
 </script>
 
 <form
 	class="mt-8 space-y-4"
 	method="POST"
 	{action}
-	use:enhance={() => {
-		submitting = true;
-		return async ({ update }) => {
-			await update();
-			submitting = false;
-		};
-	}}
+	use:enhance={safeSubmit((b) => (submitting = b))}
 >
 	<div>
 		<label for={inputId} class="mb-1.5 block text-sm tracking-wide text-muted-foreground">
@@ -83,6 +79,7 @@
 	<SvaKoshButton
 		type="submit"
 		variant="primary"
+		disabled={submitting || !isValid}
 		label={submitting ? 'Sending…' : ctaLabel}
 		class="w-full py-3.5 text-sm font-medium [--terminal-bg:var(--primary)] [--terminal-border:var(--primary)] [--terminal-bg-hover:#e6c54a] [--terminal-border-hover:#e6c54a] [--terminal-fg:#08090a]"
 	>

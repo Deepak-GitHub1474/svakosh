@@ -81,8 +81,8 @@ def mongo_query_for_identifier(ident_type: str, identifier: str) -> dict[str, An
     return {field: identifier}
 
 
-def is_locked(user: dict[str, Any]) -> bool:
-    return bool(user.get("blocked", False))
+def is_user_blocked(user: dict[str, Any] | None) -> bool:
+    return bool(user and user.get("blocked"))
 
 
 def detect_device_type(ua: str) -> str:
@@ -479,6 +479,13 @@ def build_otp_error_detail(
     }
 
 
+def build_blocked_detail() -> dict[str, Any]:
+    return {
+        "message": "Account permanently blocked. Contact support.",
+        "is_blocked": True,
+    }
+
+
 async def check_otp(redis: Any, identifier: str, presented_otp: str) -> bool:
     key = otp_key(identifier)
     record = await redis.hgetall(key)
@@ -653,7 +660,7 @@ async def block_existing_user_if_locked(
             mongo_query_for_identifier(ident_type, identifier),
             projection={"_id": 1, "blocked": 1},
         )
-    if user is None or user.get("blocked"):
+    if user is None or is_user_blocked(user):
         return user
     await mongo["users"].update_one(
         {"_id": user["_id"]},

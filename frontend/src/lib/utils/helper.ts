@@ -1,3 +1,27 @@
+import type { SubmitFunction } from '@sveltejs/kit';
+import { REQUEST_TIMEOUT_MS } from './const';
+
+export function safeSubmit(
+	setBusy: (busy: boolean) => void,
+	onSuccess?: () => void
+): SubmitFunction {
+	return () => {
+		setBusy(true);
+		let timedOut = false;
+		const timer = setTimeout(() => {
+			timedOut = true;
+			setBusy(false);
+		}, REQUEST_TIMEOUT_MS);
+		return async ({ update, result }) => {
+			clearTimeout(timer);
+			if (timedOut) return;
+			await update();
+			setBusy(false);
+			if (result.type === 'success') onSuccess?.();
+		};
+	};
+}
+
 export function formatNumber(v: number): string {
 	return (v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
