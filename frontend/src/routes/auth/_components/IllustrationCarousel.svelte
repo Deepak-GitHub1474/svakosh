@@ -1,11 +1,22 @@
 <script lang="ts">
-	import { fade } from 'svelte/transition';
+	import { cubicOut } from 'svelte/easing';
 
 	type ImageItem = { src: string; alt: string };
 	type Props = {
 		images: ImageItem[];
 		intervalMs?: number;
 	};
+
+	function softZoom(_node: Element, { duration = 900, from = 1.06 }: { duration?: number; from?: number } = {}) {
+		return {
+			duration,
+			easing: cubicOut,
+			css: (t: number) => {
+				const scale = from + (1 - from) * t;
+				return `opacity:${t}; transform:scale(${scale}); filter:blur(${(1 - t) * 4}px);`;
+			}
+		};
+	}
 
 	let { images, intervalMs = 5000 }: Props = $props();
 	let current = $state(0);
@@ -63,8 +74,8 @@
 					alt={img.alt}
 					loading={i === 0 ? 'eager' : 'lazy'}
 					class="absolute inset-0 h-full w-full object-cover [object-position:54%_10%]"
-					in:fade={{ duration: 700 }}
-					out:fade={{ duration: 700 }}
+					in:softZoom={{ duration: 900, from: 1.06 }}
+					out:softZoom={{ duration: 700, from: 0.96 }}
 				/>
 			{/if}
 		{/each}
