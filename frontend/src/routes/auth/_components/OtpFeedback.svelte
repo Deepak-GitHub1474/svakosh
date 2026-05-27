@@ -24,8 +24,8 @@
 </script>
 
 {#if error || message}
-	<div class="space-y-1.5 rounded-md border border-bearish/30 bg-bearish-subtle px-3 py-2.5 text-xs">
-		<p class="text-bearish">
+	<div class="space-y-1.5 rounded-md border px-3 py-2.5 text-xs {error ? 'border-bearish-muted bg-bearish-subtle text-bearish' : 'border-bullish-muted bg-bullish-subtle text-bullish'}">
+		<p>
 			{error?.message ?? message}
 		</p>
 

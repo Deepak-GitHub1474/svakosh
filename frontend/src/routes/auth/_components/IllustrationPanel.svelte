@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
+	import FeatureCycler from './FeatureCycler.svelte';
 	import type { TIllustrationPanel } from '../_lib/types';
 
-	let { image, alt, caption, index, class: className = '' }: TIllustrationPanel = $props();
+	let { image, alt, features, class: className = '' }: TIllustrationPanel = $props();
 </script>
 
 <div
@@ -19,12 +20,7 @@
 		style="background: linear-gradient(180deg, transparent 55%, rgba(195, 178, 152, 0.22) 100%);"
 	></div>
 
-	<div class="absolute top-5 left-5 z-10 flex items-center gap-2.5">
-		<span
-			class="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[#08090a]"
-		>
-			{index}
-		</span>
-		<span class="text-sm text-primary tracking-wide">{caption}</span>
+	<div class="absolute top-5 left-5 z-10">
+		<FeatureCycler {features} />
 	</div>
 </div>

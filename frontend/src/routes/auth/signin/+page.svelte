@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { BRAND } from '$lib/brand';
+	import { APP_FEATURES } from '$lib/utils';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import SvaKoshLogo from '../_components/SvaKoshLogo.svelte';
@@ -31,8 +32,7 @@
 		<IllustrationPanel
 			image={bullImage}
 			alt="Golden bull on a rocky outcrop with candlestick chart in the background"
-			caption="Momentum Rise"
-			index={1}
+			features={APP_FEATURES}
 			class="h-[36vh] w-full rounded-b-3xl lg:h-full lg:rounded-b-none"
 		/>
 

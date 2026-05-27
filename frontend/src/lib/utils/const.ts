@@ -33,3 +33,24 @@ export const DEFAULT_STRIKE_COUNT = 5;
 export const REFRESH_INTERVAL = 10000;
 export const OI_TIMEFRAMES = ['1 Min', '3 Min', '6 Min', '9 Min', '15 Min', '30 Min'];
 export const REQUEST_TIMEOUT_MS = 20000;
+
+export const APP_FEATURES = [
+    'Watchlist',
+    'Options Analytics',
+    'Market Overview',
+    'Lookup',
+    'OI Tracker',
+    'OI Glimps',
+    'Buildup',
+    'Call vs Put',
+    'Multi OI',
+    'Max Pain',
+    'Straddle Analysis',
+    'Strangle Analysis',
+    'Air In Premiums',
+    'Options Chart',
+    'Stocks Screeners',
+    '52-Week Breakout',
+    'Volume Breakout',
+    'Market Pulse'
+];

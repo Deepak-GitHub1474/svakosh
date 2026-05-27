@@ -3,8 +3,7 @@ export type TIconType = 'mail' | 'lock' | 'user';
 export	type TIllustrationPanel = {
 	image: string;
 	alt: string;
-	caption: string;
-	index: number;
+	features: string[];
 	class?: string;
 };
 
