@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { enhance } from '$app/forms';
 	import { cubicInOut } from 'svelte/easing';
 	import { fade, fly } from 'svelte/transition';
 	import { uiState } from '$lib/store/ui.svelte';
@@ -82,18 +83,27 @@
 		</div>
 
 		<div class="border-t border-border-subtle p-6">
-			<SvaKoshButton 
-				variant="bearish" 
-				label="Logout"
-				class="w-full justify-center normal-case text-xs h-10"
-				onclick={() => {
+			<form
+				method="POST"
+				action="/auth/logout"
+				use:enhance={() => {
 					closeMenu();
+					return async ({ update }) => {
+						await update();
+					};
 				}}
 			>
-				{#snippet icon()}
-					<span class="material-symbols-outlined icon-size">logout</span>
-				{/snippet}
-			</SvaKoshButton>
+				<SvaKoshButton
+					type="submit"
+					variant="bearish"
+					label="Logout"
+					class="w-full justify-center normal-case text-xs h-10"
+				>
+					{#snippet icon()}
+						<span class="material-symbols-outlined icon-size">logout</span>
+					{/snippet}
+				</SvaKoshButton>
+			</form>
 		</div>
 	</div>
 {/if}

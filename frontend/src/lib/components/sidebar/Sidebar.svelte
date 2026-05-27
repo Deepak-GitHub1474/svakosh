@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { enhance } from '$app/forms';
 	import { uiState } from '$lib/store/ui.svelte';
 	import { menuItems } from './const';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
@@ -68,19 +69,18 @@
 		</div>
 
 		<div class="relative group">
-			<SvaKoshButton 
-				variant="bearish" 
-				label={uiState.isWatchlistVisible ? '' : 'Logout'}
-				class="w-full min-w-0 border-y-0 border-l-0 justify-start normal-case text-sm {uiState.isWatchlistVisible ? 'border-r-2 border-bearish/40 bg-bearish/5' : ''}"
-			>
-				{#snippet icon()}
-					<span class="material-symbols-outlined icon-size
-						{uiState.isWatchlistVisible ? 'opacity-100' : ''}"
-					>
-						logout
-					</span>
-				{/snippet}
-			</SvaKoshButton>
+			<form method="POST" action="/auth/logout" use:enhance>
+				<SvaKoshButton
+					type="submit"
+					variant="bearish"
+					label={uiState.isWatchlistVisible ? '' : 'Logout'}
+					class="w-full min-w-0 border-y-0 border-l-0 justify-start normal-case text-sm {uiState.isWatchlistVisible ? 'border-r-2 border-bearish/40 bg-bearish/5' : ''}"
+				>
+					{#snippet icon()}
+						<span class="material-symbols-outlined icon-size {uiState.isWatchlistVisible ? 'opacity-100' : ''}">logout</span>
+					{/snippet}
+				</SvaKoshButton>
+			</form>
 
 			{#if uiState.isWatchlistVisible}
 				<div class="absolute left-14 top-1/2 -translate-y-1/2 hidden group-hover:block whitespace-nowrap rounded-md font-medium bg-gradient-to-br from-white/10 via-white/5 to-white/[0.02] backdrop-blur-xl border-t border-l border-white/20 border-b border-r border-black/60 px-3 py-1.5 text-xs text-foreground z-50 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.9),0_0_15px_rgba(255,255,255,0.05)]">

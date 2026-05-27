@@ -3,6 +3,7 @@
 	import { Spring } from 'svelte/motion';
 	import { BRAND } from '$lib/brand';
 	import { page } from '$app/state';
+	import { enhance } from '$app/forms';
 	import { navItems } from './const';
 	import { uiState } from '$lib/store/ui.svelte';
 	import MenuIcon from '../svg-provider/MenuIcon.svelte';
@@ -151,8 +152,22 @@
 		<SvaKoshSwitch checked size="sm" />
     </div>
     <div class="h-[0.0625rem] bg-white/5 my-1 mx-2"></div>
-    <button class="flex w-full items-center gap-3 px-3 py-2 text-xs text-bearish/80 hover:bg-bearish-subtle hover:text-bearish rounded-md transition-all duration-200 group">
-        <span class="material-symbols-outlined icon-size">logout</span>
-        Logout
-    </button>
+    <form
+        method="POST"
+        action="/auth/logout"
+        use:enhance={() => {
+            isProfileModalOpen = false;
+            return async ({ update }) => {
+                await update();
+            };
+        }}
+    >
+        <button
+            type="submit"
+            class="flex w-full items-center gap-3 px-3 py-2 text-xs text-bearish/80 hover:bg-bearish-subtle hover:text-bearish rounded-md transition-all duration-200 group"
+        >
+            <span class="material-symbols-outlined icon-size">logout</span>
+            Logout
+        </button>
+    </form>
 </SvaKoshModal>
