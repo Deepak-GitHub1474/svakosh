@@ -9,7 +9,9 @@
 	import FeaturesBar from '../_components/FeaturesBar.svelte';
 	import IdentifierForm from '../_components/IdentifierForm.svelte';
 	import OtpVerifyForm from '../_components/OtpVerifyForm.svelte';
-	import bullImage from '../_assets/bull.png';
+	import bull from '../_assets/bull.png';
+	import globe from '../_assets/globe.png';
+	import man from '../_assets/man.png';
 
 	let { form, data } = $props();
 
@@ -17,6 +19,11 @@
 	const formIdentifier = $derived(String(form?.identifier ?? ''));
 	const redirectTo = $derived(String(form?.redirect ?? data?.redirect ?? ''));
 	const isEmail = $derived(formIdentifier.includes('@'));
+	const illustrations = [
+		{ src: bull, alt: 'Bull' },
+		{ src: globe, alt: 'Globe' },
+		{ src: man, alt: 'Trader' }
+	]
 
 	function changeIdentifier() {
 		goto(page.url.pathname + page.url.search, { invalidateAll: true });
@@ -30,8 +37,7 @@
 <main class="relative min-h-dvh bg-[#101216] text-foreground">
 	<div class="grid min-h-dvh grid-cols-1 lg:grid-cols-2">
 		<IllustrationPanel
-			image={bullImage}
-			alt="Golden bull on a rocky outcrop with candlestick chart in the background"
+			images={illustrations}
 			features={APP_FEATURES}
 			class="h-[36vh] w-full rounded-b-3xl lg:h-full lg:rounded-b-none"
 		/>
