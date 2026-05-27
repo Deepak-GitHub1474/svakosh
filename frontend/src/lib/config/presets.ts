@@ -1,6 +1,7 @@
 export const presets = {
 	production: {
-		apiUrl: 'https://api.svakosh.com',
+		// apiUrl: 'https://api.svakosh.com',
+		apiUrl: 'http://svakosh-backend-liz5ku-07fddf-34-74-52-79.traefik.me',
 		wsUrl: 'wss://api.svakosh.com'
 	},
 	development: {
