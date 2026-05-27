@@ -1,29 +1,18 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { BRAND } from '$lib/brand';
 	import Pulse from '$src/lib/components/Pulse.svelte';
 	import Background from '$src/lib/components/Background.svelte';
-	import { getServerConnectionView } from './_lib/api';
-	import type { THealthResponse } from './_lib/types';
 
-	let healthInfo = $state<THealthResponse | null>(null);
-	let requestError = $state<string | null>(null);
+	let { data } = $props();
+	const healthInfo = $derived(data.healthInfo);
+	const requestError = $derived(data.requestError);
 	const connected = $derived(healthInfo?.success);
 	const healthData = $derived(
 		healthInfo?.data && typeof healthInfo.data === 'object'
 			? (healthInfo.data as Record<string, unknown>)
 			: null
 	);
-
-	onMount(async () => {
-		try {
-			healthInfo = await getServerConnectionView();
-			requestError = null;
-		} catch (e) {
-			requestError = e instanceof Error ? e.message : String(e);
-		}
-	});
 </script>
 
 <svelte:head>
@@ -63,7 +52,7 @@
 					class="border-surface-elevated bg-surface-elevated rounded-lg border p-4 font-mono text-xs text-muted-foreground break-all sm:max-w-[60%]"
 					title="Configured API base URL"
 				>
-					{healthInfo?.backendUrl ?? 'Resolving...'}
+					{healthInfo?.backendUrl ?? data.backendUrl ?? 'Resolving...'}
 				</div>
 			</div>
 

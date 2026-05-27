@@ -1,10 +1,13 @@
 export type TIconType = 'mail' | 'lock' | 'user';
 
-export	type TIllustrationPanel = {
-	image: string;
+export type TIllustrationImage = {
+	src: string;
 	alt: string;
-	caption: string;
-	index: number;
+};
+
+export	type TIllustrationPanel = {
+	images: TIllustrationImage[];
+	features: string[];
 	class?: string;
 };
 
