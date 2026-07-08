@@ -10,6 +10,30 @@
 	import SvaKoshSwitch from '../svakosh/SvaKoshSwitch.svelte';
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
 
+	type TUser = {
+		email?: string | null;
+		mobile_number?: string | null;
+		profile?: {
+			full_name?: string | null;
+			username?: string | null;
+			avatar?: string | null;
+		} | null;
+	} | null;
+
+	interface Props {
+		user?: TUser;
+	}
+
+	let { user = null }: Props = $props();
+
+	const displayName = $derived(
+		user?.profile?.full_name?.trim() ||
+			user?.profile?.username?.trim() ||
+			'Unknown'
+	);
+	const displayIdentifier = $derived(user?.email || user?.mobile_number || '');
+	const avatarUrl = $derived(user?.profile?.avatar?.trim() || '');
+
 	let isProfileModalOpen = $state(false);
 	let navRefs = $state<(HTMLAnchorElement | null)[]>([]);
 
@@ -136,12 +160,18 @@
     width="14rem"
 >
     {#snippet icon()}
-        <span class="material-symbols-outlined icon-size">person</span>
+        {#if avatarUrl}
+            <img src={avatarUrl} alt={displayName} class="w-full h-full object-cover rounded-full" />
+        {:else}
+            <span class="material-symbols-outlined icon-size">person</span>
+        {/if}
     {/snippet}
 
     {#snippet title()}
-        <span class="text-xs text-white">Deepak Chaudhary</span>
-        <span class="text-[0.625rem] text-muted-foreground">deepak@svakosh.com</span>
+        <span class="text-xs text-white truncate">{displayName}</span>
+        {#if displayIdentifier}
+            <span class="text-[0.625rem] text-muted-foreground truncate">{displayIdentifier}</span>
+        {/if}
     {/snippet}
 
     <div class="flex items-center justify-between px-3 py-2 text-xs text-muted-foreground">
@@ -151,6 +181,23 @@
         </div>
 		<SvaKoshSwitch checked size="sm" />
     </div>
+    <div class="h-[0.0625rem] bg-white/5 my-1 mx-2"></div>
+    <a
+        href="/profile"
+        onclick={() => (isProfileModalOpen = false)}
+        class="flex w-full items-center gap-3 px-3 py-2 text-xs text-muted-foreground hover:bg-glass hover:text-foreground rounded-md transition-all duration-200"
+    >
+        <span class="material-symbols-outlined icon-size">person</span>
+        Profile
+    </a>
+    <a
+        href="/settings"
+        onclick={() => (isProfileModalOpen = false)}
+        class="flex w-full items-center gap-3 px-3 py-2 text-xs text-muted-foreground hover:bg-glass hover:text-foreground rounded-md transition-all duration-200"
+    >
+        <span class="material-symbols-outlined icon-size">settings</span>
+        Settings
+    </a>
     <div class="h-[0.0625rem] bg-white/5 my-1 mx-2"></div>
     <form
         method="POST"
