@@ -4,15 +4,9 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.config import get_settings
 from app.responses import err_response, extract_request_payload
 
 logger = logging.getLogger("svakosh.error_handlers")
-
-
-def is_dev_mode() -> bool:
-    s = get_settings()
-    return s.API_ENV.lower() in ("development", "dev", "local")
 
 
 def http_fail_message(status_code: int) -> str:
@@ -76,23 +70,18 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def handle_unhandled_error(request: Request, exc: Exception) -> JSONResponse:
+        payload = await extract_request_payload(request)
         logger.error(
-            "Unhandled error.\nReason: %s: %s",
+            "Unhandled error type=%s detail=%s payload=%r",
             type(exc).__name__,
             exc,
+            payload,
             exc_info=exc,
         )
-        reason = (
-            f"{type(exc).__name__}: {exc}"
-            if is_dev_mode()
-            else "Something went wrong. Try again later."
-        )
-        payload = await extract_request_payload(request)
-        logger.error("Unhandled request error message=%s payload=%r", reason, payload)
         return JSONResponse(
             status_code=500,
             content=err_response(
-                reason,
+                "Something went wrong. Try again later.",
                 data=None,
             ),
         )
