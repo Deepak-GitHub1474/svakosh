@@ -63,15 +63,15 @@
 	}
 </script>
 
-<SvaKoshModal bind:isOpen={modalOpen} onClose={close} width="22rem" position="center">
+<SvaKoshModal bind:isOpen={modalOpen} onClose={close} position="center">
 	{#snippet title()}
 		<span class="text-sm text-foreground">Note for {symbolName}</span>
-		<span class="text-[0.625rem] text-muted-foreground">
+		<span class="text-xs text-muted-foreground">
 			Private note for this symbol in this watchlist.
 		</span>
 	{/snippet}
 
-	<div class="flex flex-col gap-3 p-3">
+	<div class="flex flex-col gap-4 p-4">
 		<textarea
 			bind:this={inputEl}
 			bind:value={note}
@@ -82,7 +82,7 @@
 			class="w-full px-3 py-2 text-xs text-foreground bg-glass border border-border-subtle rounded outline-none focus:border-primary resize-none disabled:opacity-50"
 		></textarea>
 
-		<div class="flex items-center justify-between text-[0.625rem] text-muted-foreground">
+		<div class="flex items-center justify-between text-xs text-muted-foreground">
 			<span>{trimmed.length}/500</span>
 			{#if error}<span class="text-error">{error}</span>{/if}
 		</div>

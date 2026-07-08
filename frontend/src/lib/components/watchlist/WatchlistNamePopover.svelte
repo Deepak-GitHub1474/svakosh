@@ -71,8 +71,8 @@
 	}
 </script>
 
-<SvaKoshModal bind:isOpen={modalOpen} onClose={close} width="20rem" position="center" {title}>
-	<div class="flex flex-col gap-3 p-3">
+<SvaKoshModal bind:isOpen={modalOpen} onClose={close} position="center" {title}>
+	<div class="flex flex-col gap-4 p-4">
 		<input
 			bind:this={inputEl}
 			bind:value={name}
@@ -85,7 +85,7 @@
 		/>
 
 		{#if error}
-			<span class="text-[0.625rem] text-error">{error}</span>
+			<span class="text-xs text-error">{error}</span>
 		{/if}
 
 		<div class="flex justify-end gap-2">

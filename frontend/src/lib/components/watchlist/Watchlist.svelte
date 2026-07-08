@@ -108,6 +108,7 @@
 	let isCreatePopoverOpen = $state(false);
 	let renameTarget = $state<string | null>(null);
 	let deleteTarget = $state<string | null>(null);
+	let removeSymbolTarget = $state<{ sk_token: string; name: string } | null>(null);
 	let noteTarget = $state<{ sk_token: string; name: string; note: string } | null>(null);
 
 	let searchQuery = $state('');
@@ -184,14 +185,21 @@
 		}
 	}
 
-	async function handleRemoveSymbol(sk_token: string) {
+	function requestRemoveSymbol(sk_token: string, name: string) {
 		if (!selectedName || selectedItem?.predefined) return;
-		const res = await removeSymbolFromWatchlist(selectedName, sk_token);
+		removeSymbolTarget = { sk_token, name };
+	}
+
+	async function confirmRemoveSymbol() {
+		if (!selectedName || !removeSymbolTarget) {
+			return { ok: false as const, error: 'No symbol selected.' };
+		}
+		const res = await removeSymbolFromWatchlist(selectedName, removeSymbolTarget.sk_token);
 		if (res.ok || res.status === 404) {
 			await Promise.all([invalidateAll(), fetchEntries(selectedName)]);
-		} else {
-			console.error('remove symbol failed:', res.error);
+			return { ok: true as const };
 		}
+		return res;
 	}
 
 	async function handleSaveNote(note: string) {
@@ -342,7 +350,7 @@
 								name: entry.trading_symbol,
 								note: entry.symbol_note ?? ''
 							})}
-						onRemove={() => handleRemoveSymbol(entry.sk_token)}
+						onRemove={() => requestRemoveSymbol(entry.sk_token, entry.trading_symbol)}
 					/>
 				{/each}
 			{/if}
@@ -384,9 +392,22 @@
 
 <DeleteWatchlistConfirm
 	isOpen={deleteTarget !== null}
-	watchlistName={deleteTarget ?? ''}
+	title="Delete watchlist?"
+	description={`This permanently removes "${deleteTarget ?? ''}" and all its symbols. Cannot be undone.`}
+	confirmLabel="Delete"
+	loadingLabel="Deleting..."
 	onClose={() => (deleteTarget = null)}
 	onConfirm={handleDeleteWatchlist}
+/>
+
+<DeleteWatchlistConfirm
+	isOpen={removeSymbolTarget !== null}
+	title="Remove symbol?"
+	description={`Remove "${removeSymbolTarget?.name ?? ''}" from this watchlist?`}
+	confirmLabel="Remove"
+	loadingLabel="Removing..."
+	onClose={() => (removeSymbolTarget = null)}
+	onConfirm={confirmRemoveSymbol}
 />
 
 <NoteEditorPopover
