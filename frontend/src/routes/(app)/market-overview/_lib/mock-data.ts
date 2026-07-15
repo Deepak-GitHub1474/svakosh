@@ -1,4 +1,4 @@
-import type { TMarketOverviewData } from './types';
+import type { TBreadth, TIndexItem, TMarketOverviewData, TStockMovers } from './types';
 
 export const MARKET_DATA: { success: boolean; message: string; data: TMarketOverviewData } = {
 	success: true,
@@ -263,3 +263,48 @@ export const MARKET_DATA: { success: boolean; message: string; data: TMarketOver
 		]
 	}
 };
+
+const walk = (v: number, pct: number) => v * (1 + (Math.random() - 0.5) * pct);
+
+function liveIndex(ix: TIndexItem): TIndexItem {
+	const ltp = +walk(ix.ltp, 0.004).toFixed(2);
+	const change = +(ltp - ix.prev_close).toFixed(2);
+	const change_pct = +((change / ix.prev_close) * 100).toFixed(2);
+	return {
+		...ix,
+		ltp,
+		change,
+		change_pct,
+		high: +Math.max(ix.high, ltp).toFixed(2),
+		low: +Math.min(ix.low, ltp).toFixed(2)
+	};
+}
+
+function liveMover(m: TStockMovers): TStockMovers {
+	const prevClose = m.ltp - m.change;
+	const ltp = +walk(m.ltp, 0.004).toFixed(2);
+	const change = +(ltp - prevClose).toFixed(2);
+	const change_pct = +((change / prevClose) * 100).toFixed(2);
+	return { ...m, ltp, change, change_pct, volume: m.volume + Math.floor(Math.random() * 5000) };
+}
+
+function liveBreadth(b: TBreadth): TBreadth {
+	const movable = b.total - b.unchanged;
+	const advances = Math.min(
+		movable,
+		Math.max(0, b.advances + Math.floor((Math.random() - 0.5) * 5))
+	);
+	return { ...b, advances, declines: movable - advances };
+}
+
+export function getMarketOverview(): TMarketOverviewData {
+	const base = MARKET_DATA.data;
+	return {
+		...base,
+		status: { ...base.status, as_of: new Date().toISOString() },
+		indices: base.indices.map(liveIndex),
+		breadth: liveBreadth(base.breadth),
+		top_gainers: base.top_gainers.map(liveMover),
+		top_losers: base.top_losers.map(liveMover)
+	};
+}

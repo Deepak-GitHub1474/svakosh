@@ -12,14 +12,15 @@
 		MarkLineComponent
 	} from 'echarts/components';
 	import { CanvasRenderer } from 'echarts/renderers';
-	import { UNDERLYINGS, MOCK_DATA } from './_lib/mock-data';
+	import { UNDERLYINGS, getOptionsAnalytics } from './_lib/mock-data';
+	import { REFRESH_INTERVAL } from '$lib/utils/const';
 	import {
 		calculateOiStats,
 		calculateActiveStrikes,
 		getSymbolUpdate,
 		getExpiryUpdate
 	} from './_lib/helper';
-	import type { TStrikeOIItem } from './_lib/types';
+	import type { TStrikeOIItem, TOptionsAnalyticsData } from './_lib/types';
 	import { formatNumber as formatCurrency, formatLakh } from '$lib/utils';
 	import Info from '$lib/components/svg-provider/Info.svelte';
 	import SpotIcon from '$lib/components/svg-provider/SpotIcon.svelte';
@@ -67,7 +68,10 @@
 		meta: u.exchange
 	}));
 
-	const currentData = $derived(MOCK_DATA[symbol] || MOCK_DATA['NIFTY']);
+	let liveData = $state<TOptionsAnalyticsData>(getOptionsAnalytics('NIFTY'));
+	let intervalId: ReturnType<typeof setInterval> | undefined;
+
+	const currentData = $derived(liveData);
 
 	const expiryOptions = $derived(
 		currentData.expiries.map((exp) => ({
@@ -86,6 +90,7 @@
 		const update = getSymbolUpdate(s);
 		symbol = update.symbol;
 		selectedExpiry = update.selectedExpiry;
+		liveData = getOptionsAnalytics(symbol);
 	}
 
 	function selectExpiry(exp: string) {
@@ -255,9 +260,13 @@
 	onMount(() => {
 		initChart();
 		if (!selectedExpiry) selectedExpiry = currentData.expiry;
+		intervalId = setInterval(() => {
+			liveData = getOptionsAnalytics(symbol);
+		}, REFRESH_INTERVAL);
 	});
 
 	onDestroy(() => {
+		if (intervalId) clearInterval(intervalId);
 		if (browser) {
 			chart?.dispose();
 		}

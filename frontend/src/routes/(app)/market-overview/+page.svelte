@@ -1,17 +1,32 @@
 <script lang="ts">
 	import { fly, fade } from 'svelte/transition';
-	import { onMount } from 'svelte';
-	import { MARKET_DATA } from './_lib/mock-data';
+	import { onMount, onDestroy } from 'svelte';
+	import { getMarketOverview } from './_lib/mock-data';
+	import type { TMarketOverviewData } from './_lib/types';
+	import { REFRESH_INTERVAL } from '$lib/utils/const';
 	import { formatNumber } from '$lib/utils';
  	import { uiState } from '$lib/store/ui.svelte';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 
-	const { indices, breadth, top_gainers, top_losers, fii_dii } = MARKET_DATA.data;
-
+	let data: TMarketOverviewData = $state(getMarketOverview());
 	let mounted = $state(false);
-	
+	let intervalId: ReturnType<typeof setInterval> | undefined;
+
+	const indices = $derived(data.indices);
+	const breadth = $derived(data.breadth);
+	const top_gainers = $derived(data.top_gainers);
+	const top_losers = $derived(data.top_losers);
+	const fii_dii = $derived(data.fii_dii);
+
 	onMount(() => {
 		mounted = true;
+		intervalId = setInterval(() => {
+			data = getMarketOverview();
+		}, REFRESH_INTERVAL);
+	});
+
+	onDestroy(() => {
+		if (intervalId) clearInterval(intervalId);
 	});
 </script>
 

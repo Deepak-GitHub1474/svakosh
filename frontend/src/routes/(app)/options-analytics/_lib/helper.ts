@@ -18,14 +18,13 @@ export function getExpiryUpdate(exp: string) {
 }
 
 export function calculateOiStats(strikes: TStrikeOIItem[]) {
-	const buildups = [...strikes]
-		.sort((a, b) => b.ce_oi_change + b.pe_oi_change - (a.ce_oi_change + a.pe_oi_change))
-		.slice(0, 5);
-	const unwindings = [...strikes]
-		.sort((a, b) => a.ce_oi_change + b.pe_oi_change - (b.ce_oi_change + a.pe_oi_change))
-		.filter((s) => s.ce_oi_change + s.pe_oi_change < 0)
-		.slice(0, 5);
-	return { buildups, unwindings };
+	const byChange = [...strikes].sort(
+		(a, b) => b.ce_oi_change + b.pe_oi_change - (a.ce_oi_change + a.pe_oi_change)
+	);
+	return {
+		buildups: byChange.slice(0, 5),
+		unwindings: byChange.slice(-5).reverse()
+	};
 }
 
 export function calculateActiveStrikes(strikes: TStrikeOIItem[], expiry: string) {

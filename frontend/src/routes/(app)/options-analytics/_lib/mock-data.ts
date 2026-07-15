@@ -65,3 +65,24 @@ function generateStrikes(center: number, step: number, count: number) {
 	}
 	return strikes;
 }
+
+export function getOptionsAnalytics(sym: string): TOptionsAnalyticsData {
+	const base = MOCK_DATA[sym] || MOCK_DATA.NIFTY;
+	const strikes = base.strikes.map((s) => ({
+		strike: s.strike,
+		ce_oi: Math.round(s.ce_oi * (1 + (Math.random() - 0.5) * 0.02)),
+		ce_oi_change: Math.round(s.ce_oi_change * (1 + (Math.random() - 0.5) * 0.1)),
+		pe_oi: Math.round(s.pe_oi * (1 + (Math.random() - 0.5) * 0.02)),
+		pe_oi_change: Math.round(s.pe_oi_change * (1 + (Math.random() - 0.5) * 0.1))
+	}));
+	const total_ce_oi = strikes.reduce((a, s) => a + s.ce_oi, 0);
+	const total_pe_oi = strikes.reduce((a, s) => a + s.pe_oi, 0);
+	return {
+		...base,
+		spot_price: +(base.spot_price * (1 + (Math.random() - 0.5) * 0.004)).toFixed(2),
+		strikes,
+		total_ce_oi,
+		total_pe_oi,
+		pcr: +(total_pe_oi / total_ce_oi).toFixed(2)
+	};
+}
