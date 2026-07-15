@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.endpoints import health
 from app.api.endpoints.auth.routes import router as auth
+from app.api.endpoints.watchlist.router import router as watchlist
 from app.config import get_settings
 from app.database import (
     connect_mongo_db,
@@ -62,6 +63,7 @@ register_exception_handlers(app)
 
 app.include_router(health.router)
 app.include_router(auth)
+app.include_router(watchlist)
 
 app.add_middleware(
     CORSMiddleware,

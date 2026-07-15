@@ -7,7 +7,7 @@
 	import Watchlist from '$lib/components/watchlist/Watchlist.svelte';
 	import MobileMenu from '$lib/components/MobileMenu.svelte';
 
-	let { children } = $props();
+	let { children, data } = $props();
 
 	$effect(() => {
 		const watchlist = page.url.searchParams.get('watchlist');
@@ -27,11 +27,11 @@
 </script>
 
 <div class="h-screen flex flex-col">
-	<Header />
+	<Header user={data.user} />
 	<div class="flex flex-1 pt-4">
 		<Sidebar />
 		<div class="hidden lg:block">
-			<Watchlist />
+			<Watchlist watchlists={data.watchlists ?? []} />
 		</div>
 		<main
 			class="flex-1 overflow-y-auto transition-all duration-300 ease-in-out
