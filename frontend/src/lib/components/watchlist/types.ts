@@ -8,9 +8,7 @@ export type TWatchlistSortBy = 'name' | 'ltp' | 'change' | 'changePct';
 
 export type TSortDirection = 'asc' | 'desc';
 
-export type TResult<T = unknown> =
-	| { ok: true; data: T }
-	| { ok: false; error: string; status?: number };
+export type { TResult } from '$lib/api';
 
 export type TOpResult =
 	| { ok: true }

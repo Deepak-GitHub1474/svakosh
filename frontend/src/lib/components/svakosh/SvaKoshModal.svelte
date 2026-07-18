@@ -2,6 +2,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { cn } from '$lib/utils';
 	import type { Snippet } from 'svelte';
+	import CloseIcon from '$lib/components/svg-provider/CloseIcon.svelte';
 
 	type ModalPosition = 'center' | 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'dropdown';
 
@@ -15,7 +16,8 @@
 		width = '28rem',
 		position = 'center',
 		showBackdrop = true,
-		backdropClass = ''
+		backdropClass = '',
+		showClose = false
 	}: {
 		isOpen: boolean;
 		onClose?: () => void;
@@ -27,6 +29,7 @@
 		position?: ModalPosition;
 		showBackdrop?: boolean;
 		backdropClass?: string;
+		showClose?: boolean;
 	} = $props();
 
 	function handleClose() {
@@ -74,7 +77,7 @@
 		aria-modal="true"
 		class={cn(
 			'fixed z-[110] flex flex-col',
-			'rounded-lg border border-border-subtle bg-background',
+			'rounded-lg border border-surface-border bg-surface',
 			'shadow-[0_10px_30px_-5px_rgba(0,0,0,0.6)]',
 			positionClasses[position],
 			className
@@ -99,6 +102,16 @@
 							{@render title()}
 						{/if}
 					</div>
+				{/if}
+				{#if showClose}
+					<button
+						type="button"
+						onclick={handleClose}
+						aria-label="Close"
+						class="ml-auto shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+					>
+						<CloseIcon class="h-5 w-5" />
+					</button>
 				{/if}
 			</div>
 		{/if}

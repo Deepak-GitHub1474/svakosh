@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     OTP_HMAC_SECRET: str
     OTP_LOCKOUT_FAIL_THRESHOLD: int = 5
     OTP_LOCKOUT_MINUTES: int = 15
+    OTP_RESEND_COOLDOWN_SECONDS: int = 30
+
+    ENCRYPTION_KEY: str
 
     GOOGLE_CLIENT_ID: str | None = None
     GOOGLE_JWKS_URL: str = "https://www.googleapis.com/oauth2/v3/certs"

@@ -1,25 +1,5 @@
-import type { TResult, TWatchlistEntriesPayload, TWatchlistItem } from './types';
-
-async function apiCall<T>(url: string, method: string, body?: unknown): Promise<TResult<T>> {
-	try {
-		const res = await fetch(url, {
-			method,
-			headers: { 'content-type': 'application/json' },
-			body: body === undefined ? undefined : JSON.stringify(body)
-		});
-		const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-		if (!res.ok || !json?.success) {
-			return {
-				ok: false,
-				error: (json?.message as string | undefined) ?? 'Request failed.',
-				status: res.status
-			};
-		}
-		return { ok: true, data: json.data as T };
-	} catch {
-		return { ok: false, error: 'Network error. Try again.' };
-	}
-}
+import { apiCall } from '$lib/api';
+import type { TWatchlistEntriesPayload, TWatchlistItem } from './types';
 
 export const createWatchlist = (name: string) =>
 	apiCall<TWatchlistItem>('/api/watchlist/create', 'POST', { name });

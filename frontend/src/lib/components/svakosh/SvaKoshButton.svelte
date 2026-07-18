@@ -11,7 +11,7 @@
 		bars: 'M4 10h4v11H4V10zm6-6h4v17h-4V4zm6 9h4v8h-4v-8z'
 	};
 
-	type Variant = 'primary' | 'secondary' | 'bullish' | 'bearish';
+	type Variant = 'primary' | 'secondary' | 'bullish' | 'bearish' | 'solid';
 
 	type Props = {
 		variant: Variant;

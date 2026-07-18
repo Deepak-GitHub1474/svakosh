@@ -72,9 +72,9 @@ OAuthProvider = Annotated[Literal["google"], BeforeValidator(strip_lower)]
 
 
 class Address(BaseModel):
-    city: LowerStr | None = None
-    state: LowerStr | None = None
-    country: LowerStr | None = None
+    city: TrimStr | None = None
+    state: TrimStr | None = None
+    country: TrimStr | None = None
     pincode: TrimStr | None = Field(None, pattern=PINCODE_RE.pattern)
 
 

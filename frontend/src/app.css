@@ -108,6 +108,7 @@
 	html {
 		font-size: 0.875rem;
 		font-weight: 400;
+		color-scheme: dark;
 		background-color: var(--background);
 		color: var(--foreground);
 		font-family: var(--font-sans);
@@ -216,6 +217,15 @@
 		--terminal-bg: var(--primary-subtle);
 		--terminal-border-hover: var(--primary);
 		--terminal-bg-hover: var(--primary-hover);
+	}
+
+	.btn-terminal--solid {
+		--terminal-fg: #08090a;
+		--terminal-border: var(--primary);
+		--terminal-bg: var(--primary);
+		--terminal-border-hover: #e6c54a;
+		--terminal-bg-hover: #e6c54a;
+		font-weight: 500;
 	}
 
 	.btn-terminal--secondary {

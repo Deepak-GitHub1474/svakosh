@@ -1,6 +1,6 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { resolveBackendConfig } from '$lib/config';
-import { ACCESS_COOKIE } from '$lib/auth/cookies';
+import { ACCESS_COOKIE, CSRF_COOKIE } from '$lib/auth/cookies';
 import { accessCookieHeader, tryRefreshTokens } from './auth-refresh';
 
 export async function forwardToBackend(
@@ -16,12 +16,18 @@ export async function forwardToBackend(
 	const body = await event.request.text();
 	const url = `${apiUrl}${backendPath}`;
 
-	const send = () =>
-		event.fetch(url, {
+	const send = () => {
+		const csrf = event.cookies.get(CSRF_COOKIE) ?? '';
+		return event.fetch(url, {
 			method,
-			headers: { 'content-type': 'application/json', cookie: accessCookieHeader(event.cookies) },
+			headers: {
+				'content-type': 'application/json',
+				'x-csrf-token': csrf,
+				cookie: `${accessCookieHeader(event.cookies)}; ${CSRF_COOKIE}=${csrf}`
+			},
 			body: body || undefined
 		});
+	};
 
 	let res = await send();
 	if (res.status === 401 && (await tryRefreshTokens(event.cookies, event.fetch))) {
