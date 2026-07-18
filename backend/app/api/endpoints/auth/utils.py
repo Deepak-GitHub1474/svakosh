@@ -63,6 +63,10 @@ def otp_key(identifier: str) -> str:
     return f"{NS}:OTP:{identifier}"
 
 
+def otp_cooldown_key(identifier: str) -> str:
+    return f"{NS}:OTP_CD:{identifier}"
+
+
 # --------------------------------------------------------------------------
 # Identifier helpers
 # --------------------------------------------------------------------------
@@ -429,8 +433,20 @@ def generate_otp() -> str:
 
 
 async def save_otp(redis: Any, identifier: str, otp: str) -> None:
-    """Set/refresh OTP. Preserves attempts counter across re-sends so refresh can't bypass lockout."""
+    """Set/refresh OTP. Preserves attempts counter across re-sends so refresh can't bypass lockout.
+    Enforces a server-side resend cooldown so re-sends can't be spammed."""
     s = get_settings()
+    cd_key = otp_cooldown_key(identifier)
+    ttl = await redis.ttl(cd_key)
+    if isinstance(ttl, int) and ttl > 0:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "code": "RESEND_COOLDOWN",
+                "message": f"Please wait {ttl}s before requesting another OTP.",
+                "retry_after_seconds": ttl,
+            },
+        )
     key = otp_key(identifier)
     now_ts = int(datetime.now(timezone.utc).timestamp())
     pipe = redis.pipeline(transaction=False)
@@ -440,6 +456,7 @@ async def save_otp(redis: Any, identifier: str, otp: str) -> None:
     })
     pipe.hsetnx(key, "attempts", "0")
     pipe.expire(key, s.OTP_LOCKOUT_MINUTES * 60)
+    pipe.set(cd_key, "1", ex=s.OTP_RESEND_COOLDOWN_SECONDS)
     await pipe.execute()
 
 
@@ -527,6 +544,11 @@ async def send_otp_email(email: str, otp: str) -> None:
 async def send_otp_mobile(mobile: str, otp: str) -> None:
     # TODO: wire later. Dev: print so it always shows in uvicorn stdout.
     print(f"[DEV] otp.mobile to={mobile} otp={otp}", flush=True)
+
+
+async def send_otp_whatsapp(whatsapp_number: str, otp: str) -> None:
+    # TODO: wire later. Dev: print so it always shows in uvicorn stdout.
+    print(f"[DEV] otp.whatsapp to={whatsapp_number} otp={otp}", flush=True)
 
 
 # --------------------------------------------------------------------------

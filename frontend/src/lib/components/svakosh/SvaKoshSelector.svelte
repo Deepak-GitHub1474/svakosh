@@ -32,6 +32,8 @@
 	}>();
 
 	let searchQuery = $state('');
+	let containerEl = $state<HTMLDivElement | undefined>();
+	let dropUp = $state(false);
 
 	const filteredOptions = $derived.by(() => {
 		if (!searchable || !searchQuery) return options;
@@ -43,7 +45,15 @@
 
 	function toggle() {
 		isOpen = !isOpen;
-		if (isOpen) searchQuery = '';
+		if (isOpen) {
+			searchQuery = '';
+			if (containerEl && typeof window !== 'undefined') {
+				const rect = containerEl.getBoundingClientRect();
+				const below = window.innerHeight - rect.bottom;
+				const needed = searchable ? 320 : 260;
+				dropUp = below < needed && rect.top > below;
+			}
+		}
 	}
 
 	function handleSelect(val: any) {
@@ -72,7 +82,7 @@
 	});
 </script>
 
-<div class={cn('relative svakosh-selector', className)}>
+<div bind:this={containerEl} class={cn('relative svakosh-selector', className)}>
 	<button
 		{id}
 		type="button"
@@ -97,8 +107,11 @@
 
 	{#if isOpen}
 		<div
-			class="glass-panel bg-surface absolute left-0 top-full z-[100] mt-2 w-full overflow-hidden rounded-xl border border-primary/20 shadow-2xl"
-			transition:fly={{ y: -10, duration: 200 }}
+			class={cn(
+				'glass-panel bg-surface absolute left-0 z-[100] w-full overflow-hidden rounded-xl border border-primary/20 shadow-2xl',
+				dropUp ? 'bottom-full mb-2' : 'top-full mt-2'
+			)}
+			transition:fly={{ y: dropUp ? 10 : -10, duration: 200 }}
 		>
 			{#if searchable}
 				<div class="border-b border-border-subtle">
@@ -112,7 +125,7 @@
 			{/if}
 
 			<div class="max-h-60 min-h-[100px] overflow-y-auto">
-				{#each filteredOptions as option}
+				{#each filteredOptions as option (option.value)}
 					<button
 						type="button"
 						onclick={() => handleSelect(option.value)}

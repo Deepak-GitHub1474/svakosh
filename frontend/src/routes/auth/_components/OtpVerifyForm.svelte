@@ -6,7 +6,7 @@
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import type { TOtpVerifyingForm } from '../_lib/types';
 
-	const RESEND_SECONDS = 60;
+	const RESEND_SECONDS = 30;
 	const OTP_LENGTH = 6;
 
 	let {
@@ -94,10 +94,10 @@
 
 	<SvaKoshButton
 		type="submit"
-		variant="primary"
+		variant="solid"
 		disabled={submitting || !isValidOtp}
 		label={submitting ? 'Verifying…' : ctaLabel}
-		class="w-full py-3.5 text-sm font-medium [--terminal-bg:var(--primary)] [--terminal-border:var(--primary)] [--terminal-bg-hover:#e6c54a] [--terminal-border-hover:#e6c54a] [--terminal-fg:#08090a]"
+		class="w-full py-3.5 text-sm"
 	>
 		{#snippet icon()}
 			<span class="material-symbols-outlined icon-size">arrow_forward</span>

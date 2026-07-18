@@ -1,29 +1,18 @@
 import { fail, redirect, type Actions, type ServerLoad } from '@sveltejs/kit';
 import { resolveBackendConfig } from '$lib/config';
-import {
-	ACCESS_COOKIE,
-	authForwardHeaders,
-	forwardSetCookies,
-	safeRedirectPath
-} from '$lib/auth/cookies';
+import { authForwardHeaders, forwardSetCookies, safeRedirectPath } from '$lib/auth/cookies';
+import { backendGet } from '$lib/server/backend-fetch';
 
 export const load: ServerLoad = async ({ cookies, fetch, url }) => {
-	const token = cookies.get(ACCESS_COOKIE);
-	if (!token) {
+	const res = await backendGet<{ email_verified?: boolean; mobile_number_verified?: boolean }>(
+		cookies,
+		fetch,
+		'/auth/me'
+	);
+	if (!res.ok || !res.data) {
 		throw redirect(303, '/auth/signin');
 	}
-	const { apiUrl } = resolveBackendConfig();
-	const res = await fetch(`${apiUrl}/auth/me`, {
-		headers: { cookie: `${ACCESS_COOKIE}=${token}` }
-	});
-	if (res.status === 401) {
-		throw redirect(303, '/auth/signin');
-	}
-	const json = await res.json().catch(() => ({}));
-	const user = json?.data;
-	if (!user) {
-		throw redirect(303, '/auth/signin');
-	}
+	const user = res.data;
 	const redirectTo = safeRedirectPath(url.searchParams.get('redirect'));
 	if (user.email_verified && user.mobile_number_verified) {
 		throw redirect(303, redirectTo);

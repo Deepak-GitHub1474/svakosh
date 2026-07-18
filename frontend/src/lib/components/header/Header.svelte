@@ -9,6 +9,7 @@
 	import MenuIcon from '../svg-provider/MenuIcon.svelte';
 	import SvaKoshSwitch from '../svakosh/SvaKoshSwitch.svelte';
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
+	import SvaKoshAvatar from '$lib/components/svakosh/SvaKoshAvatar.svelte';
 
 	type TUser = {
 		email?: string | null;
@@ -136,11 +137,8 @@
 	</div>
 
 	<div class="flex items-center gap-6 flex-1 justify-end">
-		<button 
-			onclick={toggleProfileModal}
-			class="hidden lg:inline-flex items-center text-muted-foreground hover:text-primary border border-primary/20 rounded-full p-1 transition-colors"
-		>
-			<span class="material-symbols-outlined icon-size">person</span>
+		<button onclick={toggleProfileModal} aria-label="Profile" class="hidden transition-colors lg:inline-flex">
+			<SvaKoshAvatar url={avatarUrl} name={displayName} class="h-9 w-9 border border-primary/20" />
 		</button>
 
 		<button 
@@ -160,11 +158,7 @@
     width="14rem"
 >
     {#snippet icon()}
-        {#if avatarUrl}
-            <img src={avatarUrl} alt={displayName} class="w-full h-full object-cover rounded-full" />
-        {:else}
-            <span class="material-symbols-outlined icon-size">person</span>
-        {/if}
+        <SvaKoshAvatar url={avatarUrl} name={displayName} class="h-full w-full border border-primary/20" />
     {/snippet}
 
     {#snippet title()}

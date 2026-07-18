@@ -33,3 +33,14 @@ export function formatLakh(v: number): string {
 export function roundLakh(v: number): number {
 	return Math.round((v + Number.EPSILON) * 100) / 100;
 }
+
+export function getInitials(name: string | null | undefined): string {
+	return (name ?? '')
+		.trim()
+		.split(/\s+/)
+		.map((p) => p[0])
+		.filter(Boolean)
+		.slice(0, 2)
+		.join('')
+		.toUpperCase();
+}

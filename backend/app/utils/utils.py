@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+import base64
+import binascii
+import hashlib
 import hmac
+import os
 import time
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Annotated, Callable
 
 import jwt
+from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from fastapi import Depends, HTTPException, Request, status
 
 from app.api.endpoints.auth.utils import (
@@ -29,6 +35,23 @@ def now_utc() -> datetime:
 
 def now_epoch() -> int:
     return int(time.time())
+
+
+def date_to_ddmmyyyy(value: date) -> str:
+    return value.strftime("%d-%m-%Y")
+
+
+def dob_to_iso(value: object) -> str | None:
+    if isinstance(value, datetime):
+        return value.date().isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, str) and value:
+        try:
+            return datetime.strptime(value, "%d-%m-%Y").date().isoformat()
+        except ValueError:
+            return value[:10]
+    return None
 
 
 # --------------------------------------------------------------------------
@@ -128,3 +151,46 @@ def rate_limit(max_calls: int, window_seconds: int, scope: str | None = None) ->
             )
 
     return dependency
+
+
+# --------------------------------------------------------------------------
+# Encryption
+# --------------------------------------------------------------------------
+
+_NONCE_BYTES = 12
+
+
+class DecryptionError(Exception):
+    pass
+
+
+def _encryption_key() -> bytes:
+    return hashlib.sha256(get_settings().ENCRYPTION_KEY.encode()).digest()
+
+
+def encrypt(plaintext: str) -> str:
+    aesgcm = AESGCM(_encryption_key())
+    nonce = os.urandom(_NONCE_BYTES)
+    ct = aesgcm.encrypt(nonce, plaintext.encode(), None)
+    return base64.b64encode(nonce + ct).decode()
+
+
+def decrypt(ciphertext: str) -> str:
+    aesgcm = AESGCM(_encryption_key())
+    try:
+        data = base64.b64decode(ciphertext.encode())
+    except (binascii.Error, ValueError) as exc:
+        raise DecryptionError("Ciphertext is not valid base64") from exc
+    if len(data) <= _NONCE_BYTES:
+        raise DecryptionError("Ciphertext too short to contain nonce")
+    nonce, ct = data[:_NONCE_BYTES], data[_NONCE_BYTES:]
+    try:
+        return aesgcm.decrypt(nonce, ct, None).decode()
+    except InvalidTag as exc:
+        raise DecryptionError("ENCRYPTION_KEY mismatch or corrupt ciphertext") from exc
+
+
+def mask_pan(pan: str) -> str:
+    if len(pan) != 10:
+        return pan
+    return pan[:3] + "XXXXX" + pan[8:]

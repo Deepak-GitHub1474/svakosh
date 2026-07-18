@@ -78,10 +78,10 @@
 
 	<SvaKoshButton
 		type="submit"
-		variant="primary"
+		variant="solid"
 		disabled={submitting || !isValid}
 		label={submitting ? 'Sending…' : ctaLabel}
-		class="w-full py-3.5 text-sm font-medium [--terminal-bg:var(--primary)] [--terminal-border:var(--primary)] [--terminal-bg-hover:#e6c54a] [--terminal-border-hover:#e6c54a] [--terminal-fg:#08090a]"
+		class="w-full py-3.5 text-sm"
 	>
 		{#snippet icon()}
 			<span class="material-symbols-outlined icon-size">arrow_forward</span>
