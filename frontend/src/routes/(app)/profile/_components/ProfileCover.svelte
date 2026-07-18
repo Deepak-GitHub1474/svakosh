@@ -1,6 +1,6 @@
 <script lang="ts">
 	import cover from '../_assets/profilecover.png';
-	import verifiedBadge from '../_assets/verifiedbadge.png';
+	import VerifiedBadge from '$lib/components/svg-provider/VeifiedBadge.svelte';
 	import SvaKoshBadge from '$lib/components/svakosh/SvaKoshBadge.svelte';
 	import SvaKoshAvatar from '$lib/components/svakosh/SvaKoshAvatar.svelte';
 	import { statusVariant } from '../_lib/helper';
@@ -88,10 +88,10 @@
 			<div class="mt-4">
 				<SvaKoshBadge
 					variant={statusVariant(status)}
-					class="gap-1 rounded-full px-2.5 py-1 text-xs sm:text-sm"
+					class="gap-2 rounded-full px-2.5 py-1 text-xs sm:text-sm"
 				>
 					{status}
-					<img src={verifiedBadge} alt="Verified" class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+					<VerifiedBadge class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
 				</SvaKoshBadge>
 			</div>
 		</div>
