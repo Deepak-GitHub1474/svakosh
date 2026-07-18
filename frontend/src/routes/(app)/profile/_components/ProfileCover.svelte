@@ -2,6 +2,7 @@
 	import cover from '../_assets/profilecover.png';
 	import verifiedBadge from '../_assets/verifiedbadge.png';
 	import SvaKoshBadge from '$lib/components/svakosh/SvaKoshBadge.svelte';
+	import SvaKoshAvatar from '$lib/components/svakosh/SvaKoshAvatar.svelte';
 	import { statusVariant } from '../_lib/helper';
 	import type { TProfileDetails } from '../_lib/types';
 
@@ -9,15 +10,6 @@
 
 	const displayName = $derived(details?.full_name?.trim() || details?.username?.trim() || 'Unknown');
 	const avatarUrl = $derived(details?.avatar?.trim() || '');
-	const initials = $derived(
-		displayName
-			.split(' ')
-			.map((p) => p[0])
-			.filter(Boolean)
-			.slice(0, 2)
-			.join('')
-			.toUpperCase()
-	);
 </script>
 
 <section class="sticky top-0 z-20 -mt-10 -mr-4 overflow-hidden">
@@ -39,15 +31,7 @@
 			<div
 				class="border-primary relative h-20 w-20 overflow-hidden rounded-full border sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-32 lg:w-32"
 			>
-				{#if avatarUrl}
-					<img src={avatarUrl} alt={displayName} class="h-full w-full object-cover" />
-				{:else}
-					<div
-						class="bg-primary/15 text-primary flex h-full w-full items-center justify-center text-3xl"
-					>
-						{initials}
-					</div>
-				{/if}
+				<SvaKoshAvatar url={avatarUrl} name={displayName} class="h-full w-full text-3xl" />
 				<div
 					class="pointer-events-none absolute inset-0 rounded-full"
 					style="background: radial-gradient(55% 38% at 50% 0%, rgba(212,175,55,0.16), transparent 72%);"
