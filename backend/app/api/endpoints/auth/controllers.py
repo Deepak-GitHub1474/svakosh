@@ -366,6 +366,19 @@ async def logout(
 # /me
 # --------------------------------------------------------------------------
 
+_ME_PROJECTION = {
+    "email": 1,
+    "mobile_number": 1,
+    "email_verified": 1,
+    "mobile_number_verified": 1,
+    "status": 1,
+    "role": 1,
+    "profile.full_name": 1,
+    "profile.username": 1,
+    "profile.avatar": 1,
+}
+
+
 async def get_me(
     claims: AccessClaims, *, mongo: AsyncIOMotorDatabase,
 ) -> dict[str, Any]:
@@ -373,12 +386,25 @@ async def get_me(
         raise HTTPException(status_code=404, detail="User not found.")
     user = await mongo["users"].find_one(
         {"_id": ObjectId(claims.user_id)},
-        projection={"password": 0},
+        projection=_ME_PROJECTION,
     )
     if user is None:
         raise HTTPException(status_code=404, detail="User not found.")
-    user["_id"] = str(user["_id"])
-    return user
+    p = user.get("profile") or {}
+    return {
+        "id": str(user["_id"]),
+        "email": user.get("email"),
+        "mobile_number": user.get("mobile_number"),
+        "email_verified": bool(user.get("email_verified", False)),
+        "mobile_number_verified": bool(user.get("mobile_number_verified", False)),
+        "status": user.get("status"),
+        "role": user.get("role"),
+        "profile": {
+            "full_name": p.get("full_name"),
+            "username": p.get("username"),
+            "avatar": p.get("avatar"),
+        },
+    }
 
 
 # --------------------------------------------------------------------------
