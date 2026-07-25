@@ -3,6 +3,10 @@
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 </script>
 
+<svelte:head>
+	<title>Settings | SvaKosh</title>
+</svelte:head>
+
 <div class="mx-auto w-full max-w-3xl px-4 py-8" in:fade={{ duration: 200 }}>
 	<SvaKoshCard>
 		<div class="flex flex-col items-center justify-center gap-4 py-16 text-center">
