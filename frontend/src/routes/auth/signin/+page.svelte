@@ -19,6 +19,9 @@
 	const formIdentifier = $derived(String(form?.identifier ?? ''));
 	const redirectTo = $derived(String(form?.redirect ?? data?.redirect ?? ''));
 	const isEmail = $derived(formIdentifier.includes('@'));
+	const isGoogleError = $derived(form?.source === 'google');
+	const otpMessage = $derived(isGoogleError ? undefined : form?.message);
+	const googleMessage = $derived(isGoogleError ? String(form?.message ?? '') : '');
 	const illustrations = [
 		{ src: bull, alt: 'Bull' },
 		{ src: globe, alt: 'Globe' },
@@ -63,7 +66,7 @@
 							inputId="signin-identifier"
 							ctaLabel="Continue"
 							{redirectTo}
-							message={form?.message}
+							message={otpMessage}
 						/>
 
 						<div class="my-5 flex items-center gap-3">
@@ -72,7 +75,7 @@
 							<span class="h-px flex-1 bg-border-subtle"></span>
 						</div>
 
-						<OAuthButtons />
+						<OAuthButtons {redirectTo} serverMessage={googleMessage} />
 					{:else}
 						<OtpVerifyForm
 							verifyAction="?/verifyOtp"

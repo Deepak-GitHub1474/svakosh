@@ -67,5 +67,32 @@ export const actions: Actions = {
 
 		forwardSetCookies(res, cookies);
 		throw redirect(303, safeRedirectPath(redirectTo));
+	},
+
+	googleAuth: async ({ request, fetch, cookies }) => {
+		const data = await request.formData();
+		const idToken = String(data.get('id_token') ?? '').trim();
+		const redirectTo = String(data.get('redirect') ?? '');
+		if (!idToken) {
+			return fail(400, { source: 'google', message: 'Google sign-in failed. Try again.', redirect: redirectTo });
+		}
+
+		const { apiUrl } = resolveBackendConfig();
+		const res = await fetch(`${apiUrl}/auth/google`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ id_token: idToken })
+		});
+		const json = await res.json().catch(() => ({}));
+		if (!res.ok || !json?.success) {
+			return fail(res.status || 400, {
+				source: 'google',
+				message: json?.message ?? 'Google sign-in failed.',
+				redirect: redirectTo
+			});
+		}
+
+		forwardSetCookies(res, cookies);
+		throw redirect(303, safeRedirectPath(redirectTo));
 	}
 };
