@@ -29,6 +29,7 @@ from app.api.endpoints.auth.utils import (
     create_access_token,
     detect_identifier,
     generate_otp,
+    generate_unique_username,
     get_client_ip,
     get_client_ua,
     get_otp_status,
@@ -233,6 +234,16 @@ async def add_channel_verify(
     mobile_ok = ident_type == "mobile" or bool(user.get("mobile_number_verified"))
     if email_ok and mobile_ok and user.get("status") != "active":
         set_fields["status"] = "active"
+
+    if ident_type == "email":
+        profile = user.get("profile") or {}
+        if not profile.get("username"):
+            username = await generate_unique_username(mongo, identifier)
+            if username:
+                if user.get("profile"):
+                    set_fields["profile.username"] = username
+                else:
+                    set_fields["profile"] = {"username": username}
 
     await users.update_one({"_id": user_id}, {"$set": set_fields})
     user = await users.find_one({"_id": user_id})
