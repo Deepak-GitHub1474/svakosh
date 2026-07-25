@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import { env } from '$env/dynamic/public';
+	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
 
 	type Props = {
 		redirectTo?: string;
@@ -30,17 +32,25 @@
 	let formRef: HTMLFormElement | null = $state(null);
 	let overlayEl: HTMLDivElement | null = $state(null);
 	let idToken = $state('');
+	let loading = $state(false);
 
 	async function handleCredential(response: { credential?: string }) {
+		if (loading) return;
 		if (!response?.credential) {
 			error = 'Google sign-in failed. Try again.';
 			return;
 		}
 		error = '';
+		loading = true;
 		idToken = response.credential;
 		await tick();
 		formRef?.requestSubmit();
 	}
+
+	const onGoogleSubmit: SubmitFunction = () => async ({ update }) => {
+		await update();
+		loading = false;
+	};
 
 	function initGoogle() {
 		const w = window as WindowWithGoogle;
@@ -93,7 +103,13 @@
 	});
 </script>
 
-<form bind:this={formRef} method="POST" {action} use:enhance class="hidden">
+<form
+	bind:this={formRef}
+	method="POST"
+	{action}
+	use:enhance={onGoogleSubmit}
+	class="hidden"
+>
 	<input type="hidden" name="id_token" bind:value={idToken} />
 	<input type="hidden" name="redirect" value={redirectTo} />
 </form>
@@ -128,3 +144,7 @@
 		></div>
 	{/if}
 </div>
+
+{#if loading}
+	<SvaKoshLoader message="Signing you in…" />
+{/if}
