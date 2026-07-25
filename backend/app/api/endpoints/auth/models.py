@@ -18,7 +18,7 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 PAN_RE = re.compile(r"^[A-Z]{5}[0-9]{4}[A-Z]$")
 E164_RE = re.compile(r"^\+[1-9]\d{1,14}$")
 PINCODE_RE = re.compile(r"^[1-9]\d{5}$")
-USERNAME_RE = re.compile(r"^[a-z0-9_]{2,10}$")
+USERNAME_RE = re.compile(r"^[a-z0-9_]{2,30}$")
 REFERRAL_RE = re.compile(r"^[A-Z0-9]{6,12}$")
 MOBILE_RE = re.compile(r"^\d{10}$")
 
@@ -80,7 +80,7 @@ class Address(BaseModel):
 
 class Profile(BaseModel):
     full_name: TrimStr = Field(..., min_length=2, max_length=40)
-    username: LowerStr = Field(..., min_length=2, max_length=10, pattern=USERNAME_RE.pattern)
+    username: LowerStr = Field(..., min_length=2, max_length=30, pattern=USERNAME_RE.pattern)
     avatar: TrimStr | None = None
     gender: Gender | None = None
     dob: date | None = None
