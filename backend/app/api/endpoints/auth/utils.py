@@ -182,11 +182,10 @@ async def verify_google_id_token(token: str) -> dict[str, Any]:
     issuers = [i.strip() for i in s.GOOGLE_ISSUERS.split(",") if i.strip()]
     try:
         signing_key = get_google_jwks_client().get_signing_key_from_jwt(token)
-        alg = jwt.get_unverified_header(token).get("alg", "RS256")
         claims = jwt.decode(
             token,
             signing_key.key,
-            algorithms=[alg],
+            algorithms=["RS256"],
             audience=s.GOOGLE_CLIENT_ID,
             options={"require": ["sub", "iss", "aud", "exp"]},
         )
@@ -725,6 +724,7 @@ async def build_new_user_doc(
     ip: str | None,
     ua: str,
     mongo: AsyncIOMotorDatabase,
+    profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     now = datetime.now(timezone.utc)
     referral_code = await generate_unique_referral_code(mongo)
@@ -736,7 +736,7 @@ async def build_new_user_doc(
         "email_verified": email_verified,
         "mobile_number_verified": mobile_verified,
         "twofa_enabled": False,
-        "profile": None,
+        "profile": profile,
         "referral_code": referral_code,
         "referred_by": referred_by,
         "status": "pending",
