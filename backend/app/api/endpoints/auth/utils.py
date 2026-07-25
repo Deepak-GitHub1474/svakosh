@@ -26,6 +26,10 @@ REFERRAL_LENGTH = 6
 REFERRAL_ALPHABET = string.ascii_uppercase + string.digits
 REFERRAL_MAX_TRIES = 50
 
+USERNAME_MIN_LENGTH = 2
+USERNAME_MAX_LENGTH = 30
+USERNAME_MAX_TRIES = 10
+
 
 # --------------------------------------------------------------------------
 # Redis key builders
@@ -157,6 +161,34 @@ async def generate_unique_referral_code(mongo: AsyncIOMotorDatabase) -> str:
     raise RuntimeError("Failed to generate unique referral code after retries.")
 
 
+def username_base_from_email(email: str) -> str:
+    local = email.split("@", 1)[0].lower()
+    cleaned = "".join(ch for ch in local if ch.isalnum() or ch == "_") or "user"
+    if len(cleaned) < USERNAME_MIN_LENGTH:
+        cleaned = (cleaned + "user")
+    return cleaned[:USERNAME_MAX_LENGTH]
+
+
+async def generate_unique_username(
+    mongo: AsyncIOMotorDatabase, email: str | None,
+) -> str | None:
+    if not email or "@" not in email:
+        return None
+    users = mongo["users"]
+    base = username_base_from_email(email)
+    if await users.find_one({"profile.username": base}, projection={"_id": 1}) is None:
+        return base
+
+    stem = base[: USERNAME_MAX_LENGTH - 4]
+    for _ in range(USERNAME_MAX_TRIES):
+        candidate = f"{stem}{secrets.token_hex(2)}"
+        if await users.find_one({"profile.username": candidate}, projection={"_id": 1}) is None:
+            return candidate
+
+    logger.error("username exhausted after %d tries for base=%s", USERNAME_MAX_TRIES, base)
+    return f"{base[:2]}{secrets.token_hex(4)}"
+
+
 # --------------------------------------------------------------------------
 # Google OAuth (ID-token verification)
 # --------------------------------------------------------------------------
@@ -182,11 +214,10 @@ async def verify_google_id_token(token: str) -> dict[str, Any]:
     issuers = [i.strip() for i in s.GOOGLE_ISSUERS.split(",") if i.strip()]
     try:
         signing_key = get_google_jwks_client().get_signing_key_from_jwt(token)
-        alg = jwt.get_unverified_header(token).get("alg", "RS256")
         claims = jwt.decode(
             token,
             signing_key.key,
-            algorithms=[alg],
+            algorithms=["RS256"],
             audience=s.GOOGLE_CLIENT_ID,
             options={"require": ["sub", "iss", "aud", "exp"]},
         )
@@ -725,9 +756,15 @@ async def build_new_user_doc(
     ip: str | None,
     ua: str,
     mongo: AsyncIOMotorDatabase,
+    profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     now = datetime.now(timezone.utc)
     referral_code = await generate_unique_referral_code(mongo)
+    profile_doc = dict(profile) if profile else {}
+    if email and not profile_doc.get("username"):
+        username = await generate_unique_username(mongo, email)
+        if username:
+            profile_doc["username"] = username
     return {
         "role": "user",
         "email": email,
@@ -736,7 +773,7 @@ async def build_new_user_doc(
         "email_verified": email_verified,
         "mobile_number_verified": mobile_verified,
         "twofa_enabled": False,
-        "profile": None,
+        "profile": profile_doc or None,
         "referral_code": referral_code,
         "referred_by": referred_by,
         "status": "pending",

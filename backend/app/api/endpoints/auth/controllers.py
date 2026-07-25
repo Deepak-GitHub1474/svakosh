@@ -29,6 +29,7 @@ from app.api.endpoints.auth.utils import (
     create_access_token,
     detect_identifier,
     generate_otp,
+    generate_unique_username,
     get_client_ip,
     get_client_ua,
     get_otp_status,
@@ -227,10 +228,24 @@ async def add_channel_verify(
 
     field = "email" if ident_type == "email" else "mobile_number"
     verified_field = "email_verified" if ident_type == "email" else "mobile_number_verified"
-    await users.update_one(
-        {"_id": user_id},
-        {"$set": {field: identifier, verified_field: True, "updated_at": now_utc()}},
-    )
+    set_fields: dict[str, Any] = {field: identifier, verified_field: True, "updated_at": now_utc()}
+
+    email_ok = ident_type == "email" or bool(user.get("email_verified"))
+    mobile_ok = ident_type == "mobile" or bool(user.get("mobile_number_verified"))
+    if email_ok and mobile_ok and user.get("status") != "active":
+        set_fields["status"] = "active"
+
+    if ident_type == "email":
+        profile = user.get("profile") or {}
+        if not profile.get("username"):
+            username = await generate_unique_username(mongo, identifier)
+            if username:
+                if user.get("profile"):
+                    set_fields["profile.username"] = username
+                else:
+                    set_fields["profile"] = {"username": username}
+
+    await users.update_one({"_id": user_id}, {"$set": set_fields})
     user = await users.find_one({"_id": user_id})
     if user is None:
         raise HTTPException(status_code=500, detail="User lookup failed after channel add.")
@@ -282,6 +297,11 @@ async def google_auth(
 
     is_new_user = user is None
     if is_new_user:
+        profile_seed: dict[str, Any] = {}
+        if claims.get("name"):
+            profile_seed["full_name"] = claims["name"]
+        if claims.get("picture"):
+            profile_seed["avatar"] = claims["picture"]
         doc = await build_new_user_doc(
             email=email,
             mobile=None,
@@ -297,6 +317,7 @@ async def google_auth(
             ip=ip,
             ua=ua,
             mongo=mongo,
+            profile=profile_seed or None,
         )
         result = await users.insert_one(doc)
         user = await users.find_one({"_id": result.inserted_id})
