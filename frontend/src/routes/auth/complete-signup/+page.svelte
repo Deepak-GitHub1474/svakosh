@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { BRAND } from '$lib/brand';
 	import { APP_FEATURES } from '$lib/utils';
+	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import SvaKoshLogo from '../_components/SvaKoshLogo.svelte';
@@ -46,6 +47,17 @@
 		<div class="flex w-full items-start justify-center p-4 lg:h-full lg:items-center lg:pb-32">
 			<div class="w-full max-w-[26rem]">
 				<div class="flex flex-col">
+					<div class="flex justify-end">
+						<form method="POST" action="/auth/logout" use:enhance>
+							<button
+								type="submit"
+								class="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+							>
+								<span class="material-symbols-outlined" style="font-size: 0.875rem;">logout</span>
+								<span>Logout</span>
+							</button>
+						</form>
+					</div>
 					<SvaKoshLogo class="self-start" />
 					<div class="mt-8 hidden lg:block">
 						<h1 class="text-2xl font-semibold leading-tight text-foreground">
