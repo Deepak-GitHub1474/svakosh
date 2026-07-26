@@ -7,7 +7,7 @@
 </script>
 
 <div
-	class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[#101216]/80 backdrop-blur-sm"
+	class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm"
 	role="status"
 	aria-live="polite"
 	aria-busy="true"

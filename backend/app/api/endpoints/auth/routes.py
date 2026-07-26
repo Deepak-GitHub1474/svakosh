@@ -6,6 +6,8 @@ from app.api.endpoints.auth import controllers
 from app.api.endpoints.auth.models import (
     AuthRequest,
     GoogleAuthRequest,
+    PasskeyAuthCompleteRequest,
+    PasskeyRegisterCompleteRequest,
     VerifyOtpRequest,
 )
 from app.database import MongoDatabase, RedisClient
@@ -106,6 +108,97 @@ async def add_channel_verify(
         body, claims, mongo=mongo, redis=redis, response=response,
     )
     return ok_response("Channel verified.", data=data)
+
+
+# --------------------------------------------------------------------------
+# Passkeys (WebAuthn)
+# --------------------------------------------------------------------------
+
+@router.post(
+    "/passkey/register/begin",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(rate_limit(10, 60)), Depends(csrf_protect)],
+)
+async def passkey_register_begin(
+    claims: CurrentClaims,
+    mongo: MongoDatabase,
+    redis: RedisClient,
+):
+    data = await controllers.passkey_register_begin(claims, mongo=mongo, redis=redis)
+    return ok_response("Passkey registration started.", data=data)
+
+
+@router.post(
+    "/passkey/register/complete",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(rate_limit(10, 60)), Depends(csrf_protect)],
+)
+async def passkey_register_complete(
+    body: PasskeyRegisterCompleteRequest,
+    claims: CurrentClaims,
+    mongo: MongoDatabase,
+    redis: RedisClient,
+):
+    data = await controllers.passkey_register_complete(body, claims, mongo=mongo, redis=redis)
+    return ok_response("Passkey added.", data=data)
+
+
+@router.post(
+    "/passkey/auth/begin",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(rate_limit(10, 60))],
+)
+async def passkey_auth_begin(redis: RedisClient):
+    data = await controllers.passkey_auth_begin(redis=redis)
+    return ok_response("Passkey login started.", data=data)
+
+
+@router.post(
+    "/passkey/auth/complete",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(rate_limit(10, 60))],
+)
+async def passkey_auth_complete(
+    body: PasskeyAuthCompleteRequest,
+    request: Request,
+    response: Response,
+    mongo: MongoDatabase,
+    redis: RedisClient,
+):
+    data = await controllers.passkey_auth_complete(
+        body, mongo=mongo, redis=redis, request=request, response=response,
+    )
+    return ok_response("Login success.", data=data)
+
+
+@router.get("/passkey/list", status_code=status.HTTP_200_OK)
+async def passkey_list(claims: CurrentClaims, mongo: MongoDatabase):
+    data = await controllers.passkey_list(claims, mongo=mongo)
+    return ok_response("Passkeys fetched.", data=data)
+
+
+@router.post(
+    "/passkey/remove-all",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(csrf_protect)],
+)
+async def passkey_remove_all(claims: CurrentClaims, mongo: MongoDatabase):
+    data = await controllers.passkey_remove_all(claims, mongo=mongo)
+    return ok_response("All passkeys removed.", data=data)
+
+
+@router.delete(
+    "/passkey/{credential_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(csrf_protect)],
+)
+async def passkey_remove(
+    credential_id: str,
+    claims: CurrentClaims,
+    mongo: MongoDatabase,
+):
+    data = await controllers.passkey_remove(claims, credential_id, mongo=mongo)
+    return ok_response("Passkey removed.", data=data)
 
 
 # --------------------------------------------------------------------------
