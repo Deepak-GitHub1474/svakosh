@@ -2,6 +2,7 @@
 	import '$src/app.css';
 	import { BRAND } from '$lib/brand';
 	import favicon from '$lib/assets/svakosh/favicon.svg';
+	import SvaKoshToaster from '$lib/components/svakosh/SvaKoshToaster.svelte';
 
 	let { children } = $props();
 </script>
@@ -16,3 +17,5 @@
 </svelte:head>
 
 {@render children()}
+
+<SvaKoshToaster />
