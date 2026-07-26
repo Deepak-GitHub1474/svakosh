@@ -18,6 +18,7 @@
 			id: {
 				initialize: (config: Record<string, unknown>) => void;
 				renderButton: (el: HTMLElement, options: Record<string, unknown>) => void;
+				prompt: () => void;
 			};
 		};
 	};
@@ -71,6 +72,11 @@
 			logo_alignment: 'center',
 			width: 200
 		});
+		try {
+			w.google.accounts.id.prompt();
+		} catch {
+			error = '';
+		}
 	}
 
 	function loadGsi() {
