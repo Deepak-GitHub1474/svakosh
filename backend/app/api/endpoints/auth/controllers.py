@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 import logging
+import secrets
 from typing import Any
 
 from bson import ObjectId
 from fastapi import HTTPException, Request, Response
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from redis.asyncio import Redis
+from webauthn.helpers.exceptions import WebAuthnException
 
 from app.api.endpoints.auth.models import (
     AuthRequest,
     GoogleAuthRequest,
+    PasskeyAuthCompleteRequest,
+    PasskeyRegisterCompleteRequest,
     VerifyOtpRequest,
 )
 from app.api.endpoints.auth.utils import (
@@ -52,11 +56,18 @@ from app.api.endpoints.auth.utils import (
     token_payload,
     user_sessions_key,
     verify_google_id_token,
+    build_passkey_authentication_options,
+    build_passkey_registration_options,
+    passkey_auth_challenge_key,
+    passkey_reg_challenge_key,
+    verify_passkey_authentication,
+    verify_passkey_registration,
 )
 from app.utils.utils import now_utc
 
 logger = logging.getLogger("svakosh.auth.controller")
 
+PASSKEY_CHALLENGE_TTL_SECONDS = 120
 
 # --------------------------------------------------------------------------
 # Unified OTP send / verify  (signin or signup)
@@ -338,6 +349,195 @@ async def google_auth(
         "is_new_user": is_new_user,
         "tokens": token_payload(access),
     }
+
+
+# --------------------------------------------------------------------------
+# Passkeys (WebAuthn)
+# --------------------------------------------------------------------------
+
+def _passkey_credentials(user: dict[str, Any]) -> list[dict[str, Any]]:
+    return (user.get("auth") or {}).get("passkey_credentials") or []
+
+
+async def passkey_register_begin(
+    claims: Any, *, mongo: AsyncIOMotorDatabase, redis: Redis,
+) -> dict[str, Any]:
+    users = mongo["users"]
+    user = await users.find_one({"_id": ObjectId(claims.user_id)})
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found.")
+    if is_user_blocked(user):
+        raise HTTPException(status_code=403, detail=build_blocked_detail())
+
+    user_name = user.get("email") or user.get("mobile_number") or claims.user_id
+    display_name = (user.get("profile") or {}).get("full_name") or user_name
+    options, challenge = build_passkey_registration_options(
+        claims.user_id, user_name, display_name, _passkey_credentials(user),
+    )
+    await redis.set(
+        passkey_reg_challenge_key(claims.user_id),
+        challenge,
+        ex=PASSKEY_CHALLENGE_TTL_SECONDS,
+    )
+    return options
+
+
+async def passkey_register_complete(
+    body: PasskeyRegisterCompleteRequest, claims: Any, *,
+    mongo: AsyncIOMotorDatabase, redis: Redis,
+) -> dict[str, Any]:
+    key = passkey_reg_challenge_key(claims.user_id)
+    challenge = await redis.get(key)
+    if not challenge:
+        raise HTTPException(status_code=400, detail="Passkey challenge expired. Try again.")
+    await redis.delete(key)
+
+    try:
+        verified = verify_passkey_registration(body.credential, challenge)
+    except WebAuthnException as e:
+        logger.warning("passkey register verify failed user=%s err=%s", claims.user_id, e)
+        raise HTTPException(status_code=400, detail="Passkey registration failed.") from e
+
+    now = now_utc()
+    transports = (body.credential.get("response") or {}).get("transports") or []
+    new_cred = {
+        "credential_id": verified["credential_id"],
+        "public_key": verified["public_key"],
+        "sign_count": verified["sign_count"],
+        "transports": transports,
+        "aaguid": verified["aaguid"],
+        "device_name": body.device_name or "Passkey",
+        "created_at": now,
+        "last_used_at": None,
+    }
+    res = await mongo["users"].update_one(
+        {
+            "_id": ObjectId(claims.user_id),
+            "auth.passkey_credentials.credential_id": {"$ne": new_cred["credential_id"]},
+        },
+        {"$push": {"auth.passkey_credentials": new_cred}, "$set": {"updated_at": now}},
+    )
+    if res.modified_count == 0:
+        raise HTTPException(status_code=409, detail="Passkey already registered.")
+
+    return {
+        "credential_id": new_cred["credential_id"],
+        "device_name": new_cred["device_name"],
+        "created_at": new_cred["created_at"],
+    }
+
+
+async def passkey_auth_begin(*, redis: Redis) -> dict[str, Any]:
+    options, challenge = build_passkey_authentication_options()
+    challenge_id = secrets.token_urlsafe(24)
+    await redis.set(
+        passkey_auth_challenge_key(challenge_id),
+        challenge,
+        ex=PASSKEY_CHALLENGE_TTL_SECONDS,
+    )
+    return {"challenge_id": challenge_id, "options": options}
+
+
+async def passkey_auth_complete(
+    body: PasskeyAuthCompleteRequest, *,
+    mongo: AsyncIOMotorDatabase, redis: Redis, request: Request, response: Response,
+) -> dict[str, Any]:
+    key = passkey_auth_challenge_key(body.challenge_id)
+    challenge = await redis.get(key)
+    if not challenge:
+        raise HTTPException(status_code=400, detail="Passkey challenge expired. Try again.")
+    await redis.delete(key)
+
+    credential_id = body.credential.get("id") or body.credential.get("rawId")
+    if not credential_id:
+        raise HTTPException(status_code=400, detail="Invalid passkey response.")
+
+    users = mongo["users"]
+    user = await users.find_one({"auth.passkey_credentials.credential_id": credential_id})
+    if user is None:
+        raise HTTPException(status_code=401, detail="Passkey not recognized.")
+    if is_user_blocked(user):
+        raise HTTPException(status_code=403, detail=build_blocked_detail())
+
+    stored = next(
+        (c for c in _passkey_credentials(user) if c.get("credential_id") == credential_id),
+        None,
+    )
+    if stored is None:
+        raise HTTPException(status_code=401, detail="Passkey not recognized.")
+
+    try:
+        new_sign_count = verify_passkey_authentication(
+            body.credential, challenge, stored["public_key"], stored.get("sign_count", 0),
+        )
+    except WebAuthnException as e:
+        logger.warning("passkey auth verify failed cred=%s err=%s", credential_id, e)
+        raise HTTPException(status_code=401, detail="Passkey verification failed.") from e
+
+    ip = get_client_ip(request)
+    ua = get_client_ua(request)
+    now = now_utc()
+    await users.update_one(
+        {"_id": user["_id"], "auth.passkey_credentials.credential_id": credential_id},
+        {"$set": {
+            "auth.passkey_credentials.$.sign_count": new_sign_count,
+            "auth.passkey_credentials.$.last_used_at": now,
+            "updated_at": now,
+        }},
+    )
+    await record_login_in_users(mongo, str(user["_id"]), ip=ip, ua=ua)
+    user = await users.find_one({"_id": user["_id"]})
+    if user is None:
+        raise HTTPException(status_code=500, detail="User lookup failed after passkey auth.")
+
+    access, refresh = await issue_token_pair(redis, user, ip, ua)
+    set_auth_cookies(response, access, refresh)
+    return {
+        "user_id": str(user["_id"]),
+        "is_new_user": False,
+        "tokens": token_payload(access),
+    }
+
+
+async def passkey_list(claims: Any, *, mongo: AsyncIOMotorDatabase) -> list[dict[str, Any]]:
+    user = await mongo["users"].find_one(
+        {"_id": ObjectId(claims.user_id)},
+        projection={"auth.passkey_credentials": 1},
+    )
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found.")
+    return [
+        {
+            "credential_id": c["credential_id"],
+            "device_name": c.get("device_name"),
+            "created_at": c.get("created_at"),
+            "last_used_at": c.get("last_used_at"),
+        }
+        for c in _passkey_credentials(user)
+    ]
+
+
+async def passkey_remove(
+    claims: Any, credential_id: str, *, mongo: AsyncIOMotorDatabase,
+) -> dict[str, Any]:
+    res = await mongo["users"].update_one(
+        {"_id": ObjectId(claims.user_id)},
+        {
+            "$pull": {"auth.passkey_credentials": {"credential_id": credential_id}},
+            "$set": {"updated_at": now_utc()},
+        },
+    )
+    if res.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Passkey not found.")
+    return {"removed": credential_id}
+
+
+async def passkey_remove_all(claims: Any, *, mongo: AsyncIOMotorDatabase) -> dict[str, Any]:
+    await mongo["users"].update_one(
+        {"_id": ObjectId(claims.user_id)},
+        {"$set": {"auth.passkey_credentials": [], "updated_at": now_utc()}},
+    )
+    return {"removed_all": True}
 
 
 # --------------------------------------------------------------------------

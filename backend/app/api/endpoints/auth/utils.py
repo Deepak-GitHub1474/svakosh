@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import logging
 import secrets
 import string
@@ -14,6 +15,20 @@ from bson import ObjectId
 from fastapi import HTTPException, Request, Response
 from jwt import PyJWKClient
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from webauthn import (
+    generate_authentication_options,
+    generate_registration_options,
+    options_to_json,
+    verify_authentication_response,
+    verify_registration_response,
+)
+from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+from webauthn.helpers.structs import (
+    AuthenticatorSelectionCriteria,
+    PublicKeyCredentialDescriptor,
+    ResidentKeyRequirement,
+    UserVerificationRequirement,
+)
 
 from app.api.endpoints.auth.models import EMAIL_RE
 from app.config import get_settings
@@ -69,6 +84,14 @@ def otp_key(identifier: str) -> str:
 
 def otp_cooldown_key(identifier: str) -> str:
     return f"{NS}:OTP_CD:{identifier}"
+
+
+def passkey_reg_challenge_key(user_id: str) -> str:
+    return f"{NS}:PASSKEY_REG:{user_id}"
+
+
+def passkey_auth_challenge_key(challenge_id: str) -> str:
+    return f"{NS}:PASSKEY_AUTH:{challenge_id}"
 
 
 # --------------------------------------------------------------------------
@@ -187,6 +210,84 @@ async def generate_unique_username(
 
     logger.error("username exhausted after %d tries for base=%s", USERNAME_MAX_TRIES, base)
     return f"{base[:2]}{secrets.token_hex(4)}"
+
+
+# --------------------------------------------------------------------------
+# Passkeys (WebAuthn)
+# --------------------------------------------------------------------------
+
+def _descriptors(creds: list[dict[str, Any]]) -> list[PublicKeyCredentialDescriptor]:
+    out: list[PublicKeyCredentialDescriptor] = []
+    for c in creds:
+        cid = c.get("credential_id")
+        if cid:
+            out.append(PublicKeyCredentialDescriptor(id=base64url_to_bytes(cid)))
+    return out
+
+
+def build_passkey_registration_options(
+    user_id: str, user_name: str, display_name: str, existing: list[dict[str, Any]],
+) -> tuple[dict[str, Any], str]:
+    """Return (options_json, challenge_b64). Challenge must be stored for verify."""
+    s = get_settings()
+    options = generate_registration_options(
+        rp_id=s.WEBAUTHN_RP_ID,
+        rp_name=s.WEBAUTHN_RP_NAME,
+        user_id=user_id.encode(),
+        user_name=user_name,
+        user_display_name=display_name,
+        exclude_credentials=_descriptors(existing) or None,
+        authenticator_selection=AuthenticatorSelectionCriteria(
+            resident_key=ResidentKeyRequirement.PREFERRED,
+            user_verification=UserVerificationRequirement.PREFERRED,
+        ),
+    )
+    return json.loads(options_to_json(options)), bytes_to_base64url(options.challenge)
+
+
+def verify_passkey_registration(credential: dict[str, Any], challenge_b64: str) -> dict[str, Any]:
+    s = get_settings()
+    result = verify_registration_response(
+        credential=json.dumps(credential),
+        expected_challenge=base64url_to_bytes(challenge_b64),
+        expected_rp_id=s.WEBAUTHN_RP_ID,
+        expected_origin=s.WEBAUTHN_ORIGIN,
+    )
+    return {
+        "credential_id": bytes_to_base64url(result.credential_id),
+        "public_key": bytes_to_base64url(result.credential_public_key),
+        "sign_count": result.sign_count,
+        "aaguid": result.aaguid,
+    }
+
+
+def build_passkey_authentication_options(
+    allow: list[dict[str, Any]] | None = None,
+) -> tuple[dict[str, Any], str]:
+    """Return (options_json, challenge_b64). `allow=None` → discoverable (usernameless)."""
+    s = get_settings()
+    options = generate_authentication_options(
+        rp_id=s.WEBAUTHN_RP_ID,
+        allow_credentials=_descriptors(allow) if allow else None,
+        user_verification=UserVerificationRequirement.PREFERRED,
+    )
+    return json.loads(options_to_json(options)), bytes_to_base64url(options.challenge)
+
+
+def verify_passkey_authentication(
+    credential: dict[str, Any], challenge_b64: str, public_key_b64: str, sign_count: int,
+) -> int:
+    """Return the new sign_count on success; raises on failure."""
+    s = get_settings()
+    result = verify_authentication_response(
+        credential=json.dumps(credential),
+        expected_challenge=base64url_to_bytes(challenge_b64),
+        expected_rp_id=s.WEBAUTHN_RP_ID,
+        expected_origin=s.WEBAUTHN_ORIGIN,
+        credential_public_key=base64url_to_bytes(public_key_b64),
+        credential_current_sign_count=sign_count,
+    )
+    return result.new_sign_count
 
 
 # --------------------------------------------------------------------------

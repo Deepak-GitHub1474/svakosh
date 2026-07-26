@@ -189,3 +189,13 @@ class VerifyOtpRequest(BaseModel):
 class GoogleAuthRequest(BaseModel):
     id_token: str
     referred_by: UpperStr | None = Field(None, pattern=REFERRAL_RE.pattern)
+
+
+class PasskeyRegisterCompleteRequest(BaseModel):
+    credential: dict[str, Any]
+    device_name: TrimStr | None = Field(None, max_length=40)
+
+
+class PasskeyAuthCompleteRequest(BaseModel):
+    challenge_id: str = Field(..., min_length=8, max_length=128)
+    credential: dict[str, Any]

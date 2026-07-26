@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     GOOGLE_JWKS_URL: str = "https://www.googleapis.com/oauth2/v3/certs"
     GOOGLE_ISSUERS: str = "https://accounts.google.com,accounts.google.com"
 
+    WEBAUTHN_RP_ID: str = "localhost"
+    WEBAUTHN_RP_NAME: str = "Svakosh"
+    WEBAUTHN_ORIGIN: str = "http://localhost:5173"
+
     COOKIE_SECURE: bool = False
     COOKIE_DOMAIN: str | None = None
     COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"

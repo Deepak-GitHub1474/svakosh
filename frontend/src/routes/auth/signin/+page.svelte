@@ -20,8 +20,10 @@
 	const redirectTo = $derived(String(form?.redirect ?? data?.redirect ?? ''));
 	const isEmail = $derived(formIdentifier.includes('@'));
 	const isGoogleError = $derived(form?.source === 'google');
-	const otpMessage = $derived(isGoogleError ? undefined : form?.message);
+	const isPasskeyError = $derived(form?.source === 'passkey');
+	const otpMessage = $derived(isGoogleError || isPasskeyError ? undefined : form?.message);
 	const googleMessage = $derived(isGoogleError ? String(form?.message ?? '') : '');
+	const passkeyMessage = $derived(isPasskeyError ? String(form?.message ?? '') : '');
 	const illustrations = [
 		{ src: bull, alt: 'Bull' },
 		{ src: globe, alt: 'Globe' },
@@ -75,7 +77,7 @@
 							<span class="h-px flex-1 bg-border-subtle"></span>
 						</div>
 
-						<OAuthButtons {redirectTo} serverMessage={googleMessage} />
+						<OAuthButtons {redirectTo} {googleMessage} {passkeyMessage} />
 					{:else}
 						<OtpVerifyForm
 							verifyAction="?/verifyOtp"
@@ -89,8 +91,6 @@
 							onChange={changeIdentifier}
 						/>
 					{/if}
-
-					
 				</div>
 			</div>
 		</div>

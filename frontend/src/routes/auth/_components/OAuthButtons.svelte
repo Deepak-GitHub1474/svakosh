@@ -1,22 +1,23 @@
 <script lang="ts">
 	import GoogleAuthButton from './GoogleAuthButton.svelte';
-	import GithubAuthButton from './GithubAuthButton.svelte';
+	import PasskeyButton from './PasskeyButton.svelte';
 
 	type Props = {
 		redirectTo?: string;
-		serverMessage?: string;
-		onGithub?: () => void;
+		googleMessage?: string;
+		passkeyMessage?: string;
 	};
 
-	let { redirectTo = '', serverMessage = '', onGithub }: Props = $props();
+	let { redirectTo = '', googleMessage = '', passkeyMessage = '' }: Props = $props();
 
 	let googleError = $state('');
-	const message = $derived(googleError || serverMessage);
+	let passkeyError = $state('');
+	const message = $derived(googleError || passkeyError || googleMessage || passkeyMessage);
 </script>
 
 <div class="flex w-full gap-3">
 	<GoogleAuthButton {redirectTo} bind:error={googleError} />
-	<GithubAuthButton onClick={onGithub} />
+	<PasskeyButton {redirectTo} bind:error={passkeyError} />
 </div>
 
 {#if message}

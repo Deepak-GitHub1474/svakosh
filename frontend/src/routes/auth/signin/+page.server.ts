@@ -94,5 +94,40 @@ export const actions: Actions = {
 
 		forwardSetCookies(res, cookies);
 		throw redirect(303, safeRedirectPath(redirectTo));
+	},
+
+	passkeyAuth: async ({ request, fetch, cookies }) => {
+		const data = await request.formData();
+		const challengeId = String(data.get('challenge_id') ?? '').trim();
+		const credentialRaw = String(data.get('credential') ?? '').trim();
+		const redirectTo = String(data.get('redirect') ?? '');
+		if (!challengeId || !credentialRaw) {
+			return fail(400, { source: 'passkey', message: 'Passkey sign-in failed. Try again.', redirect: redirectTo });
+		}
+
+		let credential: unknown;
+		try {
+			credential = JSON.parse(credentialRaw);
+		} catch {
+			return fail(400, { source: 'passkey', message: 'Passkey sign-in failed. Try again.', redirect: redirectTo });
+		}
+
+		const { apiUrl } = resolveBackendConfig();
+		const res = await fetch(`${apiUrl}/auth/passkey/auth/complete`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ challenge_id: challengeId, credential })
+		});
+		const json = await res.json().catch(() => ({}));
+		if (!res.ok || !json?.success) {
+			return fail(res.status || 400, {
+				source: 'passkey',
+				message: json?.message ?? 'Passkey sign-in failed.',
+				redirect: redirectTo
+			});
+		}
+
+		forwardSetCookies(res, cookies);
+		throw redirect(303, safeRedirectPath(redirectTo));
 	}
 };
