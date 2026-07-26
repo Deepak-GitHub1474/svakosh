@@ -41,19 +41,19 @@
 		<IllustrationPanel
 			images={illustrations}
 			features={APP_FEATURES}
-			class="h-[32vh] w-full rounded-b-3xl lg:h-full lg:rounded-b-none"
+			class="h-[36vh] w-full rounded-b-3xl lg:h-full lg:rounded-b-none"
 		/>
 
-		<div class="flex w-full items-start justify-center p-4 lg:h-full lg:items-center lg:pb-32">
+		<div class="flex w-full items-start justify-center p-4 lg:h-full lg:items-center lg:pb-32 pb-44">
 			<div class="w-full max-w-[26rem]">
 				<div class="flex flex-col">
 					<div class="flex justify-end">
 						<form method="POST" action="/auth/logout" use:enhance>
 							<button
 								type="submit"
-								class="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+								class="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
 							>
-								<span class="material-symbols-outlined" style="font-size: 0.875rem;">logout</span>
+								<span class="material-symbols-outlined" style="font-size: 1rem;">logout</span>
 								<span>Logout</span>
 							</button>
 						</form>
