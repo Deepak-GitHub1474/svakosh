@@ -1,16 +1,40 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { enhance } from '$app/forms';
-	import { cubicInOut } from 'svelte/easing';
-	import { fade, fly } from 'svelte/transition';
+	import { cubicInOut, cubicOut } from 'svelte/easing';
+	import { fade, fly, slide } from 'svelte/transition';
 	import { uiState } from '$lib/store/ui.svelte';
 	import { navItems } from './header/const';
 	import { menuItems } from './sidebar/const';
 	import { BRAND } from '$lib/brand';
-	import SvaKoshButton from './svakosh/SvaKoshButton.svelte';
 	import CloseIcon from './svg-provider/CloseIcon.svelte';
+	import SvaKoshAvatar from './svakosh/SvaKoshAvatar.svelte';
+	import AccountMenu from './account/AccountMenu.svelte';
+
+	type TUser = {
+		email?: string | null;
+		mobile_number?: string | null;
+		profile?: {
+			full_name?: string | null;
+			username?: string | null;
+			avatar?: string | null;
+		} | null;
+	} | null;
+
+	interface Props {
+		user?: TUser;
+	}
+
+	let { user = null }: Props = $props();
+
+	const displayName = $derived(
+		user?.profile?.full_name?.trim() || user?.profile?.username?.trim() || 'Unknown'
+	);
+	const displayIdentifier = $derived(user?.email || user?.mobile_number || '');
+	const avatarUrl = $derived(user?.profile?.avatar?.trim() || '');
 
 	const allItems = [...navItems, ...menuItems];
+
+	let isAccountOpen = $state(false);
 
 	function closeMenu() {
 		uiState.isMobileMenuOpen = false;
@@ -19,6 +43,15 @@
 	function handleNavigate() {
 		closeMenu();
 	}
+
+	function openWatchlist() {
+		closeMenu();
+		uiState.isWatchlistVisible = true;
+	}
+
+	$effect(() => {
+		if (!uiState.isMobileMenuOpen) isAccountOpen = false;
+	});
 
 	$effect(() => {
 		if (uiState.isMobileMenuOpen) {
@@ -47,14 +80,14 @@
 		transition:fly={{ x: 300, duration: 400, easing: cubicInOut }}
 	>
 		<div class="flex items-center justify-between border-b border-border-subtle px-6 py-4">
-			<a 
-				href="/" 
+			<a
+				href="/"
 				onclick={handleNavigate}
 				class="text-xs tracking-tighter text-primary uppercase select-none hover:opacity-80 transition-opacity"
 			>
 				{BRAND.name}
 			</a>
-			<button 
+			<button
 				onclick={closeMenu}
 				class="text-muted-foreground hover:text-primary transition-colors"
 			>
@@ -63,13 +96,22 @@
 		</div>
 
 		<div class="flex-1 overflow-y-auto px-4 py-6 space-y-1 hide-scrollbar">
+			<button
+				type="button"
+				onclick={openWatchlist}
+				class="flex w-full items-center gap-4 px-4 py-3 rounded-xl text-muted-foreground transition-all duration-300 hover:bg-white/[0.03] hover:text-white cursor-pointer"
+			>
+				<span class="material-symbols-outlined icon-size">preview</span>
+				<span class="text-xs tracking-wide">Watchlist</span>
+			</button>
+
 			{#each allItems as item}
 				<a
 					href={item.href}
 					onclick={handleNavigate}
 					class="flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group
-					{page.url.pathname === item.href 
-						? 'bg-primary-subtle text-primary border-l-2 border-primary' 
+					{page.url.pathname === item.href
+						? 'bg-primary-subtle text-primary border-l-2 border-primary'
 						: 'text-muted-foreground hover:bg-white/[0.03] hover:text-white'}"
 				>
 					<span class="material-symbols-outlined icon-size {page.url.pathname === item.href ? 'fill-1' : ''}" style={page.url.pathname === item.href ? "font-variation-settings: 'FILL' 1;" : ""}>
@@ -82,28 +124,42 @@
 			{/each}
 		</div>
 
-		<div class="border-t border-border-subtle p-6">
-			<form
-				method="POST"
-				action="/auth/logout"
-				use:enhance={() => {
-					closeMenu();
-					return async ({ update }) => {
-						await update();
-					};
-				}}
-			>
-				<SvaKoshButton
-					type="submit"
-					variant="bearish"
-					label="Logout"
-					class="w-full justify-center normal-case text-xs h-10"
+		<div class="border-t border-border-subtle shrink-0">
+			{#if isAccountOpen}
+				<div
+					class="border-b border-border-subtle px-2 py-2"
+					transition:slide={{ duration: 220, easing: cubicOut }}
 				>
-					{#snippet icon()}
-						<span class="material-symbols-outlined icon-size">logout</span>
-					{/snippet}
-				</SvaKoshButton>
-			</form>
+					<AccountMenu compact={false} onNavigate={handleNavigate} />
+				</div>
+			{/if}
+
+			<button
+				type="button"
+				onclick={() => (isAccountOpen = !isAccountOpen)}
+				aria-expanded={isAccountOpen}
+				aria-label="Account menu"
+				class="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-white/[0.03]"
+			>
+				<SvaKoshAvatar
+					url={avatarUrl}
+					name={displayName}
+					class="h-9 w-9 shrink-0 border border-primary/20 text-xs"
+				/>
+				<div class="flex min-w-0 flex-1 flex-col">
+					<span class="truncate text-xs text-foreground">{displayName}</span>
+					{#if displayIdentifier}
+						<span class="truncate text-[0.625rem] text-muted-foreground">{displayIdentifier}</span>
+					{/if}
+				</div>
+				<span
+					class="material-symbols-outlined icon-size shrink-0 text-muted-foreground transition-transform duration-200 {isAccountOpen
+						? 'rotate-180'
+						: ''}"
+				>
+					expand_less
+				</span>
+			</button>
 		</div>
 	</div>
 {/if}

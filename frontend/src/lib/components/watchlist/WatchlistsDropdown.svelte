@@ -57,7 +57,7 @@
 		transition:fly={{ y: -6, duration: 190, easing: cubicOut }}
 	>
 		<div
-			class="shrink-0 px-3 py-2 text-[0.6875rem] text-muted-foreground border-b border-border-subtle bg-glass"
+			class="shrink-0 px-4 lg:px-3 py-2 text-[0.6875rem] text-muted-foreground border-b border-border-subtle bg-glass"
 		>
 			Select Watchlist:
 		</div>
@@ -75,7 +75,7 @@
 						tabindex="0"
 						onclick={() => handleSelect(wl.name)}
 						onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleSelect(wl.name)}
-						class="group w-full flex items-center justify-between gap-2 px-3 py-2.5 border-b border-border-subtle hover:bg-glass transition-colors cursor-pointer text-left
+						class="group w-full flex items-center justify-between gap-2 px-4 lg:px-3 py-2.5 border-b border-border-subtle hover:bg-glass transition-colors cursor-pointer text-left
 						{isSelected ? 'bg-primary-hover' : ''}"
 					>
 						<div class="flex items-center gap-1.5 min-w-0">
@@ -126,7 +126,7 @@
 		<div class="shrink-0 bg-glass">
 			<button
 				type="button"
-				class="w-full flex items-center justify-between px-3 py-3 text-left hover:bg-primary-hover transition-colors cursor-pointer rounded-b-2xl"
+				class="w-full flex items-center justify-between px-4 lg:px-3 py-3 text-left hover:bg-primary-hover transition-colors cursor-pointer rounded-b-2xl"
 				onclick={() => onCreate?.()}
 			>
 				<span class="text-xs text-primary">Create New Watchlist</span>

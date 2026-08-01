@@ -17,9 +17,9 @@
 </script>
 
 <div
-	class="shrink-0 flex items-center justify-between gap-2 py-2 px-2 border-t border-border-subtle bg-glass"
+	class="shrink-0 flex items-center justify-between gap-2 py-2 px-4 lg:px-2 border-t border-border-subtle bg-glass"
 >
-	<span class="text-[0.625rem] text-muted-foreground inline-flex items-center gap-1">
+	<span class="text-xs text-muted-foreground inline-flex items-center gap-1">
 		<span class="material-symbols-outlined" style="font-size:0.875rem">swap_vert</span>
 		Sort By
 	</span>
@@ -29,7 +29,7 @@
 			<button
 				type="button"
 				onclick={() => onsortchange?.(opt.key)}
-				class="px-1.5 py-1 text-[0.625rem] border-none bg-transparent cursor-pointer rounded transition-colors {active
+				class="px-1.5 py-1 text-xs border-none bg-transparent cursor-pointer rounded transition-colors {active
 					? 'bg-primary-hover text-primary'
 					: 'text-muted-foreground hover:text-foreground'}"
 			>

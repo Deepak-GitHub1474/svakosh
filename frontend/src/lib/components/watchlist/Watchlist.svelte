@@ -10,6 +10,7 @@
 	import WatchlistNamePopover from './WatchlistNamePopover.svelte';
 	import DeleteWatchlistConfirm from './DeleteWatchlistConfirm.svelte';
 	import NoteEditorPopover from './NoteEditorPopover.svelte';
+	import CloseIcon from '$lib/components/svg-provider/CloseIcon.svelte';
 	import {
 		addSymbolToWatchlist,
 		createWatchlist,
@@ -249,14 +250,26 @@
 </script>
 
 <aside
-	class="fixed top-12 h-[calc(100vh-3rem)] flex flex-col bg-background border-r border-border-subtle transition-all duration-300 ease-in-out
-    {uiState.isWatchlistVisible ? 'translate-x-0' : '-translate-x-full'}
-    left-[56px] w-[280px] 2xl:w-[340px]"
+	class="fixed top-12 bottom-0 left-0 right-0 z-[90] flex flex-col bg-background border-r border-border-subtle transition-transform duration-300 ease-in-out
+    lg:left-[56px] lg:right-auto lg:bottom-auto lg:z-auto lg:h-[calc(100vh-3rem)] lg:w-[280px] 2xl:w-[340px]
+    {uiState.isWatchlistVisible ? 'translate-x-0' : '-translate-x-full'}"
 >
+	<div class="flex items-center justify-between border-b border-border-subtle px-4 py-2 lg:hidden">
+		<span class="text-xs text-foreground">Watchlist</span>
+		<button
+			type="button"
+			onclick={() => (uiState.isWatchlistVisible = false)}
+			aria-label="Close watchlist"
+			class="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+		>
+			<CloseIcon class="w-5 h-5" />
+		</button>
+	</div>
+
 	<div use:handleClickOutsideSearch class="contents">
 		<div
 			data-search-zone
-			class="flex items-center gap-2 p-2 border-b border-border-subtle bg-glass"
+			class="flex items-center gap-2 px-4 py-2 lg:p-2 border-b border-border-subtle bg-glass"
 		>
 			<span class="material-symbols-outlined text-muted-foreground icon-size">search</span>
 			<input
@@ -285,7 +298,7 @@
 		<button
 			type="button"
 			onclick={() => (isDropdownOpen = !isDropdownOpen)}
-			class="w-full flex items-center justify-between gap-2 p-2 border-b border-border-subtle hover:bg-glass transition-colors cursor-pointer"
+			class="w-full flex items-center justify-between gap-2 px-4 py-2 lg:p-2 border-b border-border-subtle hover:bg-glass transition-colors cursor-pointer"
 		>
 			<div class="flex items-center gap-1.5 min-w-0">
 				<span class="text-xs text-foreground truncate text-left">
@@ -317,7 +330,7 @@
 	</div>
 
 	<div class="flex-1 min-h-0 relative">
-		<div class="h-full overflow-y-auto pb-6 hide-scrollbar">
+		<div class="h-full overflow-y-auto overscroll-contain pb-6 hide-scrollbar">
 			{#if entriesLoading && entries.length === 0}
 				<div class="flex items-center justify-center h-full text-[0.625rem] text-muted-foreground">
 					Loading...

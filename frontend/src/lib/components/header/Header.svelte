@@ -3,13 +3,12 @@
 	import { Spring } from 'svelte/motion';
 	import { BRAND } from '$lib/brand';
 	import { page } from '$app/state';
-	import { enhance } from '$app/forms';
 	import { navItems } from './const';
 	import { uiState } from '$lib/store/ui.svelte';
 	import MenuIcon from '../svg-provider/MenuIcon.svelte';
-	import SvaKoshSwitch from '../svakosh/SvaKoshSwitch.svelte';
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
 	import SvaKoshAvatar from '$lib/components/svakosh/SvaKoshAvatar.svelte';
+	import AccountMenu from '$lib/components/account/AccountMenu.svelte';
 
 	type TUser = {
 		email?: string | null;
@@ -141,7 +140,7 @@
 			<SvaKoshAvatar url={avatarUrl} name={displayName} class="h-9 w-9 border border-primary/20" />
 		</button>
 
-		<button 
+		<button
 			type="button"
 			class="lg:hidden flex items-center text-muted-foreground hover:text-primary transition-colors"
 			onclick={() => uiState.toggleMobileMenu()}
@@ -168,47 +167,5 @@
         {/if}
     {/snippet}
 
-    <div class="flex items-center justify-between px-3 py-2 text-xs text-muted-foreground">
-        <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined icon-size">dark_mode</span>
-            Dark Theme
-        </div>
-		<SvaKoshSwitch checked size="sm" />
-    </div>
-    <div class="h-[0.0625rem] bg-white/5 my-1 mx-2"></div>
-    <a
-        href="/profile"
-        onclick={() => (isProfileModalOpen = false)}
-        class="flex w-full items-center gap-3 px-3 py-2 text-xs text-muted-foreground hover:bg-glass hover:text-foreground rounded-md transition-all duration-200"
-    >
-        <span class="material-symbols-outlined icon-size">person</span>
-        Profile
-    </a>
-    <a
-        href="/settings"
-        onclick={() => (isProfileModalOpen = false)}
-        class="flex w-full items-center gap-3 px-3 py-2 text-xs text-muted-foreground hover:bg-glass hover:text-foreground rounded-md transition-all duration-200"
-    >
-        <span class="material-symbols-outlined icon-size">settings</span>
-        Settings
-    </a>
-    <div class="h-[0.0625rem] bg-white/5 my-1 mx-2"></div>
-    <form
-        method="POST"
-        action="/auth/logout"
-        use:enhance={() => {
-            isProfileModalOpen = false;
-            return async ({ update }) => {
-                await update();
-            };
-        }}
-    >
-        <button
-            type="submit"
-            class="flex w-full items-center gap-3 px-3 py-2 text-xs text-bearish/80 hover:bg-bearish-subtle hover:text-bearish rounded-md transition-all duration-200 group"
-        >
-            <span class="material-symbols-outlined icon-size">logout</span>
-            Logout
-        </button>
-    </form>
+    <AccountMenu onNavigate={() => (isProfileModalOpen = false)} />
 </SvaKoshModal>

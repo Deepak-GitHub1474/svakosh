@@ -100,7 +100,7 @@
 					{@const added = addedTokens.has(hit.sk_token)}
 					{@const disabled = !canAdd || busy || added}
 					<div
-						class="group flex items-center gap-3 px-3 py-2 border-b border-border-subtle hover:bg-glass transition-colors"
+						class="group flex items-center gap-3 px-4 lg:px-3 py-2 border-b border-border-subtle hover:bg-glass transition-colors"
 					>
 						<SymbolImage
 							name={hit.name}

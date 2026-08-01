@@ -21,7 +21,7 @@
 		const url = new URL(page.url);
 		if (url.searchParams.get('watchlist') !== isVisible.toString()) {
 			url.searchParams.set('watchlist', isVisible.toString());
-			goto(url, { replaceState: true, noScroll: true, keepFocus: true });
+			goto(url, { replaceState: !isVisible, noScroll: true, keepFocus: true });
 		}
 	});
 </script>
@@ -30,9 +30,7 @@
 	<Header user={data.user} />
 	<div class="flex flex-1 pt-4">
 		<Sidebar />
-		<div class="hidden lg:block">
-			<Watchlist watchlists={data.watchlists ?? []} />
-		</div>
+		<Watchlist watchlists={data.watchlists ?? []} />
 		<main
 			class="flex-1 overflow-y-auto transition-all duration-300 ease-in-out
             {uiState.isWatchlistVisible ? 'lg:ml-[295px] 2xl:ml-[355px] ml-0' : 'lg:ml-40 ml-0'}"
@@ -42,5 +40,5 @@
 			</div>
 		</main>
 	</div>
-	<MobileMenu />
+	<MobileMenu user={data.user} />
 </div>
