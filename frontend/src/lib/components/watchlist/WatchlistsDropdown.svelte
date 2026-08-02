@@ -3,6 +3,10 @@
 	import { cubicOut } from 'svelte/easing';
 	import SvaKoshBadge from '$lib/components/svakosh/SvaKoshBadge.svelte';
 	import type { TWatchlistItem } from './types';
+	import AddCircle from '$lib/components/svg-provider/material/AddCircle.svelte';
+	import CheckCircle from '$lib/components/svg-provider/material/CheckCircle.svelte';
+	import Delete from '$lib/components/svg-provider/material/Delete.svelte';
+	import DriveFileRenameOutline from '$lib/components/svg-provider/material/DriveFileRenameOutline.svelte';
 
 	interface Props {
 		isOpen: boolean;
@@ -89,9 +93,7 @@
 						</div>
 
 						{#if isSelected}
-							<span class="material-symbols-outlined text-primary icon-size shrink-0"
-								>check_circle</span
-							>
+							<CheckCircle class="text-primary icon-size shrink-0" />
 						{:else if !wl.predefined}
 							<div
 								class="shrink-0 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -101,20 +103,18 @@
 									onclick={(e) => handleRename(e, wl.name)}
 									aria-label="Rename watchlist"
 									title="Rename"
-									class="material-symbols-outlined text-muted-foreground hover:text-primary cursor-pointer"
-									style="font-size:1rem"
+									class="text-muted-foreground hover:text-primary cursor-pointer"
 								>
-									drive_file_rename_outline
+									<DriveFileRenameOutline style="font-size:1rem" />
 								</button>
 								<button
 									type="button"
 									onclick={(e) => handleDelete(e, wl.name)}
 									aria-label="Delete watchlist"
 									title="Delete"
-									class="material-symbols-outlined text-muted-foreground hover:text-bearish cursor-pointer"
-									style="font-size:1rem"
+									class="text-muted-foreground hover:text-bearish cursor-pointer"
 								>
-									delete
+									<Delete style="font-size:1rem" />
 								</button>
 							</div>
 						{/if}
@@ -130,7 +130,7 @@
 				onclick={() => onCreate?.()}
 			>
 				<span class="text-xs text-primary">Create New Watchlist</span>
-				<span class="material-symbols-outlined text-primary icon-size">add_circle</span>
+				<AddCircle class="text-primary icon-size" />
 			</button>
 		</div>
 	</div>

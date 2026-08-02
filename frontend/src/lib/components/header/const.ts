@@ -1,4 +1,7 @@
+import Analytics from '$lib/components/svg-provider/material/Analytics.svelte';
+import DonutSmall from '$lib/components/svg-provider/material/DonutSmall.svelte';
+
 export const navItems = [
-    { icon: 'analytics', label: 'Options Analytics', href: '/options-analytics' },
-    { icon: 'donut_small', label: 'Market Overview', href: '/market-overview' },
+	{ icon: Analytics, label: 'Options Analytics', href: '/options-analytics' },
+	{ icon: DonutSmall, label: 'Market Overview', href: '/market-overview' }
 ];

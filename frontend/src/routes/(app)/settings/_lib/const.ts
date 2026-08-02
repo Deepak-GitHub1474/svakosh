@@ -1,16 +1,18 @@
+import Palette from '$lib/components/svg-provider/material/Palette.svelte';
+import PasskeyIcon from '$lib/components/svg-provider/material/PasskeyIcon.svelte';
 import type { PasskeyColumn, SettingsTab } from './types';
 
 export const SETTINGS_TABS: SettingsTab[] = [
 	{
 		id: 'passkeys',
 		label: 'Passkeys',
-		icon: 'passkey',
+		icon: PasskeyIcon,
 		subtitle: 'Sign in faster and more securely with your fingerprint, face, or device PIN.'
 	},
 	{
 		id: 'themes',
 		label: 'Themes',
-		icon: 'palette',
+		icon: Palette,
 		subtitle: 'Personalize how SvaKosh looks.'
 	}
 ];

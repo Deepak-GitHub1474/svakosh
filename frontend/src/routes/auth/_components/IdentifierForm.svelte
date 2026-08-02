@@ -5,6 +5,7 @@
 	import OtpFeedback from './OtpFeedback.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import type { TIdentifierForm } from '../_lib/types';
+	import ArrowForward from '$lib/components/svg-provider/material/ArrowForward.svelte';
 
 	let {
 		action,
@@ -84,7 +85,7 @@
 		class="w-full py-3.5 text-sm"
 	>
 		{#snippet icon()}
-			<span class="material-symbols-outlined icon-size">arrow_forward</span>
+			<ArrowForward class="icon-size" />
 		{/snippet}
 	</SvaKoshButton>
 </form>

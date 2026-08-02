@@ -9,6 +9,8 @@
 	import CloseIcon from './svg-provider/CloseIcon.svelte';
 	import SvaKoshAvatar from './svakosh/SvaKoshAvatar.svelte';
 	import AccountMenu from './account/AccountMenu.svelte';
+	import ExpandLess from '$lib/components/svg-provider/material/ExpandLess.svelte';
+	import Preview from '$lib/components/svg-provider/material/Preview.svelte';
 
 	type TUser = {
 		email?: string | null;
@@ -101,7 +103,7 @@
 				onclick={openWatchlist}
 				class="flex w-full items-center gap-4 px-4 py-3 rounded-xl text-muted-foreground transition-all duration-300 hover:bg-white/[0.03] hover:text-white cursor-pointer"
 			>
-				<span class="material-symbols-outlined icon-size">preview</span>
+				<Preview class="icon-size" />
 				<span class="text-xs tracking-wide">Watchlist</span>
 			</button>
 
@@ -114,9 +116,7 @@
 						? 'bg-primary-subtle text-primary border-l-2 border-primary'
 						: 'text-muted-foreground hover:bg-white/[0.03] hover:text-white'}"
 				>
-					<span class="material-symbols-outlined icon-size {page.url.pathname === item.href ? 'fill-1' : ''}" style={page.url.pathname === item.href ? "font-variation-settings: 'FILL' 1;" : ""}>
-						{item.icon}
-					</span>
+					<item.icon class="icon-size" filled={page.url.pathname === item.href} />
 					<span class="text-xs tracking-wide">
 						{item.label}
 					</span>
@@ -152,13 +152,7 @@
 						<span class="truncate text-[0.625rem] text-muted-foreground">{displayIdentifier}</span>
 					{/if}
 				</div>
-				<span
-					class="material-symbols-outlined icon-size shrink-0 text-muted-foreground transition-transform duration-200 {isAccountOpen
-						? 'rotate-180'
-						: ''}"
-				>
-					expand_less
-				</span>
+				<ExpandLess class="icon-size shrink-0 text-muted-foreground transition-transform duration-200 {isAccountOpen ? 'rotate-180' : ''}" />
 			</button>
 		</div>
 	</div>

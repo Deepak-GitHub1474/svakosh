@@ -5,6 +5,10 @@
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
 	import type { Passkey, PasskeyResult } from '../_lib/types';
 	import { PASSKEY_COLUMNS } from '../_lib/const';
+	import ChevronRight from '$lib/components/svg-provider/material/ChevronRight.svelte';
+	import DeleteForever from '$lib/components/svg-provider/material/DeleteForever.svelte';
+	import Delete from '$lib/components/svg-provider/material/Delete.svelte';
+	import PasskeyIcon from '$lib/components/svg-provider/material/PasskeyIcon.svelte';
 	import {
 		deleteAllPasskeys,
 		deletePasskey,
@@ -88,12 +92,11 @@
 				</thead>
 				<tbody>
 					{#each passkeys as pk (pk.credential_id)}
+						{@const DeviceIcon = deviceIcon(pk.device_name)}
 						<tr class="border-b border-border-subtle/50 last:border-0">
 							<td class="py-4 pr-4">
 								<div class="flex items-center gap-3">
-									<span class="material-symbols-outlined text-muted-foreground" style="font-size: 1.25rem;">
-										{deviceIcon(pk.device_name)}
-									</span>
+									<DeviceIcon class="text-muted-foreground" style="font-size: 1.25rem;" />
 									<span class="text-xs text-foreground">{pk.device_name || 'Passkey'}</span>
 								</div>
 							</td>
@@ -107,7 +110,7 @@
 									aria-label="Remove passkey"
 									class="text-muted-foreground transition-colors hover:text-bearish disabled:opacity-50"
 								>
-									<span class="material-symbols-outlined" style="font-size: 1.125rem;">delete</span>
+									<Delete style="font-size: 1.125rem;" />
 								</button>
 							</td>
 						</tr>
@@ -123,17 +126,17 @@
 			class="mt-2 flex w-full items-center justify-between gap-3 border-t border-border-subtle p-4 text-left transition-colors hover:bg-bearish-subtle disabled:opacity-50"
 		>
 			<div class="flex items-center gap-3">
-				<span class="material-symbols-outlined text-bearish" style="font-size: 1.25rem;">delete_forever</span>
+				<DeleteForever class="text-bearish" style="font-size: 1.25rem;" />
 				<div>
 					<p class="text-sm font-semibold text-bearish">Remove All Devices</p>
 					<p class="text-xs text-muted-foreground">Remove all passkeys from all devices</p>
 				</div>
 			</div>
-			<span class="material-symbols-outlined text-muted-foreground" style="font-size: 1.25rem;">chevron_right</span>
+			<ChevronRight class="text-muted-foreground" style="font-size: 1.25rem;" />
 		</button>
 	{:else}
 		<div class="m-4 flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border-subtle px-4 py-10 text-center">
-			<span class="material-symbols-outlined text-primary" style="font-size: 2rem;">passkey</span>
+			<PasskeyIcon class="text-primary" style="font-size: 2rem;" />
 			<div>
 				<p class="text-sm text-muted-foreground">No passkeys yet.</p>
 				<p class="mt-1 text-xs text-muted-foreground">Add one to sign in faster next time.</p>

@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+	import type { Component, Snippet } from 'svelte';
 
 	interface Props {
 		title: string;
 		description?: string;
-		icon?: string;
+		icon?: Component;
 		actionLabel?: string;
-		actionIcon?: string;
+		actionIcon?: Component;
 		onAction?: () => void;
 		children?: Snippet;
 		class?: string;
@@ -28,12 +28,11 @@
 	class="flex flex-col items-center justify-center h-full p-6 text-center gap-3 {className}"
 >
 	{#if icon}
+		{@const Icon = icon}
 		<div
 			class="flex items-center justify-center w-14 h-14 rounded-full bg-primary-subtle border border-primary/20"
 		>
-			<span class="material-symbols-outlined text-primary" style="font-size:1.75rem">
-				{icon}
-			</span>
+			<Icon class="text-primary" style="font-size:1.75rem" />
 		</div>
 	{/if}
 
@@ -53,7 +52,8 @@
 			class="inline-flex items-center gap-1 px-3 py-1.5 rounded text-xs text-primary bg-primary-subtle border border-primary/20 hover:bg-primary-hover cursor-pointer transition-colors"
 		>
 			{#if actionIcon}
-				<span class="material-symbols-outlined" style="font-size:0.875rem">{actionIcon}</span>
+				{@const ActionIcon = actionIcon}
+				<ActionIcon style="font-size:0.875rem" />
 			{/if}
 			{actionLabel}
 		</button>

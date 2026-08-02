@@ -3,6 +3,8 @@
 	import WatchlistEntryActionPanel from './WatchlistEntryActionPanel.svelte';
 	import { formatNumber } from '$lib/utils';
 	import { isTradable } from './types';
+	import MoreVert from '$lib/components/svg-provider/material/MoreVert.svelte';
+	import StickyNote2 from '$lib/components/svg-provider/material/StickyNote2.svelte';
 
 	interface Props {
 		name: string;
@@ -119,12 +121,8 @@
 			<span class="flex items-center gap-1 min-w-0">
 				<span class="text-xs text-foreground truncate">{name}</span>
 				{#if hasNote}
-					<span
-						class="material-symbols-outlined text-primary shrink-0"
-						style="font-size:0.75rem"
-						title="Has note"
-					>
-						sticky_note_2
+					<span title="Has note" class="flex shrink-0">
+						<StickyNote2 class="text-primary" style="font-size:0.75rem" />
 					</span>
 				{/if}
 			</span>
@@ -160,7 +158,7 @@
 							? 'flex text-primary border-primary/30'
 							: 'hidden lg:group-hover:flex'}"
 					>
-						<span class="material-symbols-outlined" style="font-size:0.875rem">more_vert</span>
+						<MoreVert style="font-size:0.875rem" />
 					</button>
 
 					<WatchlistEntryActionPanel

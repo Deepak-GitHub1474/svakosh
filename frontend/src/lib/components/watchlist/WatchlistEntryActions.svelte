@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
+	import Delete from '$lib/components/svg-provider/material/Delete.svelte';
+	import MoreVert from '$lib/components/svg-provider/material/MoreVert.svelte';
+	import StickyNote2 from '$lib/components/svg-provider/material/StickyNote2.svelte';
 
 	interface Props {
 		showNote: boolean;
@@ -73,7 +76,7 @@
 				? 'bg-primary-subtle border-primary/30 text-primary'
 				: 'bg-glass border-border-subtle text-muted-foreground hover:text-primary hover:border-primary/30'}"
 		>
-			<span class="material-symbols-outlined" style="font-size:0.875rem">sticky_note_2</span>
+			<StickyNote2 style="font-size:0.875rem" />
 		</button>
 	{/if}
 
@@ -87,7 +90,7 @@
 			class="w-7 h-7 flex items-center justify-center rounded bg-glass border border-border-subtle text-muted-foreground hover:text-primary hover:border-primary/30 cursor-pointer transition-colors
 			{menuOpen ? 'text-primary border-primary/30' : ''}"
 		>
-			<span class="material-symbols-outlined" style="font-size:0.875rem">more_vert</span>
+			<MoreVert style="font-size:0.875rem" />
 		</button>
 
 		{#if menuOpen}
@@ -104,7 +107,7 @@
 					class="flex w-full items-center gap-3 px-3 py-2 text-xs text-bearish/80 hover:bg-bearish-subtle hover:text-bearish rounded-md transition-all duration-200 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 text-left"
 					role="menuitem"
 				>
-					<span class="material-symbols-outlined" style="font-size:0.875rem">delete</span>
+					<Delete style="font-size:0.875rem" />
 					{removing ? 'Deleting...' : 'Delete'}
 				</button>
 			</div>

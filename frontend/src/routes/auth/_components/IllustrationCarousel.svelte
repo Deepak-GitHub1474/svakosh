@@ -1,5 +1,9 @@
 <script lang="ts">
 	import { cubicOut } from 'svelte/easing';
+	import Pause from '$lib/components/svg-provider/material/Pause.svelte';
+	import PlayArrow from '$lib/components/svg-provider/material/PlayArrow.svelte';
+	import ChevronLeft from '$lib/components/svg-provider/material/ChevronLeft.svelte';
+	import ChevronRight from '$lib/components/svg-provider/material/ChevronRight.svelte';
 
 	type ImageItem = { src: string; alt: string };
 	type Props = {
@@ -101,7 +105,7 @@
 			aria-label="Previous slide"
 			class="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-gradient-to-br from-white/15 to-white/5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_4px_12px_rgba(0,0,0,0.4)] backdrop-blur-lg transition-all hover:border-white/25 hover:from-white/25 hover:to-white/10"
 		>
-			<span class="material-symbols-outlined" style="font-size:22px">chevron_left</span>
+			<ChevronLeft style="font-size:22px" />
 		</button>
 		<button
 			type="button"
@@ -109,9 +113,11 @@
 			aria-label={paused ? 'Play' : 'Pause'}
 			class="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#ffe066] via-[#ffd700] to-primary text-[#08090a] shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_0_20px_rgba(255,215,0,0.7)] transition-transform hover:scale-105"
 		>
-			<span class="material-symbols-outlined" style="font-size:26px">
-				{paused ? 'play_arrow' : 'pause'}
-			</span>
+			{#if paused}
+				<PlayArrow style="font-size:26px" />
+			{:else}
+				<Pause style="font-size:26px" />
+			{/if}
 		</button>
 		<button
 			type="button"
@@ -119,7 +125,7 @@
 			aria-label="Next slide"
 			class="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-gradient-to-br from-white/15 to-white/5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_4px_12px_rgba(0,0,0,0.4)] backdrop-blur-lg transition-all hover:border-white/25 hover:from-white/25 hover:to-white/10"
 		>
-			<span class="material-symbols-outlined" style="font-size:22px">chevron_right</span>
+			<ChevronRight style="font-size:22px" />
 		</button>
 	</div>
 {/if}

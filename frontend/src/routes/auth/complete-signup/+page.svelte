@@ -12,6 +12,7 @@
 	import bull from '../_assets/bull.png';
 	import globe from '../_assets/globe.png';
 	import man from '../_assets/man.png';
+	import Logout from '$lib/components/svg-provider/material/Logout.svelte';
 
 	let { data, form } = $props();
 
@@ -53,7 +54,7 @@
 								type="submit"
 								class="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
 							>
-								<span class="material-symbols-outlined" style="font-size: 1rem;">logout</span>
+								<Logout style="font-size: 1rem;" />
 								<span>Logout</span>
 							</button>
 						</form>

@@ -4,6 +4,8 @@
 	import { uiState } from '$lib/store/ui.svelte';
 	import { menuItems } from './const';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
+	import Logout from '$lib/components/svg-provider/material/Logout.svelte';
+	import Preview from '$lib/components/svg-provider/material/Preview.svelte';
 </script>
 
 <aside
@@ -22,9 +24,7 @@
                     : 'text-gray-500 hover:text-primary hover:bg-white/[0.02]'}"
 			>
 
-				<span class="material-symbols-outlined icon-size {page.url.pathname === item.href ? 'fill-1' : ''}" style={page.url.pathname === item.href ? "font-variation-settings: 'FILL' 1;" : ""}>
-					{item.icon}
-				</span>
+				<item.icon class="icon-size" filled={page.url.pathname === item.href} />
 				{#if !uiState.isWatchlistVisible}
 					<span class="text-sm whitespace-nowrap truncate animate-in fade-in slide-in-from-left-1 duration-200">
 						{item.label}
@@ -52,11 +52,7 @@
 				class="w-full min-w-0 border-y-0 border-l-0 justify-start normal-case text-sm {uiState.isWatchlistVisible ? 'border-r-2 border-foreground/40 bg-white/5' : 'border-r-0 border-transparent'}"
 			>
 				{#snippet icon()}
-					<span class="material-symbols-outlined icon-size
-						{uiState.isWatchlistVisible ? 'opacity-100' : ''}"
-					>
-						preview
-					</span>
+					<Preview class="icon-size {uiState.isWatchlistVisible ? 'opacity-100' : ''}" />
 				{/snippet}
 			</SvaKoshButton>
 			
@@ -77,7 +73,7 @@
 					class="w-full min-w-0 border-y-0 border-l-0 justify-start normal-case text-sm {uiState.isWatchlistVisible ? 'border-r-2 border-bearish/40 bg-bearish/5' : ''}"
 				>
 					{#snippet icon()}
-						<span class="material-symbols-outlined icon-size {uiState.isWatchlistVisible ? 'opacity-100' : ''}">logout</span>
+						<Logout class="icon-size {uiState.isWatchlistVisible ? 'opacity-100' : ''}" />
 					{/snippet}
 				</SvaKoshButton>
 			</form>

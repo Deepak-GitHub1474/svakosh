@@ -11,6 +11,7 @@
 	import { formatNumber } from '$lib/utils/helper';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
+	import Monitoring from '$lib/components/svg-provider/material/Monitoring.svelte';
 
 	let isSelectorOpen = $state(false);
 	let selectedIndex = $state('NIFTY 50');
@@ -105,7 +106,7 @@
 						</div>
 					</div>
 					<div class="absolute right-4 bottom-1 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
-						<span class="material-symbols-outlined !text-6xl">monitoring</span>
+						<Monitoring class="!text-6xl" />
 					</div>
 				</SvaKoshCard>
 			</div>

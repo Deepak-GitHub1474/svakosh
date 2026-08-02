@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { TWatchlistSortBy } from './types';
+	import SwapVert from '$lib/components/svg-provider/material/SwapVert.svelte';
 
 	interface Props {
 		sortBy: TWatchlistSortBy;
@@ -20,7 +21,7 @@
 	class="shrink-0 flex items-center justify-between gap-2 py-2 px-4 lg:px-2 border-t border-border-subtle bg-glass"
 >
 	<span class="text-xs text-muted-foreground inline-flex items-center gap-1">
-		<span class="material-symbols-outlined" style="font-size:0.875rem">swap_vert</span>
+		<SwapVert style="font-size:0.875rem" />
 		Sort By
 	</span>
 	<div class="flex">

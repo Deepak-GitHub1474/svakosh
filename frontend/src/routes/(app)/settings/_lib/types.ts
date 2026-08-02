@@ -1,3 +1,5 @@
+import type { Component } from 'svelte';
+
 export type Passkey = {
 	credential_id: string;
 	device_name: string | null;
@@ -8,7 +10,7 @@ export type Passkey = {
 export type SettingsTab = {
 	id: 'passkeys' | 'themes';
 	label: string;
-	icon: string;
+	icon: Component;
 	subtitle: string;
 };
 

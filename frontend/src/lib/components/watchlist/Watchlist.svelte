@@ -11,6 +11,10 @@
 	import DeleteWatchlistConfirm from './DeleteWatchlistConfirm.svelte';
 	import NoteEditorPopover from './NoteEditorPopover.svelte';
 	import CloseIcon from '$lib/components/svg-provider/CloseIcon.svelte';
+	import ArrowDropDownCircle from '$lib/components/svg-provider/material/ArrowDropDownCircle.svelte';
+	import ErrorIcon from '$lib/components/svg-provider/material/ErrorIcon.svelte';
+	import PlaylistAdd from '$lib/components/svg-provider/material/PlaylistAdd.svelte';
+	import Search from '$lib/components/svg-provider/material/Search.svelte';
 	import {
 		addSymbolToWatchlist,
 		createWatchlist,
@@ -271,7 +275,7 @@
 			data-search-zone
 			class="flex items-center gap-2 px-4 py-2 lg:p-2 border-b border-border-subtle bg-glass"
 		>
-			<span class="material-symbols-outlined text-muted-foreground icon-size">search</span>
+			<Search class="text-muted-foreground icon-size" />
 			<input
 				bind:this={searchInput}
 				bind:value={searchQuery}
@@ -285,10 +289,9 @@
 					type="button"
 					onclick={clearSearch}
 					aria-label="Clear search"
-					class="material-symbols-outlined text-muted-foreground hover:text-error transition-colors"
-					style="font-size:1rem"
+					class="text-muted-foreground hover:text-error transition-colors"
 				>
-					close
+					<CloseIcon class="w-4 h-4" />
 				</button>
 			{/if}
 		</div>
@@ -308,13 +311,7 @@
 					<SvaKoshBadge label="Predefined" variant="primary" class="shrink-0" />
 				{/if}
 			</div>
-			<span
-				class="material-symbols-outlined icon-size transition-transform duration-200 {isDropdownOpen
-					? 'rotate-180 text-primary'
-					: 'text-muted-foreground'}"
-			>
-				arrow_drop_down_circle
-			</span>
+			<ArrowDropDownCircle class="icon-size transition-transform duration-200 {isDropdownOpen ? 'rotate-180 text-primary' : 'text-muted-foreground'}" />
 		</button>
 
 		<WatchlistsDropdown
@@ -336,14 +333,14 @@
 					Loading...
 				</div>
 			{:else if entriesError}
-				<EmptyState title="Couldn't load entries" description={entriesError} icon="error" />
+				<EmptyState title="Couldn't load entries" description={entriesError} icon={ErrorIcon} />
 			{:else if entries.length === 0}
 				<EmptyState
 					title="This watchlist is empty"
 					description="Search and add symbols to track live market data."
-					icon="playlist_add"
+					icon={PlaylistAdd}
 					actionLabel="Search Symbols"
-					actionIcon="search"
+					actionIcon={Search}
 					onAction={focusSearchInput}
 				/>
 			{:else}

@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
+	import PasskeyIcon from '$lib/components/svg-provider/material/PasskeyIcon.svelte';
 
 	type Props = {
 		redirectTo?: string;
@@ -62,7 +63,7 @@
 </form>
 
 <button type="button" onclick={onClick} class={baseClass} aria-label="Sign in with a passkey">
-	<span class="material-symbols-outlined" style="font-size: 1.125rem;">passkey</span>
+	<PasskeyIcon style="font-size: 1.125rem;" />
 	<span>Passkey</span>
 </button>
 

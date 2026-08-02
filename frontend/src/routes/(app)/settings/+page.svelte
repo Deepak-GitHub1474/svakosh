@@ -30,7 +30,7 @@
 					? 'border-primary font-semibold text-primary'
 					: 'border-transparent text-muted-foreground hover:text-foreground'}"
 			>
-				<span class="material-symbols-outlined" style="font-size: 1.125rem;">{tab.icon}</span>
+				<tab.icon style="font-size: 1.125rem;" />
 				{tab.label}
 			</button>
 		{/each}

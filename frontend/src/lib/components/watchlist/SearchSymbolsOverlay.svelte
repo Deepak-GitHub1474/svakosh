@@ -2,6 +2,11 @@
 	import { fade } from 'svelte/transition';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SymbolImage from '$lib/components/symbol-image/SymbolImage.svelte';
+	import AddCircle from '$lib/components/svg-provider/material/AddCircle.svelte';
+	import CheckCircle from '$lib/components/svg-provider/material/CheckCircle.svelte';
+	import ProgressActivity from '$lib/components/svg-provider/material/ProgressActivity.svelte';
+	import Search from '$lib/components/svg-provider/material/Search.svelte';
+	import SearchOff from '$lib/components/svg-provider/material/SearchOff.svelte';
 
 	type TSearchHit = { name: string; exchange: string; sk_token: string };
 
@@ -83,22 +88,27 @@
 				<EmptyState
 					title="Search Symbols"
 					description="Enter at least 3 characters to search NSE / BSE / F&O."
-					icon="search"
+					icon={Search}
 					actionLabel="Search Symbols"
-					actionIcon="search"
+					actionIcon={Search}
 					onAction={() => onseed?.('NIFTY')}
 				/>
 			{:else if results.length === 0}
 				<EmptyState
 					title="No matches found"
 					description="Try a different symbol."
-					icon="search_off"
+					icon={SearchOff}
 				/>
 			{:else}
 				{#each results as hit (hit.sk_token)}
 					{@const busy = pendingToken === hit.sk_token}
 					{@const added = addedTokens.has(hit.sk_token)}
 					{@const disabled = !canAdd || busy || added}
+					{@const StateIcon = added
+						? CheckCircle
+						: busy
+							? ProgressActivity
+							: AddCircle}
 					<div
 						class="group flex items-center gap-3 px-4 lg:px-3 py-2 border-b border-border-subtle hover:bg-glass transition-colors"
 					>
@@ -126,14 +136,13 @@
 									: busy
 										? 'Adding...'
 										: 'Add to watchlist'}
-							class="material-symbols-outlined cursor-pointer transition-colors {added
+							class="cursor-pointer transition-colors {added
 								? 'text-bullish'
 								: 'text-muted-foreground hover:text-primary'} disabled:cursor-not-allowed {added
 								? ''
 								: 'disabled:opacity-40'}"
-							style="font-size:1rem"
 						>
-							{added ? 'check_circle' : busy ? 'progress_activity' : 'add_circle'}
+							<StateIcon style="font-size:1rem" />
 						</button>
 					</div>
 				{/each}

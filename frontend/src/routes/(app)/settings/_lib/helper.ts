@@ -1,3 +1,10 @@
+import Computer from '$lib/components/svg-provider/material/Computer.svelte';
+import DesktopWindows from '$lib/components/svg-provider/material/DesktopWindows.svelte';
+import LaptopMac from '$lib/components/svg-provider/material/LaptopMac.svelte';
+import PasskeyIcon from '$lib/components/svg-provider/material/PasskeyIcon.svelte';
+import Smartphone from '$lib/components/svg-provider/material/Smartphone.svelte';
+import Tablet from '$lib/components/svg-provider/material/Tablet.svelte';
+import type { Component } from 'svelte';
 import type { PasskeyResult } from './types';
 
 function toDate(iso: string | null): Date | null {
@@ -28,15 +35,15 @@ export function timeAgo(iso: string | null): string {
 	return formatDate(iso);
 }
 
-export function deviceIcon(name: string | null): string {
+export function deviceIcon(name: string | null): Component {
 	const n = (name ?? '').toLowerCase();
 	if (n.includes('iphone') || n.includes('android') || n.includes('phone') || n.includes('mobile'))
-		return 'smartphone';
-	if (n.includes('ipad') || n.includes('tablet')) return 'tablet';
-	if (n.includes('mac')) return 'laptop_mac';
-	if (n.includes('win')) return 'desktop_windows';
-	if (n.includes('linux')) return 'computer';
-	return 'passkey';
+		return Smartphone;
+	if (n.includes('ipad') || n.includes('tablet')) return Tablet;
+	if (n.includes('mac')) return LaptopMac;
+	if (n.includes('win')) return DesktopWindows;
+	if (n.includes('linux')) return Computer;
+	return PasskeyIcon;
 }
 
 function deviceLabel(): string {

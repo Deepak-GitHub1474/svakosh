@@ -1,0 +1,22 @@
+<script lang="ts">
+	import { cn } from '$lib/utils';
+
+	let {
+		class: className = '',
+		style = '',
+		filled = false
+	}: { class?: string; style?: string; filled?: boolean } = $props();
+</script>
+
+<svg
+	class={cn('inline-block shrink-0 align-[-0.15em]', className)}
+	{style}
+	width="1em"
+	height="1em"
+	viewBox="0 -960 960 960"
+	fill="currentColor"
+	xmlns="http://www.w3.org/2000/svg"
+	aria-hidden="true"
+>
+	<path d="m363-310 117-71 117 71-31-133 104-90-137-11-53-126-53 126-137 11 104 90-31 133ZM481-29 346-160H160v-186L26-480l134-134v-186h186l135-134 133 134h186v186l134 134-134 134v186H614L481-29Zm0-84 108-107h151v-151l109-109-109-109v-151H589L481-849 371-740H220v151L111-480l109 109v151h150l111 107Zm0-368Z" />
+</svg>

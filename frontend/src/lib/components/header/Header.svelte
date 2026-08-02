@@ -93,9 +93,7 @@
 					class="flex items-center gap-2 h-full text-[0.8125rem] tracking-wider transition-colors duration-300
                     {activeIndex === i ? 'text-primary' : 'text-muted-foreground hover:text-white'}"
 				>
-					<span class="material-symbols-outlined icon-size {activeIndex === i ? 'fill-1' : ''}" style={activeIndex === i ? "font-variation-settings: 'FILL' 1;" : ""}>
-						{item.icon}
-					</span>
+					<item.icon class="icon-size" filled={activeIndex === i} />
 					{item.label}
 				</a>
 			{/each}

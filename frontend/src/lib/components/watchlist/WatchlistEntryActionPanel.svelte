@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import SvaKoshDrawer from '$lib/components/svakosh/SvaKoshDrawer.svelte';
+	import Delete from '$lib/components/svg-provider/material/Delete.svelte';
+	import StickyNote2 from '$lib/components/svg-provider/material/StickyNote2.svelte';
 
 	interface Props {
 		isOpen: boolean;
@@ -42,7 +44,7 @@
 			onclick={onNote}
 			class="flex w-full items-center gap-3 rounded-md px-3 {pad} text-xs text-muted-foreground transition-all duration-200 hover:bg-glass hover:text-foreground cursor-pointer text-left"
 		>
-			<span class="material-symbols-outlined" style="font-size:0.875rem">sticky_note_2</span>
+			<StickyNote2 style="font-size:0.875rem" />
 			{hasNote ? 'Edit note' : 'Add note'}
 		</button>
 	{/if}
@@ -52,7 +54,7 @@
 			onclick={onDelete}
 			class="flex w-full items-center gap-3 rounded-md px-3 {pad} text-xs text-bearish/80 transition-all duration-200 hover:bg-bearish-subtle hover:text-bearish cursor-pointer text-left"
 		>
-			<span class="material-symbols-outlined" style="font-size:0.875rem">delete</span>
+			<Delete style="font-size:0.875rem" />
 			Remove
 		</button>
 	{/if}
