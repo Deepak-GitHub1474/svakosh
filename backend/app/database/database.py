@@ -24,7 +24,7 @@ def exc_reason(exc: BaseException) -> str:
 
 async def discard_mongo_client(client: Any) -> None:
     try:
-        await client.close()
+        client.close()
     except Exception as e:
         logger.warning(
             "MongoDB: connection closed after failed connect.\nReason: %s",
@@ -148,7 +148,7 @@ async def disconnect_mongo_db(app: FastAPI) -> None:
     mongo_client: Any = getattr(app.state, "mongo_client", None)
     if mongo_client is not None:
         try:
-            await mongo_client.close()
+            mongo_client.close()
             logger.info("MongoDB: connection closed.")
         except Exception as e:
             logger.warning(
