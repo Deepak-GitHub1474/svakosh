@@ -6,8 +6,8 @@ services:
       - "8000:8000"
     env_file: .env
     depends_on:
-      mongodb:
-        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     networks:
@@ -34,6 +34,52 @@ services:
       start_period: 20s
     networks:
       - default
+
+  mongo-init:
+    image: mongo:7
+    restart: "no"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    network_mode: "service:mongodb"
+    environment:
+      MONGO_ROOT_USER: ${MONGO_ROOT_USER}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_APP_USER: ${MONGO_APP_USER}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
+      MONGODB_DB_NAME: ${MONGODB_DB_NAME:-svakosh}
+    entrypoint:
+      - bash
+      - -c
+      - |
+        set -e
+        if mongosh --quiet --host 127.0.0.1 -u "$$MONGO_ROOT_USER" -p "$$MONGO_ROOT_PASSWORD" \
+             --authenticationDatabase admin --eval 'db.adminCommand("ping")' >/dev/null 2>&1; then
+          echo "root user present"
+        else
+          mongosh --quiet --host 127.0.0.1 --eval '
+            db.getSiblingDB("admin").createUser({
+              user: process.env.MONGO_ROOT_USER,
+              pwd: process.env.MONGO_ROOT_PASSWORD,
+              roles: [{ role: "root", db: "admin" }]
+            });
+            print("root user created");
+          '
+        fi
+        mongosh --quiet --host 127.0.0.1 -u "$$MONGO_ROOT_USER" -p "$$MONGO_ROOT_PASSWORD" \
+          --authenticationDatabase admin --eval '
+          const name = process.env.MONGODB_DB_NAME;
+          const user = process.env.MONGO_APP_USER;
+          const appdb = db.getSiblingDB(name);
+          const roles = [{ role: "readWrite", db: name }];
+          if (appdb.getUser(user)) {
+            appdb.updateUser(user, { pwd: process.env.MONGO_APP_PASSWORD, roles: roles });
+            print("app user synced");
+          } else {
+            appdb.createUser({ user: user, pwd: process.env.MONGO_APP_PASSWORD, roles: roles });
+            print("app user created");
+          }
+        '
 
   redis:
     image: redis:7-alpine
