@@ -6,8 +6,10 @@ services:
       - "8000:8000"
     env_file: .env
     depends_on:
-      - mongodb
-      - redis
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - dokploy-network
       - default
@@ -15,17 +17,51 @@ services:
   mongodb:
     image: mongo:7
     restart: unless-stopped
+    command: ["mongod", "--auth", "--bind_ip_all"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGODB_DB_NAME:-svakosh}
+    ports:
+      - "37017:27017"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     networks:
       - default
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
+    command:
+      - sh
+      - -c
+      - >
+        exec redis-server
+        --appendonly yes
+        --requirepass "$$REDIS_PASSWORD"
+        --protected-mode no
+        --rename-command CONFIG ""
+        --rename-command FLUSHALL ""
+        --rename-command FLUSHDB ""
+        --rename-command MODULE ""
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    ports:
+      - "36379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - default
 

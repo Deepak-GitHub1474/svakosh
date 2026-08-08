@@ -8,7 +8,7 @@ export type TBackendConfig = {
 };
 
 export function resolveBackendConfig(): TBackendConfig {
-	const appEnv = (env.PUBLIC_SAVKOSH_APP_ENV || 'development').toLowerCase();
+	const appEnv = (env.PUBLIC_SVAKOSH_APP_ENV || 'development').toLowerCase();
 	const isProd = appEnv === 'production';
 	const preset = isProd ? presets.production : presets.development;
 	return {
