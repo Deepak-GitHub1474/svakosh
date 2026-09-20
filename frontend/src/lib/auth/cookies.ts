@@ -55,11 +55,12 @@ export function forwardSetCookies(response: Response, cookies: Cookies): void {
 }
 
 export function safeRedirectPath(raw: string | null | undefined): string {
-	if (!raw) return '/';
-	if (!raw.startsWith('/') || raw.startsWith('//')) return '/';
-	if (raw.startsWith('/auth/')) return '/';
+	if (!raw) return '/dashboard';
+	if (!raw.startsWith('/') || raw.startsWith('//')) return '/dashboard';
+	if (raw.startsWith('/auth/')) return '/dashboard';
 	return raw;
 }
+
 
 export function authForwardHeaders(cookies: Cookies): Record<string, string> {
 	const access = cookies.get(ACCESS_COOKIE) ?? '';
