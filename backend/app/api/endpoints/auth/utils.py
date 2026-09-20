@@ -32,11 +32,11 @@ from webauthn.helpers.structs import (
 
 from app.api.endpoints.auth.models import EMAIL_RE
 from app.config import get_settings
+from app.mail import otp_email, send_email
 
 logger = logging.getLogger("svakosh.auth.utils")
 
 NS = "SK"
-OTP_TTL_SECONDS = 300
 REFERRAL_LENGTH = 6
 REFERRAL_ALPHABET = string.ascii_uppercase + string.digits
 REFERRAL_MAX_TRIES = 50
@@ -584,7 +584,7 @@ async def save_otp(redis: Any, identifier: str, otp: str) -> None:
     pipe = redis.pipeline(transaction=False)
     pipe.hset(key, mapping={
         "hash": hash_otp(otp),
-        "otp_expires_at": str(now_ts + OTP_TTL_SECONDS),
+        "otp_expires_at": str(now_ts + s.OTP_TTL_SECONDS),
     })
     pipe.hsetnx(key, "attempts", "0")
     pipe.expire(key, s.OTP_LOCKOUT_MINUTES * 60)
@@ -665,12 +665,12 @@ async def check_otp(redis: Any, identifier: str, presented_otp: str) -> bool:
 
 
 # --------------------------------------------------------------------------
-# OTP delivery placeholders — replace with real providers later
+# OTP delivery
 # --------------------------------------------------------------------------
 
-async def send_otp_email(email: str, otp: str) -> None:
-    # TODO: wire later. Dev: print so it always shows in uvicorn stdout.
-    print(f"[DEV] otp.email to={email} otp={otp}", flush=True)
+async def send_otp_email(email: str, otp: str, purpose: str = "signin") -> bool:
+    subject, text, html = otp_email(otp, purpose=purpose)
+    return await send_email(to=email, subject=subject, text=text, html=html)
 
 
 async def send_otp_mobile(mobile: str, otp: str) -> None:
@@ -681,6 +681,11 @@ async def send_otp_mobile(mobile: str, otp: str) -> None:
 async def send_otp_whatsapp(whatsapp_number: str, otp: str) -> None:
     # TODO: wire later. Dev: print so it always shows in uvicorn stdout.
     print(f"[DEV] otp.whatsapp to={whatsapp_number} otp={otp}", flush=True)
+
+
+def otp_sent_message(ident_type: str) -> str:
+    channel = "email" if ident_type == "email" else "mobile number"
+    return f"Verification code sent to your {channel}."
 
 
 # --------------------------------------------------------------------------

@@ -29,11 +29,20 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_TTL_DAYS: int = 7
 
     OTP_HMAC_SECRET: str
+    OTP_TTL_SECONDS: int = 300
     OTP_LOCKOUT_FAIL_THRESHOLD: int = 5
     OTP_LOCKOUT_MINUTES: int = 15
     OTP_RESEND_COOLDOWN_SECONDS: int = 30
 
     ENCRYPTION_KEY: str
+
+    MAIL_PROVIDER: Literal["console", "smtp"] = "console"
+    MAIL_FROM: str = "Svakosh <no-reply@svakosh.app>"
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_USE_TLS: bool = True
 
     GOOGLE_CLIENT_ID: str | None = None
     GOOGLE_JWKS_URL: str = "https://www.googleapis.com/oauth2/v3/certs"

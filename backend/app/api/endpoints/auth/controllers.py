@@ -199,7 +199,7 @@ async def add_channel_send_otp(
     otp = generate_otp()
     await save_otp(redis, identifier, otp)
     if ident_type == "email":
-        await send_otp_email(identifier, otp)
+        await send_otp_email(identifier, otp, purpose="add_email")
     else:
         await send_otp_mobile(identifier, otp)
 

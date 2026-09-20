@@ -10,6 +10,7 @@ from app.api.endpoints.auth.models import (
     PasskeyRegisterCompleteRequest,
     VerifyOtpRequest,
 )
+from app.api.endpoints.auth.utils import otp_sent_message
 from app.database import MongoDatabase, RedisClient
 from app.responses import ok_response
 from app.utils.utils import CurrentClaims, csrf_protect, rate_limit
@@ -28,7 +29,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 )
 async def send_otp(body: AuthRequest, mongo: MongoDatabase, redis: RedisClient):
     data = await controllers.send_otp(body, mongo=mongo, redis=redis)
-    return ok_response("OTP sent.", data=data)
+    return ok_response(otp_sent_message(data["identifier_type"]), data=data)
 
 
 @router.post(
@@ -89,7 +90,7 @@ async def add_channel_send_otp(
     redis: RedisClient,
 ):
     data = await controllers.add_channel_send_otp(body, claims, mongo=mongo, redis=redis)
-    return ok_response("OTP sent.", data=data)
+    return ok_response(otp_sent_message(data["identifier_type"]), data=data)
 
 
 @router.post(
