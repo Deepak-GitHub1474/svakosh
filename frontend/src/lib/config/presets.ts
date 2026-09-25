@@ -1,7 +1,7 @@
 export const presets = {
 	production: {
-		apiUrl: 'https://svakosh-svakoshapi-kxz7i7-c9720d-13-53-86-234.sslip.io',
-		wsUrl: 'wss://svakosh-svakoshapi-kxz7i7-c9720d-13-53-86-234.sslip.io'
+		apiUrl: 'https://svakosh-svakoshapi-ow8okw-b5028b-35-188-103-96.sslip.io',
+		wsUrl: 'wss://svakosh-svakoshapi-ow8okw-b5028b-35-188-103-96.sslip.io'
 	},
 	development: {
 		apiUrl: 'http://127.0.0.1:8000',

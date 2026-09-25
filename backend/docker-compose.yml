@@ -25,7 +25,7 @@ services:
     ports:
       - "37017:27017"
     volumes:
-      - mongo_data:/data/db
+      - mongo_data_v2:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -54,11 +54,18 @@ services:
       - -c
       - |
         set -e
+        ready=0
         for i in $$(seq 1 30); do
           mongosh --quiet --host mongodb --port 27017 -u "$$MONGO_ROOT_USER" -p "$$MONGO_ROOT_PASSWORD" \
-            --authenticationDatabase admin --eval 'db.adminCommand("ping")' >/dev/null 2>&1 && break
+            --authenticationDatabase admin --eval 'db.adminCommand("ping")' >/dev/null 2>&1 && { ready=1; break; }
           sleep 2
         done
+        if [ "$$ready" != "1" ]; then
+          echo "mongo-init: could not authenticate as '$$MONGO_ROOT_USER' after 30 tries."
+          echo "mongo only creates the root user on an empty /data/db. If this volume was"
+          echo "first created while MONGO_ROOT_USER was unset, delete it and redeploy."
+          exit 1
+        fi
         mongosh --quiet --host mongodb --port 27017 -u "$$MONGO_ROOT_USER" -p "$$MONGO_ROOT_PASSWORD" \
           --authenticationDatabase admin --eval '
           const name = process.env.MONGODB_DB_NAME;
@@ -105,7 +112,7 @@ services:
       - default
 
 volumes:
-  mongo_data:
+  mongo_data_v2:
   redis_data:
 
 networks:
