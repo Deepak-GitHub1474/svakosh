@@ -21,6 +21,7 @@
 		candle?: CandlePreset;
 		icon?: Snippet;
 		disabled?: boolean;
+		href?: string;
 		type?: 'button' | 'submit' | 'reset';
 		onclick?: (e: MouseEvent) => void | Promise<void>;
 	};
@@ -33,6 +34,7 @@
 		candle,
 		icon,
 		disabled = false,
+		href,
 		type = 'button',
 		onclick
 	}: Props = $props();
@@ -42,7 +44,7 @@
 	);
 </script>
 
-<button {type} class={buttonClass} {disabled} aria-label={label} {onclick}>
+{#snippet inner()}
 	{#if icon}
 		<span class="btn-terminal__icon">{@render icon()}</span>
 	{:else if candle !== undefined}
@@ -51,4 +53,12 @@
 		</svg>
 	{/if}
 	<span class="btn-terminal__label select-none">{label}</span>
-</button>
+{/snippet}
+
+{#if href}
+	<a {href} class={buttonClass} aria-label={label}>{@render inner()}</a>
+{:else}
+	<button {type} class={buttonClass} {disabled} aria-label={label} {onclick}>
+		{@render inner()}
+	</button>
+{/if}
