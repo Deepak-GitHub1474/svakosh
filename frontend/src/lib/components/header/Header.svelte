@@ -58,9 +58,12 @@
 				direction = activeIndex > prevIndex ? 'bullish' : 'bearish';
 				prevIndex = activeIndex;
 			}
-			indicator.set({ left: activeEl.offsetLeft, width: activeEl.offsetWidth }).then(() => {
-				direction = 'none';
-			});
+			indicator
+				.set({ left: activeEl.offsetLeft, width: activeEl.offsetWidth })
+				.then(() => {
+					direction = 'none';
+				})
+				.catch(() => {});
 		}
 	});
 
