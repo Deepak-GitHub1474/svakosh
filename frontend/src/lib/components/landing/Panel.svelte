@@ -35,7 +35,7 @@
 		{/if}
 	</div>
 
-	<div class="flex-1 overflow-hidden p-5">
+	<div class="hide-scrollbar flex-1 overflow-y-auto p-5">
 		{@render children()}
 	</div>
 </article>

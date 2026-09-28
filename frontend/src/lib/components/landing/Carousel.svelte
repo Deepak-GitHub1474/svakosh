@@ -64,7 +64,7 @@
 	aria-label="Platform modules"
 >
 	<div
-		class="touch-pan-y overflow-hidden"
+		class="h-[76svh] touch-pan-y overflow-hidden md:h-auto"
 		role="presentation"
 		tabindex="-1"
 		onkeydown={keys}
@@ -74,13 +74,13 @@
 		onpointercancel={up}
 	>
 		<div
-			class="flex"
+			class="flex h-full md:h-auto"
 			style="transform: translate3d(calc({-index * 100}% + {delta}px), 0, 0);
 				transition: {dragging ? 'none' : 'transform 520ms cubic-bezier(0.22, 1, 0.36, 1)'}"
 		>
 			{#each items as item, i (item.id)}
 				<div
-					class="flex w-full shrink-0 px-0.5 transition-opacity duration-500 *:flex-1"
+					class="flex h-full w-full shrink-0 px-0.5 transition-opacity duration-500 *:flex-1 md:h-auto"
 					style="opacity: {i === index ? 1 : 0.4}"
 					aria-hidden={i !== index}
 					inert={i !== index}

@@ -45,12 +45,12 @@
 			<tbody>
 				{#each BREAKOUT.rows as row (row.symbol)}
 					<tr class="border-border-subtle/50 border-b last:border-0">
-						<td class="text-muted-foreground py-2 text-[0.625rem] tabular-nums">{row.time}</td>
-						<td class="py-2 pr-3">
+						<td class="text-muted-foreground py-1 text-[0.625rem] tabular-nums">{row.time}</td>
+						<td class="py-1 pr-3">
 							<span class="block text-[0.6875rem]">{row.symbol}</span>
 							<span class="text-muted-foreground block text-[0.5625rem]">{row.name}</span>
 						</td>
-						<td class="py-2">
+						<td class="py-1">
 							<span
 								class="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[0.5625rem] {row.high
 									? 'border-bullish/40 text-bullish'
@@ -60,24 +60,24 @@
 								<Icon path={ICONS.arrow} class="size-2.5 {row.high ? '-rotate-45' : 'rotate-45'}" />
 							</span>
 						</td>
-						<td class="text-muted-foreground py-2 text-right text-[0.625rem] tabular-nums">
+						<td class="text-muted-foreground py-1 text-right text-[0.625rem] tabular-nums">
 							{row.breakout}
 						</td>
-						<td class="py-2 text-right text-[0.625rem] tabular-nums">
+						<td class="py-1 text-right text-[0.625rem] tabular-nums">
 							<span class="block">{row.ltp}</span>
 							<span class="block {row.pct >= 0 ? 'text-bullish' : 'text-bearish'}">
 								{row.pct >= 0 ? '+' : ''}{row.pct.toFixed(2)}%
 							</span>
 						</td>
 						<td
-							class="py-2 text-right text-[0.625rem] tabular-nums {row.high
+							class="py-1 text-right text-[0.625rem] tabular-nums {row.high
 								? 'text-bullish'
 								: 'text-bearish'}"
 						>
 							{row.level}
 						</td>
 						<td
-							class="py-2 text-right text-[0.625rem] tabular-nums {row.identified >= 0
+							class="py-1 text-right text-[0.625rem] tabular-nums {row.identified >= 0
 								? 'text-bullish'
 								: 'text-bearish'}"
 						>
