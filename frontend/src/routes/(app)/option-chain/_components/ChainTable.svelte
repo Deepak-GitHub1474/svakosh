@@ -31,6 +31,7 @@
 	let availableHeight = $state(0);
 	let measuredHeight = 0;
 	let centredKey = '';
+	let horizontalKey = '';
 
 	$effect(() => {
 		const host = scroller;
@@ -75,6 +76,22 @@
 
 			host.scrollTop +=
 				rowBox.top - hostBox.top - headerHeight - (visibleHeight - rowBox.height) / 2;
+		});
+
+		return () => cancelAnimationFrame(frame);
+	});
+
+	// Call and put columns mirror each other, so the strike column sits at the table's centre.
+	$effect(() => {
+		const host = scroller;
+		if (!host || chain.loading) return;
+
+		const key = `${chain.view}:${chain.symbol}:${chain.expiry}`;
+		if (key === horizontalKey) return;
+		horizontalKey = key;
+
+		const frame = requestAnimationFrame(() => {
+			host.scrollLeft = (host.scrollWidth - host.clientWidth) / 2;
 		});
 
 		return () => cancelAnimationFrame(frame);

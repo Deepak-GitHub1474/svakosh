@@ -5,6 +5,7 @@ export const DEFAULT_STRIKE_RANGE = 10;
 export const MIN_STRIKE_RANGE = 3;
 export const MAX_STRIKE_RANGE = 60;
 export const GREEKS_INTERVAL = 700;
+export const STRIKE_RANGE_DEBOUNCE = 400;
 export const TABLE_BOTTOM_GAP = 16;
 
 export const PREFERRED_SYMBOL_ORDER = [

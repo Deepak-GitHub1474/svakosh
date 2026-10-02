@@ -1,3 +1,4 @@
+import { LOT_SIZES } from '$lib/utils';
 import type { TOptionsAnalyticsData, TOptionUnderlying } from './types';
 
 export const UNDERLYINGS: TOptionUnderlying[] = [
@@ -25,7 +26,7 @@ export const MOCK_DATA: Record<string, TOptionsAnalyticsData> = {
 		pcr_interpretation: 'Bullish',
 		total_ce_oi: 4582000,
 		total_pe_oi: 5131840,
-		lot_size: 50,
+		lot_size: LOT_SIZES.NIFTY,
 		strikes: generateStrikes(24000, 50, 20)
 	},
 	BANKNIFTY: {
@@ -43,7 +44,7 @@ export const MOCK_DATA: Record<string, TOptionsAnalyticsData> = {
 		pcr_interpretation: 'Neutral',
 		total_ce_oi: 12500000,
 		total_pe_oi: 10625000,
-		lot_size: 15,
+		lot_size: LOT_SIZES.BANKNIFTY,
 		strikes: generateStrikes(55500, 100, 20)
 	}
 };

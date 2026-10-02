@@ -1,3 +1,4 @@
+import { LOT_SIZES } from '$lib/utils';
 import type { TChainData, TFeedMessage, TStrikeData, TTokenTick } from './types';
 
 type TSpec = {
@@ -17,7 +18,7 @@ const SPECS: TSpec[] = [
 		segment: '',
 		spot: 24022.98,
 		step: 50,
-		lotSize: 75,
+		lotSize: LOT_SIZES.NIFTY,
 		expiries: upcomingExpiries(4, 4)
 	},
 	{
@@ -26,7 +27,7 @@ const SPECS: TSpec[] = [
 		segment: 'BANK',
 		spot: 54120.85,
 		step: 100,
-		lotSize: 30,
+		lotSize: LOT_SIZES.BANKNIFTY,
 		expiries: upcomingExpiries(3, 3)
 	},
 	{
@@ -35,7 +36,7 @@ const SPECS: TSpec[] = [
 		segment: 'SENSEX',
 		spot: 81402.7,
 		step: 100,
-		lotSize: 20,
+		lotSize: LOT_SIZES.SENSEX,
 		expiries: upcomingExpiries(2, 3)
 	}
 ];
