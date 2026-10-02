@@ -4,7 +4,9 @@ import { ACCESS_COOKIE, CSRF_COOKIE, REFRESH_COOKIE, forwardSetCookies } from '$
 
 type Fetch = typeof fetch;
 
-export async function tryRefreshTokens(cookies: Cookies, doFetch: Fetch): Promise<boolean> {
+const inFlight = new WeakMap<Cookies, Promise<boolean>>();
+
+async function requestRefresh(cookies: Cookies, doFetch: Fetch): Promise<boolean> {
 	const refresh = cookies.get(REFRESH_COOKIE);
 	if (!refresh) return false;
 	const csrf = cookies.get(CSRF_COOKIE) ?? '';
@@ -20,6 +22,14 @@ export async function tryRefreshTokens(cookies: Cookies, doFetch: Fetch): Promis
 	if (!res.ok) return false;
 	forwardSetCookies(res, cookies);
 	return true;
+}
+
+export function tryRefreshTokens(cookies: Cookies, doFetch: Fetch): Promise<boolean> {
+	const running = inFlight.get(cookies);
+	if (running) return running;
+	const attempt = requestRefresh(cookies, doFetch).finally(() => inFlight.delete(cookies));
+	inFlight.set(cookies, attempt);
+	return attempt;
 }
 
 export function accessCookieHeader(cookies: Cookies): string {
