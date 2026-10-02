@@ -22,6 +22,15 @@ export const STRIKE_DIFFERENCES: Record<string, number> = {
     BANKEX: 100
 };
 
+export const LOT_SIZES: Record<string, number> = {
+    NIFTY: 65,
+    BANKNIFTY: 30,
+    FINNIFTY: 60,
+    MIDCPNIFTY: 120,
+    SENSEX: 20,
+    BANKEX: 30
+};
+
 export const chartTypeTabs = [
     { label: 'Line', value: 'line', svgPath: 'M3.5,18.49L9.5,12.48L13.5,16.48L22,7.91L20.59,6.5L13.5,13.59L9.5,9.5L2,17.08L3.5,18.49Z' },
     { label: 'Bar', value: 'bar', svgPath: 'M5,6h3v12H5V6zm5-2h3v14h-3V4zm5,6h3v8h-3v-8z' }

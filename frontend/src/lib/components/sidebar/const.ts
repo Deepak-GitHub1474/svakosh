@@ -15,6 +15,7 @@ import Visibility from '$lib/components/svg-provider/material/Visibility.svelte'
 import Waves from '$lib/components/svg-provider/material/Waves.svelte';
 
 export const menuItems = [
+	{ icon: LegendToggle, label: 'Option Chain', href: '/option-chain' },
 	{ icon: TableChartView, label: 'OI Tracker', href: '/oi/tracker' },
 	{ icon: Search, label: 'Lookup', href: '/oi/lookup' },
 	{ icon: Visibility, label: 'OI Glimps', href: '/oi/glimpse' },
