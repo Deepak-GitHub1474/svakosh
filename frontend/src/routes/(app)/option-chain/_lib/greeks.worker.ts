@@ -61,21 +61,30 @@ function impliedVol(
 	rate: number,
 	kind: 'call' | 'put'
 ): number {
-	if (price <= 0 || spot <= 0 || strike <= 0 || term <= 0) return 0;
+	if (price <= 0 || spot <= 0 || strike <= 0 || term <= 0) return NaN;
+	const discounted = strike * Math.exp(-rate * term);
+	const intrinsic =
+		kind === 'call' ? Math.max(spot - discounted, 0) : Math.max(discounted - spot, 0);
+	const ceiling = kind === 'call' ? spot : discounted;
+	if (price <= intrinsic || price >= ceiling) return NaN;
 
+	let low = 1e-4;
+	let high = 5;
 	let vol = 0.3;
-	for (let iteration = 0; iteration < 60; iteration++) {
+	for (let iteration = 0; iteration < 100; iteration++) {
 		const model =
 			kind === 'call'
 				? callPrice(spot, strike, rate, vol, term)
 				: putPrice(spot, strike, rate, vol, term);
+		const gap = model - price;
+		if (Math.abs(gap) < 1e-5) return vol;
+		if (gap > 0) high = vol;
+		else low = vol;
 		const vega = vegaRaw(spot, strike, rate, vol, term);
-		if (vega < 1e-6) break;
-		const priceGap = model - price;
-		if (Math.abs(priceGap) < 1e-4) break;
-		vol = Math.max(0.0001, Math.min(vol - priceGap / vega, 5));
+		const next = vega > 1e-8 ? vol - gap / vega : NaN;
+		vol = next > low && next < high ? next : (low + high) / 2;
 	}
-	return vol > 0 && vol < 5 ? vol : 0;
+	return vol;
 }
 
 function greeksFor(
@@ -86,8 +95,8 @@ function greeksFor(
 	term: number,
 	kind: 'call' | 'put'
 ) {
-	if (vol <= 0 || term <= 0) {
-		return { delta: 0, gamma: 0, theta: 0, vega: 0 };
+	if (!(vol > 0) || term <= 0) {
+		return { delta: NaN, gamma: NaN, theta: NaN, vega: NaN };
 	}
 
 	const d1 = blackScholesD1(spot, strike, rate, vol, term);
@@ -114,24 +123,40 @@ function greeksFor(
 	};
 }
 
+function impliedSpot(spot: number, tte: number, rate: number, strikes: TInput[]): number {
+	let best: TInput | null = null;
+	for (const entry of strikes) {
+		if (entry.ce_ltp <= 0 || entry.pe_ltp <= 0) continue;
+		if (!best || Math.abs(Number(entry.strike) - spot) < Math.abs(Number(best.strike) - spot)) {
+			best = entry;
+		}
+	}
+	if (!best) return spot;
+	const parity = best.ce_ltp - best.pe_ltp + Number(best.strike) * Math.exp(-rate * tte);
+	return Math.abs(parity - spot) / spot < 0.05 ? parity : spot;
+}
+
 self.onmessage = (event: MessageEvent<TRequest>) => {
-	const { spot, tte, rate, strikes } = event.data;
+	const { tte, rate, strikes } = event.data;
+	const spot = impliedSpot(event.data.spot, tte, rate, strikes);
 
 	const results = strikes.map(({ strike, ce_ltp, pe_ltp }) => {
 		const strikeValue = Number(strike);
-		const ceIv = impliedVol(ce_ltp, spot, strikeValue, tte, rate, 'call');
-		const peIv = impliedVol(pe_ltp, spot, strikeValue, tte, rate, 'put');
-		const callGreeks = greeksFor(spot, strikeValue, rate, ceIv, tte, 'call');
-		const putGreeks = greeksFor(spot, strikeValue, rate, peIv, tte, 'put');
+		const callIv = impliedVol(ce_ltp, spot, strikeValue, tte, rate, 'call');
+		const putIv = impliedVol(pe_ltp, spot, strikeValue, tte, rate, 'put');
+		const otmIv = strikeValue >= spot ? callIv : putIv;
+		const iv = Number.isNaN(otmIv) ? (strikeValue >= spot ? putIv : callIv) : otmIv;
+		const callGreeks = greeksFor(spot, strikeValue, rate, iv, tte, 'call');
+		const putGreeks = greeksFor(spot, strikeValue, rate, iv, tte, 'put');
 
 		return {
 			strike,
-			ce_iv: ceIv * 100,
+			ce_iv: iv * 100,
 			ce_delta: callGreeks.delta,
 			ce_gamma: callGreeks.gamma,
 			ce_theta: callGreeks.theta,
 			ce_vega: callGreeks.vega,
-			pe_iv: peIv * 100,
+			pe_iv: iv * 100,
 			pe_delta: putGreeks.delta,
 			pe_gamma: putGreeks.gamma,
 			pe_theta: putGreeks.theta,

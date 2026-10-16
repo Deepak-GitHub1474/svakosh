@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.endpoints import health
 from app.api.endpoints.auth.routes import router as auth
+from app.api.endpoints.market.router import router as market
 from app.api.endpoints.profile.router import router as profile
 from app.api.endpoints.watchlist.router import router as watchlist
 from app.config import get_settings
@@ -19,6 +20,7 @@ from app.database import (
     init_database_state,
 )
 from app.error_handlers import register_exception_handlers
+from app.market_data import MarketDataClient
 from app.responses import extract_request_payload, ok_response
 
 logger = logging.getLogger("svakosh.main")
@@ -34,9 +36,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     init_database_state(app)
     await connect_mongo_db(app, settings)
     await connect_redis(app, settings)
+    app.state.market_data = MarketDataClient(settings.NATS_URL)
+    app.state.market_data.start()
     try:
         yield
     finally:
+        await app.state.market_data.stop()
         for name, fn in (
             ("Redis", disconnect_redis),
             ("MongoDB", disconnect_mongo_db),
@@ -66,6 +71,7 @@ app.include_router(health.router)
 app.include_router(auth)
 app.include_router(profile)
 app.include_router(watchlist)
+app.include_router(market)
 
 app.add_middleware(
     CORSMiddleware,

@@ -3,40 +3,111 @@
 	import { fade, slide } from 'svelte/transition';
 	import type { TMarketPulseData, TMarketPulseRow } from './_lib/types';
 	import { PULSE_SYMBOLS } from './_lib/const';
-	import { REFRESH_INTERVAL } from '$lib/utils/const';
-	import { isMarketHours } from './_lib/helper';
-	import { generatePulseMockData, generateLivePulseRow } from './_lib/mock-data';
+	import { callSignal, optionSignal, putSignal } from './_lib/helper';
+	import { marketFeed } from '$lib/market/feed.svelte';
+	import { SymbolOI } from '$lib/market/oi.svelte';
+	import { TodayBars } from '$lib/market/bars.svelte';
+	import { totalAt, type TStrikeLeg } from '$lib/market/oi';
+	import { barAt, legsByTime, withLive } from '$lib/market/series';
+	import { inSession, istTime } from '$lib/market/time';
 	import MarketPulseTable from './_components/MarketPulseTable.svelte';
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 
-	let selectedSymbol: string = $state('NIFTY');
-	let pulseData: TMarketPulseData = $state({});
-	let liveRow: TMarketPulseRow | null = $state(null);
-	let isSymbolOpen: boolean = $state(false);
-	let intervalId: any;
+	const INTERVAL = 5;
 
-	function refreshData(): void {
-		pulseData = generatePulseMockData(selectedSymbol);
-		liveRow = generateLivePulseRow(selectedSymbol);
+	let selectedSymbol: string = $state('NIFTY');
+	let isSymbolOpen: boolean = $state(false);
+	let options = $state.raw<SymbolOI | null>(null);
+	const spotBars = new TodayBars();
+	const futureBars = new TodayBars();
+
+	const view = $derived(options?.chain.view ?? null);
+	const spotToken = $derived(view?.spot ?? '');
+	const futureToken = $derived(Object.keys(futureBars.data).sort()[0] ?? '');
+
+	const rows = $derived.by((): TMarketPulseRow[] => {
+		if (!options || !spotToken) return [];
+		const spot = withLive(spotBars.data[spotToken], marketFeed.quotes[spotToken], INTERVAL);
+		const future = legsByTime(withLive(futureBars.data[futureToken], marketFeed.quotes[futureToken], INTERVAL), []);
+		const ce: TStrikeLeg[] = options.legs('CE');
+		const pe: TStrikeLeg[] = options.legs('PE');
+		let high = -Infinity;
+		let low = Infinity;
+		let previous = { ce: 0, pe: 0, fut: 0 };
+		return spot.map((bar, index) => {
+			const ts = bar[0];
+			const time = istTime(ts);
+			const ceTotal = totalAt(ce, ts);
+			const peTotal = totalAt(pe, ts);
+			const fut = future.find((point) => point.time === time)?.ce;
+			const ceChange = index ? ceTotal - previous.ce : 0;
+			const peChange = index ? peTotal - previous.pe : 0;
+			const futChange = index && fut ? fut.oi - previous.fut : 0;
+			const atm = ce.reduce<TStrikeLeg | null>(
+				(best, leg) => (!best || Math.abs(leg.strike - bar[4]) < Math.abs(best.strike - bar[4]) ? leg : best),
+				null
+			);
+			const atmPe = pe.find((leg) => leg.strike === atm?.strike);
+			const dayHL = bar[2] >= high ? 'High' : bar[3] <= low ? 'Low' : 'Normal';
+			high = Math.max(high, bar[2]);
+			low = Math.min(low, bar[3]);
+			previous = { ce: ceTotal, pe: peTotal, fut: fut?.oi ?? previous.fut };
+			return {
+				time,
+				spot: bar[4],
+				ceOIChange: ceChange,
+				peOIChange: peChange,
+				oiChange: ceChange + peChange,
+				dayHL: index ? dayHL : 'Normal',
+				optionSignal: optionSignal(ceChange, peChange),
+				vwap: fut?.atp ?? 0,
+				callSignal: callSignal(ceChange),
+				putSignal: putSignal(peChange),
+				futCOI: futChange,
+				atmStraddle:
+					Math.round(
+						((barAt(atm?.series ?? [], ts)?.[4] ?? 0) + (barAt(atmPe?.series ?? [], ts)?.[4] ?? 0)) * 100
+					) / 100
+			};
+		});
+	});
+
+	const forming = $derived(rows.length > 0 && inSession(Date.now()));
+	const pulseData: TMarketPulseData = $derived(
+		Object.fromEntries((forming ? rows.slice(0, -1) : rows).map((row) => [row.time, row]))
+	);
+	const liveRow: TMarketPulseRow | null = $derived(forming ? (rows.at(-1) ?? null) : null);
+
+	$effect(() => {
+		if (!view) return;
+		void spotBars.load(`${view.spot.split(':')[0]}.${view.underlying}`, view.spot, INTERVAL);
+		void futureBars.load(`${view.exchange}.${view.underlying}`, `${view.exchange}:FUT:${view.underlying}:`, INTERVAL);
+	});
+
+	$effect(() => {
+		if (!futureToken) return;
+		return marketFeed.subscribe([futureToken], ['ltp', 'oi']);
+	});
+
+	function load(symbol: string) {
+		options?.stop();
+		const next = new SymbolOI(symbol, INTERVAL);
+		next.start();
+		options = next;
 	}
 
 	function handleSymbolChange(val: string): void {
 		selectedSymbol = val;
-		refreshData();
+		load(val);
 	}
 
-	onMount(() => {
-		refreshData();
-		intervalId = setInterval(() => {
-			if (isMarketHours()) {
-				liveRow = generateLivePulseRow(selectedSymbol);
-			}
-		}, REFRESH_INTERVAL);
-	});
+	onMount(() => load(selectedSymbol));
 
 	onDestroy(() => {
-		if (intervalId) clearInterval(intervalId);
+		options?.stop();
+		spotBars.stop();
+		futureBars.stop();
 	});
 </script>
 

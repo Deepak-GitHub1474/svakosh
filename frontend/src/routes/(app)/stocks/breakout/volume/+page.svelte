@@ -1,18 +1,58 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
-	import { onMount } from 'svelte';
-	import { BREAKOUT_DATA } from './_lib/mock-data';
+	import { onDestroy, onMount } from 'svelte';
 	import { filterBreakouts, sortBreakouts } from './_lib/helper';
 	import type { TBreakoutFilters, TSortConfig, TSortKey, TVolumeBreakout } from './_lib/types';
-
+	import { changeOf, marketFeed, type TQuoteField } from '$lib/market/feed.svelte';
+	import { getAverageVolumes, getMarketOverview } from '$lib/market/service';
+	import { istTime } from '$lib/market/time';
+	import type { TStockItem } from '$lib/market/types';
 	import Header from './_components/Header.svelte';
 	import Table from './_components/Table.svelte';
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
 	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
 
+	const FIELDS: TQuoteField[] = ['ltp', 'prev_close', 'high', 'low', 'volume'];
+	const SPIKE = 2;
+	const STRONG_SPIKE = 3;
+
 	let search = $state('');
-	let breakouts = $state<TVolumeBreakout[]>(BREAKOUT_DATA);
+	let stocks = $state.raw<TStockItem[]>([]);
+	let averages = $state.raw<Record<string, number>>({});
 	let sortConfig = $state<TSortConfig>({ key: 'timestamp', direction: 'desc' });
+	let unsubscribe: (() => void) | undefined;
+	let active = true;
+	const spotted: Record<string, { time: string; price: number }> = {};
+
+	const pct = (value: number, base: number) => (base ? Math.round(((value - base) / base) * 10000) / 100 : 0);
+
+	const breakouts = $derived(
+		stocks.flatMap((stock): TVolumeBreakout[] => {
+			const q = marketFeed.quotes[stock.sk_token];
+			const average = averages[stock.sk_token];
+			if (!q?.ltp || !q.volume || !average) return [];
+			const ratio = q.volume / average;
+			if (ratio < SPIKE) return [];
+			spotted[stock.sk_token] ??= { time: istTime(Date.now()), price: q.ltp };
+			const seen = spotted[stock.sk_token];
+			return [
+				{
+					id: stock.sk_token,
+					timestamp: seen.time,
+					symbol: stock.symbol,
+					display_name: stock.name,
+					criteria: ratio >= STRONG_SPIKE ? `Strong Volume Spike > ${STRONG_SPIKE}x` : `Volume Spike > ${SPIKE}x`,
+					breakout_price: seen.price,
+					ltp: q.ltp,
+					p_change: changeOf(q).change_pct,
+					day_high: q.high ?? 0,
+					day_low: q.low ?? 0,
+					change_wrt_high: pct(q.ltp, q.high ?? 0),
+					change_wrt_low: pct(q.ltp, q.low ?? 0)
+				}
+			];
+		})
+	);
 
 	const filteredBreakouts = $derived.by(() => {
 		const filters: TBreakoutFilters = { search };
@@ -37,17 +77,20 @@
 		}
 	}
 
-	// Simulated Auto-refresh logic to mimic live breakout alerts
-	onMount(() => {
-		const interval = setInterval(() => {
-			breakouts = breakouts.map((b) => ({
-				...b,
-				ltp: b.ltp + (Math.random() - 0.5) * 5,
-				p_change: b.p_change + (Math.random() - 0.5) * 0.1
-			}));
-		}, 3000);
+	onMount(async () => {
+		const [overview, volumes] = await Promise.all([getMarketOverview(), getAverageVolumes()]);
+		if (!active || !overview.ok) return;
+		averages = volumes.ok ? volumes.data : {};
+		stocks = overview.data.stocks;
+		unsubscribe = marketFeed.subscribe(
+			stocks.map((s) => s.sk_token),
+			FIELDS
+		);
+	});
 
-		return () => clearInterval(interval);
+	onDestroy(() => {
+		active = false;
+		unsubscribe?.();
 	});
 </script>
 

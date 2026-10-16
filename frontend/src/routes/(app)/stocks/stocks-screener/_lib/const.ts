@@ -1,3 +1,4 @@
+import type { TQuoteField } from '$lib/market/feed.svelte';
 import type { TSortKey } from './types';
 
 export const SCREENER_COLUMNS: { key: TSortKey; label: string; align?: 'left' | 'right' }[] = [
@@ -13,4 +14,16 @@ export const SCREENER_COLUMNS: { key: TSortKey; label: string; align?: 'left' | 
 	{ key: 'avg_price', label: 'Average Price', align: 'right' },
 	{ key: 'upper_circuit', label: 'Upper Circuit', align: 'right' },
 	{ key: 'lower_circuit', label: 'Lower Circuit', align: 'right' }
+];
+
+export const SCREENER_FIELDS: TQuoteField[] = [
+	'ltp',
+	'prev_close',
+	'open',
+	'high',
+	'low',
+	'volume',
+	'atp',
+	'upper_circuit',
+	'lower_circuit'
 ];

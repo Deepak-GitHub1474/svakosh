@@ -1,3 +1,7 @@
+import { changeOf, marketFeed, type TQuoteField } from '$lib/market/feed.svelte';
+import { getChain, getChains } from '$lib/market/service';
+import { optionToken } from '$lib/market/token';
+import type { TChainRef, TChainView } from '$lib/market/types';
 import {
 	DEFAULT_STRIKE_RANGE,
 	DEFAULT_SYMBOL,
@@ -6,241 +10,193 @@ import {
 	MIN_STRIKE_RANGE,
 	PREFERRED_SYMBOL_ORDER
 } from './const';
-import { openFeed, type TFeed } from './feed';
 import { clearGreeksCache, computeGreeks, destroyGreeks } from './greeks';
-import { nearestAtm, parseChainId, timeToExpiry, visibleStrikes } from './helper';
-import type {
-	TChainData,
-	TChainId,
-	TFeedMessage,
-	TGreeksRow,
-	TStrikeData,
-	TTokenTick,
-	TViewMode
-} from './types';
+import { nearestAtm, timeToExpiry, visibleStrikes } from './helper';
+import type { TChainData, TGreeksRow, TStrikeData, TViewMode } from './types';
 
-let feed: TFeed | null = null;
-let tokenIndex = new Map<string, { strike: string; isCe: boolean }>();
-let tickBuffer = new Map<string, TTokenTick>();
-let flushFrame = 0;
-let greeksIntervalId = 0;
+const OPTION_FIELDS: TQuoteField[] = ['ltp', 'prev_close', 'oi', 'prev_oi', 'volume', 'bid', 'ask'];
 
-let chainData = $state<TChainData | null>(null);
-let chainIds = $state<TChainId[]>([]);
-let activeId = $state<string | null>(null);
+let refs = $state<TChainRef[]>([]);
+let detail = $state<TChainView | null>(null);
 let symbol = $state(DEFAULT_SYMBOL);
 let expiry = $state<string | null>(null);
 let view = $state<TViewMode>('OI');
 let range = $state(DEFAULT_STRIKE_RANGE);
-let connected = $state(false);
 let loading = $state(true);
 let error = $state<string | null>(null);
 let greeks = $state<Record<string, TGreeksRow>>({});
 let windowAnchor = $state('');
 
+let stopRoot: (() => void) | undefined;
+let greeksIntervalId = 0;
+let requestId = 0;
+
 const symbols = $derived(
-	[...new Set(chainIds.map((entry) => entry.symbol))].sort((left, right) => {
-		const leftRank = PREFERRED_SYMBOL_ORDER.indexOf(left);
-		const rightRank = PREFERRED_SYMBOL_ORDER.indexOf(right);
-		return (leftRank === -1 ? 99 : leftRank) - (rightRank === -1 ? 99 : rightRank);
-	})
+	refs
+		.map((ref) => ref.underlying)
+		.sort((left, right) => rank(left) - rank(right) || left.localeCompare(right))
 );
-const expiries = $derived(
-	chainIds.filter((entry) => entry.symbol === symbol).map((entry) => entry.expiry)
+const expiries = $derived(detail?.expiries.map((entry) => entry.date) ?? []);
+const current = $derived(detail?.expiries.find((entry) => entry.date === expiry));
+const allStrikes = $derived(current?.strikes.map(String) ?? []);
+const step = $derived(strikeStep(current?.strikes ?? []));
+const spotQuote = $derived(detail ? marketFeed.quotes[detail.spot] : undefined);
+const atm = $derived(nearestAtm(spotQuote?.ltp ?? 0, step));
+const strikes = $derived(
+	spotQuote?.ltp ? visibleStrikes(allStrikes, windowAnchor || atm, range) : []
 );
+const optionsData = $derived(Object.fromEntries(strikes.map((strike) => [strike, rowOf(strike)])));
 
-const atm = $derived.by(() => {
-	if (!chainData) return '0';
-	return nearestAtm(chainData.spot_ltp, chainData.strike_difference);
-});
-
-const strikes = $derived.by(() => {
-	if (!chainData) return [];
-	return visibleStrikes(chainData.all_strikes, windowAnchor || atm, range);
-});
-
-function reanchorWindow() {
-	if (!chainData) return;
-	const driftFromAnchor = Math.abs(Number(atm) - Number(windowAnchor));
-	if (!windowAnchor || driftFromAnchor >= chainData.strike_difference * 2) windowAnchor = atm;
-}
-
-function applyTick(token: string, tick: TTokenTick): boolean {
-	if (!chainData) return false;
-
-	if (token === chainData.spot) {
-		const ltp = tick.ltp ?? chainData.spot_ltp;
-		const prev = tick.prev_close ?? chainData.spot_ltp - chainData.spot_change;
-		chainData.spot_ltp = ltp;
-		chainData.spot_change = ltp - prev;
-		chainData.spot_change_pct = prev ? ((ltp - prev) / prev) * 100 : 0;
-		return true;
-	}
-
-	const location = tokenIndex.get(token);
-	if (!location) return false;
-
-	const row = chainData.options_data[location.strike];
-	if (!row) return false;
-
-	const prefix = location.isCe ? 'ce' : 'pe';
-	const assign = (field: keyof TStrikeData, incoming: number | undefined) => {
-		if (incoming === undefined) return;
-		(row[field] as number) = incoming;
+const data = $derived.by((): TChainData | null => {
+	if (!detail || !current) return null;
+	return {
+		spot: detail.spot,
+		get spot_ltp() {
+			return spotQuote?.ltp ?? 0;
+		},
+		get spot_change() {
+			return changeOf(spotQuote).change;
+		},
+		get spot_change_pct() {
+			return changeOf(spotQuote).change_pct;
+		},
+		get atm_strike() {
+			return atm;
+		},
+		strike_difference: step,
+		all_strikes: allStrikes,
+		options_data: optionsData,
+		lot_size: current.lot_size
 	};
+});
 
-	assign(`${prefix}_ltp` as keyof TStrikeData, tick.ltp);
-	assign(`${prefix}_oi` as keyof TStrikeData, tick.oi);
-	assign(`${prefix}_volume` as keyof TStrikeData, tick.volume);
-	assign(`${prefix}_bid` as keyof TStrikeData, tick.bid);
-	assign(`${prefix}_ask` as keyof TStrikeData, tick.ask);
-	return true;
+function rank(underlying: string) {
+	const index = PREFERRED_SYMBOL_ORDER.indexOf(underlying);
+	return index === -1 ? PREFERRED_SYMBOL_ORDER.length : index;
 }
 
-function flush() {
-	flushFrame = 0;
-	if (!chainData || tickBuffer.size === 0) return;
-
-	let changed = false;
-	for (const [token, tick] of tickBuffer) {
-		if (applyTick(token, tick)) changed = true;
+function strikeStep(values: number[]): number {
+	let smallest = 0;
+	for (let i = 1; i < values.length; i++) {
+		const gap = values[i] - values[i - 1];
+		if (gap > 0 && (smallest === 0 || gap < smallest)) smallest = gap;
 	}
-	tickBuffer.clear();
+	return smallest;
+}
 
-	if (changed) {
-		chainData = { ...chainData };
-		reanchorWindow();
+function rowOf(strike: string): TStrikeData {
+	if (!detail || !expiry) return {};
+	const row: TStrikeData = {
+		ce_token: optionToken(detail.exchange, detail.underlying, expiry, strike, 'CE'),
+		pe_token: optionToken(detail.exchange, detail.underlying, expiry, strike, 'PE')
+	};
+	for (const side of ['ce', 'pe'] as const) {
+		const token = row[`${side}_token`] as string;
+		for (const field of OPTION_FIELDS) {
+			Object.defineProperty(row, `${side}_${field}`, {
+				get: () => marketFeed.quotes[token]?.[field],
+				enumerable: true
+			});
+		}
 	}
+	return row;
 }
 
-function schedule() {
-	if (flushFrame) return;
-	flushFrame = requestAnimationFrame(flush);
-}
-
-function buildTokenMap(data: TChainData) {
-	tokenIndex = new Map();
-	for (const [strike, row] of Object.entries(data.options_data)) {
-		if (row.ce_token) tokenIndex.set(row.ce_token, { strike, isCe: true });
-		if (row.pe_token) tokenIndex.set(row.pe_token, { strike, isCe: false });
-	}
-}
-
-function pickChain(): string | null {
-	const exact = chainIds.find(
-		(entry) => entry.symbol === symbol && (!expiry || entry.expiry === expiry)
-	);
-	return exact?.id ?? chainIds.find((entry) => entry.symbol === symbol)?.id ?? null;
-}
-
-function handleMessage(message: TFeedMessage) {
-	if (message.type === 'ids_list') {
-		chainIds = message.data
-			.map(parseChainId)
-			.filter((entry): entry is TChainId => entry !== null)
-			.sort((left, right) => left.expiry.localeCompare(right.expiry));
-
-		if (!symbols.includes(symbol) && symbols.length) symbol = symbols[0];
-		const nextChainId = pickChain();
-		if (nextChainId) subscribe(nextChainId);
-		return;
-	}
-
-	if (message.type === 'option_chain_initial') {
-		chainData = message.data;
-		activeId = message.chain_id;
-		expiry = parseChainId(message.chain_id)?.expiry ?? expiry;
-		buildTokenMap(message.data);
-		windowAnchor = message.data.atm_strike;
-		tickBuffer.clear();
-		clearGreeksCache();
-		greeks = {};
+async function loadChain(next: string) {
+	const ref = refs.find((entry) => entry.underlying === next);
+	if (!ref) return;
+	const id = ++requestId;
+	loading = true;
+	const res = await getChain(ref.exchange, ref.underlying);
+	if (id !== requestId) return;
+	if (!res.ok) {
+		error = res.error;
 		loading = false;
-		error = null;
-		if (view === 'Greeks') refreshGreeks();
 		return;
 	}
-
-	for (const [token, value] of Object.entries(message)) {
-		if (token === 'type' || typeof value !== 'object' || value === null) continue;
-		tickBuffer.set(token, value as TTokenTick);
+	detail = res.data;
+	if (!expiry || !res.data.expiries.some((entry) => entry.date === expiry)) {
+		expiry = res.data.expiries[0]?.date ?? null;
 	}
-	schedule();
+	windowAnchor = '';
+	resetGreeks();
+	error = null;
+	loading = false;
+}
+
+function resetGreeks() {
+	clearGreeksCache();
+	greeks = {};
 }
 
 async function refreshGreeks() {
-	if (!chainData || !expiry) return;
-	const tte = timeToExpiry(expiry);
-	const rows = await computeGreeks(chainData.spot_ltp, tte, strikes, chainData.options_data);
-	greeks = { ...greeks, ...rows };
+	if (!data || !expiry) return;
+	const rows = await computeGreeks(data.spot_ltp, timeToExpiry(expiry), strikes, optionsData);
+	if (rows) greeks = rows;
 }
 
-function startGreeksLoop() {
-	stopGreeksLoop();
+function watch() {
+	$effect(() => {
+		if (!detail) return;
+		return marketFeed.subscribe([detail.spot]);
+	});
+	$effect(() => {
+		const tokens = strikes.flatMap((strike) => {
+			const row = optionsData[strike];
+			return row?.ce_token && row.pe_token ? [row.ce_token, row.pe_token] : [];
+		});
+		if (tokens.length) return marketFeed.subscribe(tokens, OPTION_FIELDS);
+	});
+	$effect(() => {
+		if (!step || atm === '0') return;
+		if (!windowAnchor || Math.abs(Number(atm) - Number(windowAnchor)) >= step * 2) {
+			windowAnchor = atm;
+		}
+	});
+}
+
+export async function startChain() {
+	if (stopRoot) return;
+	stopRoot = $effect.root(watch);
 	greeksIntervalId = window.setInterval(() => {
 		if (view === 'Greeks') void refreshGreeks();
 	}, GREEKS_INTERVAL);
-}
-
-function stopGreeksLoop() {
-	if (greeksIntervalId) clearInterval(greeksIntervalId);
-	greeksIntervalId = 0;
-}
-
-function subscribe(id: string) {
-	if (!feed) return;
-	if (activeId && activeId !== id) feed.unsubscribe(activeId);
-	activeId = id;
 	loading = true;
-	feed.subscribe(id);
-}
-
-export function startChain() {
-	if (feed) return;
-	loading = true;
-	feed = openFeed({
-		onMessage: handleMessage,
-		onStatus: (isConnected) => {
-			connected = isConnected;
-			if (isConnected) feed?.requestIds();
-		},
-		onError: (message) => {
-			error = message;
-			loading = false;
-		}
-	});
-	startGreeksLoop();
+	const res = await getChains();
+	if (!stopRoot) return;
+	if (!res.ok) {
+		error = res.error;
+		loading = false;
+		return;
+	}
+	refs = res.data;
+	if (!refs.some((entry) => entry.underlying === symbol)) symbol = symbols[0] ?? DEFAULT_SYMBOL;
+	await loadChain(symbol);
 }
 
 export function stopChain() {
-	if (flushFrame) cancelAnimationFrame(flushFrame);
-	flushFrame = 0;
-	stopGreeksLoop();
-	if (activeId) feed?.unsubscribe(activeId);
-	feed?.close();
-	feed = null;
-	tokenIndex.clear();
-	tickBuffer.clear();
+	stopRoot?.();
+	stopRoot = undefined;
+	clearInterval(greeksIntervalId);
+	greeksIntervalId = 0;
+	requestId++;
 	destroyGreeks();
-	chainData = null;
-	activeId = null;
+	detail = null;
+	greeks = {};
 }
 
 export function setSymbol(next: string) {
 	if (next === symbol) return;
 	symbol = next;
 	expiry = null;
-	greeks = {};
-	const nextChainId = pickChain();
-	if (nextChainId) subscribe(nextChainId);
+	void loadChain(next);
 }
 
 export function setExpiry(next: string) {
 	if (next === expiry) return;
 	expiry = next;
-	greeks = {};
-	const nextChainId = pickChain();
-	if (nextChainId) subscribe(nextChainId);
+	windowAnchor = '';
+	resetGreeks();
 }
 
 export function setView(next: TViewMode) {
@@ -256,7 +212,7 @@ export function setRange(next: number) {
 
 export const chain = {
 	get data() {
-		return chainData;
+		return data;
 	},
 	get symbols() {
 		return symbols;
@@ -286,7 +242,7 @@ export const chain = {
 		return greeks;
 	},
 	get connected() {
-		return connected;
+		return marketFeed.connected;
 	},
 	get loading() {
 		return loading;

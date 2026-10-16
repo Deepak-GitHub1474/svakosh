@@ -1,18 +1,3 @@
-import { SEGMENT_SYMBOL } from './const';
-import type { TChainId } from './types';
-
-export function parseChainId(id: string): TChainId | null {
-	const parts = id.split('_');
-	if (parts.length < 4) return null;
-	const segmentCode = parts[1];
-	return {
-		id,
-		exchange: parts[0],
-		symbol: SEGMENT_SYMBOL[segmentCode] ?? segmentCode,
-		expiry: parts[2]
-	};
-}
-
 export function visibleStrikes(all: string[], atm: string, range: number): string[] {
 	if (all.length === 0) return [];
 	const sorted = [...all].sort((a, b) => Number(a) - Number(b));

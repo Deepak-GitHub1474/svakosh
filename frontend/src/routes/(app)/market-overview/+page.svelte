@@ -1,37 +1,54 @@
 <script lang="ts">
 	import { fly, fade } from 'svelte/transition';
 	import { onMount, onDestroy } from 'svelte';
-	import { getMarketOverview } from './_lib/mock-data';
-	import type { TMarketOverviewData } from './_lib/types';
-	import { REFRESH_INTERVAL } from '$lib/utils/const';
+	import { getMarketOverview } from '$lib/market/service';
+	import type { TMarketOverviewData } from '$lib/market/types';
+	import { breadthOf, moversOf } from '$lib/market/analytics';
+	import { PRICE_FIELDS, changeOf, marketFeed } from '$lib/market/feed.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { formatNumber } from '$lib/utils';
  	import { uiState } from '$lib/store/ui.svelte';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 
-	let data: TMarketOverviewData = $state(getMarketOverview());
-	let mounted = $state(false);
-	let intervalId: ReturnType<typeof setInterval> | undefined;
+	let data = $state<TMarketOverviewData | null>(null);
+	let error = $state('');
+	let unsubscribe: (() => void) | undefined;
+	let active = true;
 
-	const indices = $derived(data.indices);
-	const breadth = $derived(data.breadth);
-	const top_gainers = $derived(data.top_gainers);
-	const top_losers = $derived(data.top_losers);
-	const fii_dii = $derived(data.fii_dii);
+	const indices = $derived(data?.indices ?? []);
+	const breadth = $derived(breadthOf(data?.stocks ?? [], marketFeed.quotes));
+	const movers = $derived(moversOf(data?.stocks ?? [], marketFeed.quotes));
+	const top_gainers = $derived(movers.gainers);
+	const top_losers = $derived(movers.losers);
+	const latest_fii_dii = $derived(data?.fii_dii[0]);
 
-	onMount(() => {
-		mounted = true;
-		intervalId = setInterval(() => {
-			data = getMarketOverview();
-		}, REFRESH_INTERVAL);
+	onMount(async () => {
+		const res = await getMarketOverview();
+		if (!active) return;
+		if (!res.ok) {
+			error = res.error;
+			return;
+		}
+		data = res.data;
+		const stopIndices = marketFeed.subscribe(
+			data.indices.map((item) => item.sk_token),
+			[...PRICE_FIELDS, 'open']
+		);
+		const stopStocks = marketFeed.subscribe(data.stocks.map((item) => item.sk_token));
+		unsubscribe = () => {
+			stopIndices();
+			stopStocks();
+		};
 	});
 
 	onDestroy(() => {
-		if (intervalId) clearInterval(intervalId);
+		active = false;
+		unsubscribe?.();
 	});
 </script>
 
 <div class="min-h-dvh text-foreground relative z-[-1] py-2">
-	{#if mounted}
+	{#if data}
 		<div in:fade={{ duration: 800 }}>
 			<header>
 				<h1 class="text-2xl tracking-tight text-primary mb-1">
@@ -45,7 +62,9 @@
 					Major Indices
 				</h2>
 				<div class="grid {uiState.isWatchlistVisible ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' } gap-6">
-					{#each indices as index, i}
+					{#each indices as item, i (item.sk_token)}
+						{@const quote = marketFeed.quotes[item.sk_token]}
+						{@const index = { ...item, ltp: quote?.ltp ?? 0, open: quote?.open ?? 0, prev_close: quote?.prev_close ?? 0, ...changeOf(quote) }}
 						<div in:fly={{ y: 20, delay: i * 50, duration: 500 }}>
 							<SvaKoshCard
 								class="hover:border-primary/40 transition-all duration-300 group cursor-default"
@@ -105,11 +124,11 @@
 						<div class="h-4 w-full bg-transparent rounded-full overflow-hidden flex mb-6">
 							<div
 								class="bg-gradient-to-r from-bullish to-bullish-muted transition-all duration-1000"
-								style="width: {(breadth.advances / breadth.total) * 100}%; clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);"
+								style="width: {breadth.total ? (breadth.advances / breadth.total) * 100 : 0}%; clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);"
 							></div>
 							<div
 								class="bg-gradient-to-l from-bearish to-bearish-muted transition-all duration-1000"
-								style="width: {(breadth.declines / breadth.total) * 100}%; clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%);"
+								style="width: {breadth.total ? (breadth.declines / breadth.total) * 100 : 0}%; clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%);"
 							></div>
 						</div>
 						<div class="grid grid-cols-3 gap-4 text-center">
@@ -134,13 +153,14 @@
 						<span class="w-1 h-4 bg-primary rounded-full"></span>
 						FII & DII Activity
 					</h2>
+					{#if latest_fii_dii}
 					<div class="glass-panel overflow-hidden rounded-2xl">
 						<div class="p-4 pb-2 flex items-center justify-between">
 							<span class="text-xs text-muted-foreground uppercase tracking-wider"
 								>Cash Market (in Cr)</span
 							>
 							<span class="rounded-full bg-white/5 px-2 py-0.5 text-xs text-muted-foreground"
-								>{fii_dii[0].date}</span
+								>{latest_fii_dii.date}</span
 							>
 						</div>
 						<div class="overflow-x-auto">
@@ -159,33 +179,33 @@
 									<tr class="group transition-colors hover:bg-white/5">
 										<td class="py-3 px-4 text-[0.786rem]">FII</td>
 										<td class="py-3 px-4 text-[0.786rem] opacity-80"
-											>{formatNumber(fii_dii[0].fii_buy_value)}</td
+											>{formatNumber(latest_fii_dii.fii_buy_value)}</td
 										>
 										<td class="py-3 px-4 text-[0.786rem] opacity-80"
-											>{formatNumber(fii_dii[0].fii_sell_value)}</td
+											>{formatNumber(latest_fii_dii.fii_sell_value)}</td
 										>
 										<td
-											class="py-3 px-4 text-right text-[0.786rem] font-bold {fii_dii[0].fii_net >= 0
+											class="py-3 px-4 text-right text-[0.786rem] font-bold {latest_fii_dii.fii_net >= 0
 												? 'text-bullish'
 												: 'text-bearish'}"
 										>
-											{formatNumber(fii_dii[0].fii_net)}
+											{formatNumber(latest_fii_dii.fii_net)}
 										</td>
 									</tr>
 									<tr class="group transition-colors hover:bg-white/5">
 										<td class="py-3 px-4 text-[0.786rem]">DII</td>
 										<td class="py-3 px-4 text-[0.786rem] opacity-80"
-											>{formatNumber(fii_dii[0].dii_buy_value)}</td
+											>{formatNumber(latest_fii_dii.dii_buy_value)}</td
 										>
 										<td class="py-3 px-4 text-[0.786rem] opacity-80"
-											>{formatNumber(fii_dii[0].dii_sell_value)}</td
+											>{formatNumber(latest_fii_dii.dii_sell_value)}</td
 										>
 										<td
-											class="py-3 px-4 text-right text-[0.786rem] {fii_dii[0].dii_net >= 0
+											class="py-3 px-4 text-right text-[0.786rem] {latest_fii_dii.dii_net >= 0
 												? 'text-bullish'
 												: 'text-bearish'}"
 										>
-											{formatNumber(fii_dii[0].dii_net)}
+											{formatNumber(latest_fii_dii.dii_net)}
 										</td>
 									</tr>
 									<tr class="bg-primary/10 text-primary border-t border-primary/20">
@@ -194,19 +214,20 @@
 											>Combined Institutional Activity</td
 										>
 										<td
-											class="py-3 px-4 text-right text-sm font-medium {fii_dii[0].fii_net +
-												fii_dii[0].fii_net >=
+											class="py-3 px-4 text-right text-sm font-medium {latest_fii_dii.fii_net +
+												latest_fii_dii.dii_net >=
 											0
 												? 'text-bullish'
 												: 'text-bearish'}"
 										>
-											{formatNumber(fii_dii[0].fii_net + fii_dii[0].dii_net)}
+											{formatNumber(latest_fii_dii.fii_net + latest_fii_dii.dii_net)}
 										</td>
 									</tr>
 								</tbody>
 							</table>
 						</div>
 					</div>
+					{/if}
 				</section>
 			</div>
 
@@ -226,7 +247,7 @@
 								</tr>
 							</thead>
 							<tbody class="divide-y divide-glass-border">
-								{#each top_gainers as gainer}
+								{#each top_gainers as gainer (gainer.sk_token)}
 									<tr class="hover:bg-bullish-subtle/10 transition-colors group">
 										<td class="px-6 py-4 text-[0.786rem]">
 											{gainer.symbol}
@@ -257,7 +278,7 @@
 								</tr>
 							</thead>
 							<tbody class="divide-y divide-glass-border">
-								{#each top_losers as loser}
+								{#each top_losers as loser (loser.sk_token)}
 									<tr class="hover:bg-bearish-subtle/10 transition-colors group">
 										<td class="px-6 py-4 text-[0.786rem]">
 											{loser.symbol}
@@ -274,5 +295,7 @@
 				</section>
 			</div>
 		</div>
+	{:else if error}
+		<EmptyState title="Market data unavailable" description={error} />
 	{/if}
 </div>

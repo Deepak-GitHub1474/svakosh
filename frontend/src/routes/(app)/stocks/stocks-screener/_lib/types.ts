@@ -20,9 +20,3 @@ export interface TSortConfig {
 	key: TSortKey;
 	direction: 'asc' | 'desc';
 }
-
-export interface TScreenerFilters {
-	search: string;
-	sector: string;
-	marketCapLevel: string;
-}

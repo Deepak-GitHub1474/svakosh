@@ -278,3 +278,9 @@ async def revoke_session(
 async def revoke_other_sessions(claims: CurrentClaims, redis: RedisClient):
     data = await controllers.revoke_all_other_sessions(claims, redis=redis)
     return ok_response("Other sessions revoked.", data=data)
+
+
+@router.post("/ws-ticket", status_code=status.HTTP_200_OK)
+async def ws_ticket(claims: CurrentClaims, redis: RedisClient):
+    data = await controllers.issue_ws_ticket(claims, redis)
+    return ok_response("Socket ticket issued.", data=data)

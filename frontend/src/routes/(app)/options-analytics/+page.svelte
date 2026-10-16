@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy, untrack } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { browser } from '$app/environment';
 	import * as echarts from 'echarts/core';
@@ -12,15 +12,23 @@
 		MarkLineComponent
 	} from 'echarts/components';
 	import { CanvasRenderer } from 'echarts/renderers';
-	import { UNDERLYINGS, getOptionsAnalytics } from './_lib/mock-data';
-	import { REFRESH_INTERVAL } from '$lib/utils/const';
+	import { UNDERLYINGS } from './_lib/const';
+	import { calculateOiStats } from './_lib/helper';
+	import type { TOptionsAnalyticsData } from './_lib/types';
+	import { marketFeed } from '$lib/market/feed.svelte';
 	import {
-		calculateOiStats,
-		calculateActiveStrikes,
-		getSymbolUpdate,
-		getExpiryUpdate
-	} from './_lib/helper';
-	import type { TStrikeOIItem, TOptionsAnalyticsData } from './_lib/types';
+		OI_FIELDS,
+		chainTokens,
+		expiryLabel,
+		isMonthly,
+		maxPain,
+		nearestIndex,
+		pcrView,
+		strikeOI,
+		totalsOf,
+		windowAround
+	} from '$lib/market/options';
+	import { ChainSource } from '$lib/market/chain.svelte';
 	import { formatNumber as formatCurrency, formatLakh } from '$lib/utils';
 	import Info from '$lib/components/svg-provider/Info.svelte';
 	import SpotIcon from '$lib/components/svg-provider/SpotIcon.svelte';
@@ -68,10 +76,42 @@
 		meta: u.exchange
 	}));
 
-	let liveData = $state<TOptionsAnalyticsData>(getOptionsAnalytics('NIFTY'));
-	let intervalId: ReturnType<typeof setInterval> | undefined;
+	const source = new ChainSource();
+	const view = $derived(source.view);
+	const resize = () => chart?.resize();
 
-	const currentData = $derived(liveData);
+	const expiryDates = $derived(view?.expiries.map((entry) => entry.date) ?? []);
+	const expiryIso = $derived(
+		expiryDates.find((date) => expiryLabel(date) === selectedExpiry) ?? expiryDates[0] ?? ''
+	);
+	const expiryInfo = $derived(view?.expiries.find((entry) => entry.date === expiryIso));
+	const spot = $derived(view ? (marketFeed.quotes[view.spot]?.ltp ?? 0) : 0);
+	const hasSpot = $derived(spot > 0);
+	const center = $derived(nearestIndex(expiryInfo?.strikes ?? [], spot));
+	const windowStrikes = $derived(hasSpot ? windowAround(expiryInfo?.strikes ?? [], center) : []);
+	const rows = $derived(
+		view && expiryIso ? strikeOI(view, expiryIso, windowStrikes, marketFeed.quotes) : []
+	);
+	const totals = $derived(totalsOf(rows));
+	const atmStrike = $derived(center >= 0 && expiryInfo ? expiryInfo.strikes[center] : 0);
+	const maxPainStrike = $derived(maxPain(rows));
+
+	const currentData = $derived<TOptionsAnalyticsData>({
+		symbol,
+		expiry: selectedExpiry ?? '',
+		expiries: expiryDates.map(expiryLabel),
+		expiry_type: isMonthly(expiryIso, expiryDates) ? 'monthly' : 'weekly',
+		spot_price: spot,
+		spot_token: view?.spot,
+		max_pain_strike: maxPainStrike,
+		atm_strike: atmStrike,
+		pcr: totals.pcr,
+		pcr_interpretation: pcrView(totals.pcr),
+		total_ce_oi: totals.ce,
+		total_pe_oi: totals.pe,
+		lot_size: expiryInfo?.lot_size,
+		strikes: rows
+	});
 
 	const expiryOptions = $derived(
 		currentData.expiries.map((exp) => ({
@@ -80,22 +120,31 @@
 		}))
 	);
 
-	const oiStats = $derived.by(() => calculateOiStats(currentData.strikes));
+	const oiStats = $derived.by(() => calculateOiStats(rows));
 
-	const activeStrikes = $derived.by((): TStrikeOIItem[] => {
-		return calculateActiveStrikes(currentData.strikes, selectedExpiry || currentData.expiry);
+	const activeStrikes = $derived(rows);
+
+	$effect(() => {
+		if (!view) return;
+		return marketFeed.subscribe([view.spot]);
+	});
+
+	$effect(() => {
+		if (!view || !expiryIso || windowStrikes.length === 0) return;
+		return marketFeed.subscribe(chainTokens(view, expiryIso, windowStrikes), OI_FIELDS);
+	});
+
+	$effect(() => {
+		if (view) selectedExpiry = expiryLabel(view.expiries[0]?.date ?? '');
 	});
 
 	function selectSymbol(s: string) {
-		const update = getSymbolUpdate(s);
-		symbol = update.symbol;
-		selectedExpiry = update.selectedExpiry;
-		liveData = getOptionsAnalytics(symbol);
+		symbol = s;
+		void source.load(s);
 	}
 
 	function selectExpiry(exp: string) {
-		const update = getExpiryUpdate(exp);
-		selectedExpiry = update.selectedExpiry;
+		selectedExpiry = exp;
 	}
 
 	function initChart() {
@@ -104,7 +153,7 @@
 		chart = echarts.init(chartContainer, 'dark', { renderer: 'canvas' });
 		updateChartOptions();
 
-		window.addEventListener('resize', () => chart?.resize());
+		window.addEventListener('resize', resize);
 	}
 
 	function updateChartOptions() {
@@ -252,22 +301,19 @@
 
 
 	$effect(() => {
-		if (activeStrikes) {
-			updateChartOptions();
-		}
+		void [activeStrikes, atmStrike, maxPainStrike];
+		untrack(updateChartOptions);
 	});
 
 	onMount(() => {
 		initChart();
-		if (!selectedExpiry) selectedExpiry = currentData.expiry;
-		intervalId = setInterval(() => {
-			liveData = getOptionsAnalytics(symbol);
-		}, REFRESH_INTERVAL);
+		void source.load(symbol);
 	});
 
 	onDestroy(() => {
-		if (intervalId) clearInterval(intervalId);
+		source.stop();
 		if (browser) {
+			window.removeEventListener('resize', resize);
 			chart?.dispose();
 		}
 	});
@@ -371,7 +417,7 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-white/5">
-						{#each oiStats.buildups as s}
+						{#each oiStats.buildups as s (s.strike)}
 							<tr class="hover:bg-white/5 transition-colors group">
 								<td class="px-6 py-4">{formatCurrency(s.strike)}</td>
 								<td class="px-6 py-4 text-right tabular-nums {s.ce_oi_change >= 0 ? 'text-bearish' : 'text-bullish'}">
@@ -407,7 +453,7 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-white/5">
-						{#each oiStats.unwindings as s}
+						{#each oiStats.unwindings as s (s.strike)}
 							<tr class="hover:bg-white/5 transition-colors group">
 								<td class="px-6 py-4">{formatCurrency(s.strike)}</td>
 								<td class="px-6 py-4 text-right tabular-nums {s.ce_oi_change >= 0 ? 'text-bearish' : 'text-bullish'}">

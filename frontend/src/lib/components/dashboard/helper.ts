@@ -1,52 +1,11 @@
-import * as echarts from 'echarts';
-import { GRADIENTS, CHART_CONFIGS } from './const';
-
-export function getNextMetricValue(current: any) {
-	const change = (Math.random() - 0.5) * 5;
-	const newValue = current.value + change;
-	const newNetChange = current.change + change;
-	return {
-		...current,
-		value: newValue,
-		change: newNetChange,
-		changePct: Number(((newNetChange / (newValue - newNetChange)) * 100).toFixed(2))
-	};
-}
+import { GRADIENTS, CHART_CONFIGS, INTRADAY_INTERVAL_MS } from './const';
+import { inSession, istDate, istTime } from '$lib/market/time';
+import type { TBreadth, TCandle } from '$lib/market/types';
 
 export function getSentiment(val: number) {
 	if (val > 0.05) return 'bullish';
 	if (val < -0.05) return 'bearish';
 	return 'muted';
-}
-
-export function generateMockIntraday(baseValue: number): [string, number][] {
-	const data: [string, number][] = [];
-	let current = baseValue;
-	for (let i = 0; i < 24; i++) {
-		const h = 9 + Math.floor(i / 4);
-		const m = (i % 4) * 15;
-		const time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-		current += (Math.random() - 0.5) * 30;
-		data.push([time, current]);
-	}
-	return data;
-}
-
-export function getNextIntradayTick(last: any[]): [string, number] {
-	const lastTime = last[0] as string;
-	const [h, m] = lastTime.split(':').map(Number);
-	let nm = m + 1, nh = h;
-	if (nm >= 60) { nm = 0; nh++; }
-	const nextTime = `${nh.toString().padStart(2, '0')}:${nm.toString().padStart(2, '0')}`;
-	const nextValue = (last[1] as number) + (Math.random() - 0.5) * 10;
-	return [nextTime, nextValue];
-}
-
-export function getNextSectorValue(sector: any) {
-	return {
-		...sector,
-		change: +(sector.change + (Math.random() - 0.5) * 0.05).toFixed(2)
-	};
 }
 
 export const formatChartNumber = (val: number) => {
@@ -132,7 +91,7 @@ export function getIntradayOptions(data: [string, number][], symbol: string) {
 	};
 }
 
-export function getBreadthOptions(data: any) {
+export function getBreadthOptions(data: TBreadth) {
 	return {
 		backgroundColor: 'transparent',
 		tooltip: { trigger: 'item', ...CHART_CONFIGS.tooltip, formatter: tooltipFormatter },
@@ -150,7 +109,7 @@ export function getBreadthOptions(data: any) {
 	};
 }
 
-export function getSectorOptions(sectors: any[]) {
+export function getSectorOptions(sectors: { name: string; change: number }[]) {
 	return {
 		backgroundColor: 'transparent',
 		tooltip: { trigger: 'axis', ...CHART_CONFIGS.tooltip, axisPointer: { type: 'shadow' }, formatter: tooltipFormatter },
@@ -165,4 +124,16 @@ export function getSectorOptions(sectors: any[]) {
 			}))
 		}]
 	};
+}
+
+export function intradayPoints(candles: TCandle[], ltp?: number): [string, number][] {
+	const points = candles.map((c) => [istTime(c.ts), c.close] as [string, number]);
+	if (!ltp || points.length === 0) return points;
+	const now = Date.now();
+	const last = candles[candles.length - 1].ts;
+	if (istDate(now) !== istDate(last) || !inSession(now)) return points;
+	const bucket = now - (now % INTRADAY_INTERVAL_MS);
+	if (bucket <= last) points[points.length - 1] = [points[points.length - 1][0], ltp];
+	else points.push([istTime(bucket), ltp]);
+	return points;
 }

@@ -1,5 +1,5 @@
 import { apiCall } from '$lib/api';
-import type { TWatchlistEntriesPayload, TWatchlistItem } from './types';
+import type { TSymbol, TWatchlistEntriesPayload, TWatchlistItem } from './types';
 
 export const createWatchlist = (name: string) =>
 	apiCall<TWatchlistItem>('/api/watchlist/create', 'POST', { name });
@@ -45,3 +45,6 @@ export const deleteSymbolNote = (watchlist_name: string, sk_token: string) =>
 		watchlist_name,
 		sk_token
 	});
+
+export const searchSymbols = (q: string) =>
+	apiCall<TSymbol[]>(`/api/market/search?q=${encodeURIComponent(q)}`, 'GET');

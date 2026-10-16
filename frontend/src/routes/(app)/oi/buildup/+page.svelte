@@ -1,17 +1,38 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import { LOADED_OI_DATA } from './_lib/mock-data';
 	import { OI_SYMBOLS } from './_lib/const';
-	import { roundLakh } from '$lib/utils';
-	import type { TTimeFrame, TFullOIData } from './_lib/types';
-
+	import type { TTimeFrame, TOISymbolDetail } from './_lib/types';
+	import { trackSymbols, type SymbolOI } from '$lib/market/oi.svelte';
+	import { minutesOf, topChanges } from '$lib/market/oi';
 	import Header from './_components/Header.svelte';
 	import OISnapTable from './_components/OISnapTable.svelte';
 
+	const TOP_STRIKES = 7;
+
 	let time = $state<TTimeFrame>('3 Min');
 	let expiry = $state('CURRENT_WEEK');
-	let recdData = $state<TFullOIData>(LOADED_OI_DATA['CURRENT_WEEK']);
+
+	const tracker = trackSymbols(1, 31);
+	let sources = $state.raw<SymbolOI[]>([]);
+
+	$effect(() => {
+		sources = tracker.sync(OI_SYMBOLS, expiry);
+	});
+
+	const recdData = $derived(
+		Object.fromEntries(
+			OI_SYMBOLS.map((symbol) => {
+				const source = sources.find((entry) => entry.underlying === symbol);
+				const minutes = minutesOf(time);
+				const detail: TOISymbolDetail = {
+					CE: topChanges(source ? source.legs('CE') : [], minutes, TOP_STRIKES),
+					PE: topChanges(source ? source.legs('PE') : [], minutes, TOP_STRIKES)
+				};
+				return [symbol, { [time]: detail }];
+			})
+		) as Record<string, Record<TTimeFrame, TOISymbolDetail>>
+	);
 
 	function handleTimeChange(newTime: TTimeFrame) {
 		time = newTime;
@@ -19,29 +40,9 @@
 
 	function handleExpiryChange(newExpiry: string) {
 		expiry = newExpiry;
-		recdData = LOADED_OI_DATA[newExpiry];
 	}
 
-	onMount(() => {
-		const interval = setInterval(() => {
-			const currentExpiryData = LOADED_OI_DATA[expiry];
-
-			OI_SYMBOLS.forEach(symbol => {
-				const detail = currentExpiryData[symbol][time];
-				(['CE', 'PE'] as const).forEach(side => {
-					(['Writing', 'Unwinding'] as const).forEach(type => {
-						detail[side][type].forEach(item => {
-							item.OI = roundLakh(item.OI + (Math.random() - 0.5) * 0.1);
-						});
-					});
-				});
-			});
-			
-			recdData = { ...currentExpiryData };
-		}, 3000);
-
-		return () => clearInterval(interval);
-	});
+	onDestroy(() => tracker.stop());
 </script>
 
 <svelte:head>

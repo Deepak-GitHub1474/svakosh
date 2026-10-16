@@ -1,12 +1,15 @@
 <script lang="ts">
-	import type { TStock, TSortConfig, TSortKey } from '../_lib/types';
+	import type { TSortConfig, TSortKey } from '../_lib/types';
+	import type { TStockItem } from '$lib/market/types';
+	import { marketFeed } from '$lib/market/feed.svelte';
+	import { toStock } from '../_lib/helper';
 	import { formatNumber } from '$lib/utils';
 	import SearchOff from '$lib/components/svg-provider/SearchOff.svelte';
 
 	import { SCREENER_COLUMNS } from '../_lib/const';
 
 	interface Props {
-		stocks: TStock[];
+		stocks: TStockItem[];
 		sortConfig: TSortConfig;
 		onSort: (key: TSortKey) => void;
 	}
@@ -19,7 +22,7 @@
 		<table class="w-full text-left border-separate border-spacing-0 select-none">
 			<thead class="sticky top-0 z-20">
 				<tr class="bg-surface text-muted-foreground border-b border-border-subtle">
-					{#each SCREENER_COLUMNS as col}
+					{#each SCREENER_COLUMNS as col (col.key)}
 						<th
 							class="px-6 py-4 font-normal text-sm whitespace-nowrap cursor-pointer hover:text-primary transition-colors bg-[#1c1f24] border-b border-border-subtle {col.align ===
 							'right'
@@ -44,9 +47,10 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each stocks as stock, i (stock.symbol)}
+				{#each stocks as item, i (item.sk_token)}
+					{@const stock = toStock(item, marketFeed.quotes[item.sk_token])}
 					<tr class="hover:bg-white/5 transition-colors group">
-						{#each SCREENER_COLUMNS as col}
+						{#each SCREENER_COLUMNS as col (col.key)}
 							<td
 								class="px-6 py-2.5 border-b border-border-subtle {i === stocks.length - 1
 									? 'border-b-0'
