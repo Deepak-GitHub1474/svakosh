@@ -15,10 +15,20 @@ export function isSignalColumn(index: number): boolean {
 	return [5, 6, 8, 9].includes(index);
 }
 
-export function isMarketHours(): boolean {
-	const now = new Date();
-	const hours = now.getHours();
-	const minutes = now.getMinutes();
-	const timeNum = hours * 100 + minutes;
-	return timeNum >= 915 && timeNum <= 1530;
+export function optionSignal(ceChange: number, peChange: number): 'Bullish' | 'Bearish' | 'Neutral' {
+	if (peChange > ceChange) return 'Bullish';
+	if (ceChange > peChange) return 'Bearish';
+	return 'Neutral';
+}
+
+export function callSignal(ceChange: number): 'Strong' | 'Weak' | 'Neutral' {
+	if (ceChange < 0) return 'Strong';
+	if (ceChange > 0) return 'Weak';
+	return 'Neutral';
+}
+
+export function putSignal(peChange: number): 'Strong' | 'Weak' | 'Neutral' {
+	if (peChange > 0) return 'Strong';
+	if (peChange < 0) return 'Weak';
+	return 'Neutral';
 }

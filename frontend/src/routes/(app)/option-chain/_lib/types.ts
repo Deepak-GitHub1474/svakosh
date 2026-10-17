@@ -45,39 +45,6 @@ export interface TChainData {
 	lot_size: number;
 }
 
-export interface TTokenTick {
-	ltp?: number;
-	volume?: number;
-	oi?: number;
-	bid?: number;
-	ask?: number;
-	prev_close?: number;
-}
-
-export interface TIdsListMessage {
-	type: 'ids_list';
-	data: string[];
-}
-
-export interface TInitialMessage {
-	type: 'option_chain_initial';
-	chain_id: string;
-	data: TChainData;
-}
-
-export interface TMarketDataMessage extends Record<string, TTokenTick | string> {
-	type: 'market_data';
-}
-
-export type TFeedMessage = TIdsListMessage | TInitialMessage | TMarketDataMessage;
-
-export interface TChainId {
-	id: string;
-	exchange: string;
-	symbol: string;
-	expiry: string;
-}
-
 export interface TGreeksRow {
 	strike: string;
 	ce_iv: number;

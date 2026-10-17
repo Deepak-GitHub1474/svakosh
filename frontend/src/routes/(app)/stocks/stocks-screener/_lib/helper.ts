@@ -1,27 +1,50 @@
-import type { TStock, TSortConfig, TScreenerFilters } from './types';
+import { changeOf, type TQuote, type TQuoteField } from '$lib/market/feed.svelte';
+import type { TStockItem } from '$lib/market/types';
+import type { TSortConfig, TSortKey, TStock } from './types';
 
-export function filterStocks(stocks: TStock[], filters: TScreenerFilters): TStock[] {
-	return stocks.filter((stock) => {
-		const searchMatch =
-			filters.search === '' ||
-			stock.symbol.toLowerCase().includes(filters.search.toLowerCase()) ||
-			stock.display_name.toLowerCase().includes(filters.search.toLowerCase());
+const QUOTE_FIELD: Partial<Record<TSortKey, TQuoteField>> = { avg_price: 'atp' };
 
-		return searchMatch;
-	});
+export function toStock(item: TStockItem, quote: TQuote = {}): TStock {
+	return {
+		symbol: item.symbol,
+		display_name: item.name,
+		ltp: quote.ltp ?? 0,
+		...changeOf(quote),
+		open: quote.open ?? 0,
+		high: quote.high ?? 0,
+		low: quote.low ?? 0,
+		prev_close: quote.prev_close ?? 0,
+		volume: quote.volume ?? 0,
+		avg_price: quote.atp ?? 0,
+		upper_circuit: quote.upper_circuit ?? 0,
+		lower_circuit: quote.lower_circuit ?? 0
+	};
 }
 
-export function sortStocks(stocks: TStock[], config: TSortConfig): TStock[] {
-	return [...stocks].sort((a, b) => {
-		const valA = a[config.key];
-		const valB = b[config.key];
-
-		if (valA === null) return 1;
-		if (valB === null) return -1;
-
-		if (valA < valB) return config.direction === 'asc' ? -1 : 1;
-		if (valA > valB) return config.direction === 'asc' ? 1 : -1;
-		return 0;
-	});
+function sortValue(item: TStockItem, key: TSortKey, quote: TQuote = {}): number | string {
+	if (key === 'symbol') return item.symbol;
+	if (key === 'display_name') return item.name;
+	if (key === 'change' || key === 'change_pct') return changeOf(quote)[key];
+	return quote[QUOTE_FIELD[key] ?? (key as TQuoteField)] ?? 0;
 }
 
+export function filterStocks(items: TStockItem[], search: string): TStockItem[] {
+	const q = search.trim().toLowerCase();
+	if (!q) return items;
+	return items.filter(
+		(i) => i.symbol.toLowerCase().includes(q) || i.name.toLowerCase().includes(q)
+	);
+}
+
+export function sortStocks(
+	items: TStockItem[],
+	quotes: Record<string, TQuote>,
+	config: TSortConfig
+): TStockItem[] {
+	const sign = config.direction === 'asc' ? 1 : -1;
+	return [...items].sort((a, b) => {
+		const x = sortValue(a, config.key, quotes[a.sk_token]);
+		const y = sortValue(b, config.key, quotes[b.sk_token]);
+		return x < y ? -sign : x > y ? sign : 0;
+	});
+}

@@ -1,76 +1,86 @@
 import type { TGreeksRow, TStrikeData } from './types';
 
 const RATE = 0.07;
+const MINUTES_PER_YEAR = 365 * 24 * 60;
 
-type TCacheEntry = { ce: number; pe: number; row: TGreeksRow };
+type TRequest = {
+	spot: number;
+	tte: number;
+	rate: number;
+	strikes: { strike: string; ce_ltp: number; pe_ltp: number }[];
+};
+type TResolve = (rows: TGreeksRow[] | null) => void;
 
 let worker: Worker | null = null;
-let pending: ((rows: TGreeksRow[]) => void) | null = null;
-const cache = new Map<string, TCacheEntry>();
+let inFlight: TResolve | null = null;
+let queued: { request: TRequest; resolve: TResolve } | null = null;
+let lastSignature = '';
 
 function ensureWorker(): Worker | null {
 	if (typeof window === 'undefined') return null;
 	if (worker) return worker;
-
 	worker = new Worker(new URL('./greeks.worker.ts', import.meta.url), { type: 'module' });
 	worker.onmessage = (event: MessageEvent<TGreeksRow[]>) => {
-		const resolve = pending;
-		pending = null;
-		resolve?.(event.data);
+		const done = inFlight;
+		inFlight = null;
+		done?.(event.data);
+		if (queued) {
+			const next = queued;
+			queued = null;
+			post(next.request, next.resolve);
+		}
 	};
 	return worker;
 }
 
+function post(request: TRequest, resolve: TResolve) {
+	inFlight = resolve;
+	worker?.postMessage(request);
+}
+
 export function clearGreeksCache(): void {
-	cache.clear();
+	lastSignature = '';
 }
 
 export function destroyGreeks(): void {
 	worker?.terminate();
 	worker = null;
-	pending = null;
-	cache.clear();
+	inFlight?.(null);
+	queued?.resolve(null);
+	inFlight = null;
+	queued = null;
+	lastSignature = '';
 }
 
-export async function computeGreeks(
+export function computeGreeks(
 	spot: number,
 	tte: number,
 	strikes: string[],
 	data: Record<string, TStrikeData>
-): Promise<Record<string, TGreeksRow>> {
-	const results: Record<string, TGreeksRow> = {};
-	const needsCompute: { strike: string; ce_ltp: number; pe_ltp: number }[] = [];
-
-	for (const strike of strikes) {
-		const row = data[strike];
-		if (!row) continue;
-		const callLtp = row.ce_ltp ?? 0;
-		const putLtp = row.pe_ltp ?? 0;
-		const cached = cache.get(strike);
-		if (cached && cached.ce === callLtp && cached.pe === putLtp) {
-			results[strike] = cached.row;
-			continue;
-		}
-		needsCompute.push({ strike, ce_ltp: callLtp, pe_ltp: putLtp });
-	}
-
-	if (needsCompute.length === 0) return results;
-
+): Promise<Record<string, TGreeksRow> | null> {
+	const inputs = strikes.map((strike) => ({
+		strike,
+		ce_ltp: data[strike]?.ce_ltp ?? 0,
+		pe_ltp: data[strike]?.pe_ltp ?? 0
+	}));
+	const signature = `${spot}|${Math.round(tte * MINUTES_PER_YEAR)}|${inputs
+		.map((i) => `${i.strike}:${i.ce_ltp}:${i.pe_ltp}`)
+		.join(',')}`;
 	const instance = ensureWorker();
-	if (!instance || spot <= 0 || tte <= 0) return results;
-
-	if (pending) return results;
-
-	const rows = await new Promise<TGreeksRow[]>((resolve) => {
-		pending = resolve;
-		instance.postMessage({ spot, tte, rate: RATE, strikes: needsCompute });
-	});
-
-	for (const row of rows) {
-		const source = needsCompute.find((entry) => entry.strike === row.strike);
-		cache.set(row.strike, { ce: source?.ce_ltp ?? 0, pe: source?.pe_ltp ?? 0, row });
-		results[row.strike] = row;
+	if (!instance || spot <= 0 || tte <= 0 || signature === lastSignature) {
+		return Promise.resolve(null);
 	}
+	lastSignature = signature;
 
-	return results;
+	return new Promise((resolve) => {
+		const done: TResolve = (rows) =>
+			resolve(rows ? Object.fromEntries(rows.map((row) => [row.strike, row])) : null);
+		const request = { spot, tte, rate: RATE, strikes: inputs };
+		if (inFlight) {
+			queued?.resolve(null);
+			queued = { request, resolve: done };
+		} else {
+			post(request, done);
+		}
+	});
 }

@@ -3,9 +3,12 @@
 	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import type { OIDataMap } from './_lib/types';
-	import { SYMBOLS as symbols, EXPIRIES as expiries, STRIKE_DIFFERENCES as strikeDifferences } from '$lib/utils/const';
-	import { generateStrikeList } from './_lib/helper';
-	import { generateSingleStrikeMockData, getInitialStrike } from './_lib/mock-data';
+	import { SYMBOLS as symbols, EXPIRIES as expiries } from '$lib/utils/const';
+	import { marketFeed } from '$lib/market/feed.svelte';
+	import { ChainSource } from '$lib/market/chain.svelte';
+	import { TodayBars } from '$lib/market/bars.svelte';
+	import { oiByTime, withLive } from '$lib/market/series';
+	import { nearestIndex, windowAround } from '$lib/market/options';
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import CallVsPutChart from './_components/CallVsPutChart.svelte';
@@ -13,12 +16,46 @@
 	let selectedSymbol = $state('NIFTY');
 	let selectedExpiry = $state('CURRENT_WEEK');
 	let selectedStrike = $state(0);
-	let atmStrike = $state(0);
 	let chartType = $state<'line' | 'bar'>(page.url.searchParams.get('type') as any || 'line');
 	let isSymbolOpen = $state(false);
 	let isExpiryOpen = $state(false);
 	let isStrikeOpen = $state(false);
-	let oiData = $state<OIDataMap>({});
+	const INTERVAL = 5;
+	const source = new ChainSource();
+	const bars = new TodayBars();
+	const expiry = $derived(source.view ? source.expiry(selectedExpiry) : '');
+	const allStrikes = $derived(expiry ? source.strikes(expiry) : []);
+	const hasSpot = $derived(source.spot > 0);
+	const atmIndex = $derived(nearestIndex(allStrikes, source.spot));
+	const atmStrike = $derived(hasSpot ? (allStrikes[atmIndex] ?? 0) : 0);
+	const ceToken = $derived(expiry && selectedStrike ? source.token(expiry, selectedStrike, 'CE') : '');
+	const peToken = $derived(expiry && selectedStrike ? source.token(expiry, selectedStrike, 'PE') : '');
+	const oiData: OIDataMap = $derived(
+		oiByTime(
+			withLive(bars.data[ceToken], marketFeed.quotes[ceToken], INTERVAL),
+			withLive(bars.data[peToken], marketFeed.quotes[peToken], INTERVAL)
+		)
+	);
+
+	$effect(() => {
+		if (atmStrike && !allStrikes.includes(selectedStrike)) selectedStrike = atmStrike;
+	});
+
+	$effect(() => {
+		if (!source.view) return;
+		return marketFeed.subscribe([source.view.spot]);
+	});
+
+	$effect(() => {
+		if (!ceToken) return;
+		return marketFeed.subscribe([ceToken, peToken], ['ltp', 'oi']);
+	});
+
+	function updateData() {
+		if (expiry) void bars.load(source.subject, source.optionPrefix(expiry), INTERVAL);
+	}
+
+	$effect(updateData);
 
 	$effect(() => {
 		if (isSymbolOpen) {
@@ -49,45 +86,27 @@
 		}
 	});
 
-	let strikeOptions = $derived.by(() => {
-		if (atmStrike === 0) return [];
-		const diff = strikeDifferences[selectedSymbol] || 100;
-		const list = generateStrikeList(atmStrike, diff);
-		return list.map(s => ({ label: String(s), value: s }));
-	});
-
-	function updateData() {
-		oiData = generateSingleStrikeMockData(selectedSymbol, selectedStrike, selectedExpiry);
-	}
+	let strikeOptions = $derived(
+		hasSpot ? windowAround(allStrikes, atmIndex).map((s) => ({ label: String(s), value: s })) : []
+	);
 
 	function handleSymbolChange(val: string) {
 		selectedSymbol = val;
-		const initial = getInitialStrike(val);
-		atmStrike = initial;
-		selectedStrike = initial;
-		updateData();
+		selectedStrike = 0;
+		void source.load(val);
 	}
 
 	function handleStrikeChange(val: number) {
 		selectedStrike = val;
-		updateData();
 	}
 
-	let intervalId: any;
-
 	onMount(() => {
-		const initial = getInitialStrike(selectedSymbol);
-		atmStrike = initial;
-		selectedStrike = initial;
-		updateData();
-
-		intervalId = setInterval(() => {
-			updateData();
-		}, 10000);
+		void source.load(selectedSymbol);
 	});
 
 	onDestroy(() => {
-		if (intervalId) clearInterval(intervalId);
+		source.stop();
+		bars.stop();
 	});
 </script>
 

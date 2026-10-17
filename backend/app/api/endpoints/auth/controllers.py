@@ -659,3 +659,18 @@ async def revoke_all_other_sessions(
             await revoke_family(redis, s["session_id"])
             revoked += 1
     return {"message": f"{revoked} sessions revoked.", "revoked_count": revoked}
+
+
+WS_TICKET_TTL_SECONDS = 30
+
+
+async def issue_ws_ticket(claims: AccessClaims, redis: Redis) -> dict[str, Any]:
+    ticket = secrets.token_urlsafe(32)
+    await redis.set(f"ws_ticket:{ticket}", claims.user_id, ex=WS_TICKET_TTL_SECONDS)
+    return {"ticket": ticket, "expires_in": WS_TICKET_TTL_SECONDS}
+
+
+async def redeem_ws_ticket(redis: Redis, ticket: str) -> str | None:
+    if not ticket:
+        return None
+    return await redis.getdel(f"ws_ticket:{ticket}")

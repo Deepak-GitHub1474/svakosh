@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { uiState } from '$lib/store/ui.svelte';
+	import { changeOf, marketFeed } from '$lib/market/feed.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SvaKoshBadge from '$lib/components/svakosh/SvaKoshBadge.svelte';
 	import WatchlistsDropdown from './WatchlistsDropdown.svelte';
@@ -47,11 +48,16 @@
 	let entriesError = $state<string | null>(null);
 	const addedTokens = $derived(new Set(entries.map((e) => e.sk_token)));
 
+	$effect(() => marketFeed.subscribe(entries.map((e) => e.sk_token)));
+
+	function entryLtp(e: TWatchlistEntry): number {
+		return marketFeed.quotes[e.sk_token]?.ltp ?? 0;
+	}
 	function entryChange(e: TWatchlistEntry): number {
-		return e.ltp - e.prev_close;
+		return changeOf(marketFeed.quotes[e.sk_token]).change;
 	}
 	function entryChangePct(e: TWatchlistEntry): number {
-		return e.prev_close !== 0 ? (entryChange(e) / e.prev_close) * 100 : 0;
+		return changeOf(marketFeed.quotes[e.sk_token]).change_pct;
 	}
 
 	const sortedEntries = $derived.by(() => {
@@ -63,7 +69,7 @@
 					cmp = a.trading_symbol.localeCompare(b.trading_symbol);
 					break;
 				case 'ltp':
-					cmp = a.ltp - b.ltp;
+					cmp = entryLtp(a) - entryLtp(b);
 					break;
 				case 'change':
 					cmp = entryChange(a) - entryChange(b);
@@ -180,7 +186,7 @@
 		return { ok: true as const };
 	}
 
-	async function handleAddSymbol(hit: { name: string; sk_token: string }) {
+	async function handleAddSymbol(hit: { sk_token: string }) {
 		if (!selectedName || selectedItem?.predefined) return;
 		const res = await addSymbolToWatchlist(selectedName, hit.sk_token);
 		if (res.ok || res.status === 409) {
@@ -350,8 +356,8 @@
 						exchange={entry.exchange}
 						instrument={entry.instrument}
 						companyName={entry.company_name ?? null}
-						ltp={entry.ltp}
-						prevClose={entry.prev_close}
+						ltp={marketFeed.quotes[entry.sk_token]?.ltp ?? 0}
+						prevClose={marketFeed.quotes[entry.sk_token]?.prev_close ?? 0}
 						canMutate={!selectedItem?.predefined}
 						hasNote={!!entry.symbol_note}
 						onNote={() =>

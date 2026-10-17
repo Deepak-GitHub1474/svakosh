@@ -2,10 +2,18 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import type { TMaxPainData } from './_lib/types';
-	import { calculateStrikes } from './_lib/helper';
-	import { generateMaxPainMockData } from './_lib/mock-data';
 	import { MAX_PAIN_EXPIRIES } from './_lib/const';
 	import { SYMBOLS } from '$lib/utils/const';
+	import { marketFeed } from '$lib/market/feed.svelte';
+	import { ChainSource } from '$lib/market/chain.svelte';
+	import {
+		OI_FIELDS,
+		chainTokens,
+		nearestIndex,
+		painCurve,
+		strikeOI,
+		windowAround
+	} from '$lib/market/options';
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import SvaKoshNumberInput from '$lib/components/svakosh/SvaKoshNumberInput.svelte';
@@ -15,21 +23,44 @@
 	let selectedSymbol: string = $state('NIFTY');
 	let selectedExpiry: string = $state('CURRENT_WEEK');
 	let strikeCount: number = $state(30);
-	let maxPainData: TMaxPainData = $state({});
-	let maxPainStrike: number = $state(0);
-	let strikes: number[] = $state([]);
 	let isSymbolOpen: boolean = $state(false);
 	let isExpiryOpen: boolean = $state(false);
 
-	function refreshData(): void {
-		const { data, maxPainStrike: base } = generateMaxPainMockData(selectedSymbol);
-		maxPainData = data;
-		maxPainStrike = base;
-		strikes = calculateStrikes(base, selectedSymbol, strikeCount);
-	}
+	const source = new ChainSource();
+	const view = $derived(source.view);
+	const expiry = $derived(view ? source.expiry(selectedExpiry) : '');
+	const allStrikes = $derived(view && expiry ? source.strikes(expiry) : []);
+	const hasSpot = $derived(source.spot > 0);
+	const center = $derived(nearestIndex(allStrikes, source.spot));
+	const oiStrikes = $derived(hasSpot ? windowAround(allStrikes, center) : []);
+	const rows = $derived(view && expiry ? strikeOI(view, expiry, oiStrikes, marketFeed.quotes) : []);
+	const curve = $derived(painCurve(rows));
+
+	const maxPainData: TMaxPainData = $derived(
+		Object.fromEntries(curve.map((point) => [point.strike, point]))
+	);
+	const maxPainStrike: number = $derived(
+		curve.reduce((best, point) => (point.totalPayout < best.totalPayout ? point : best), {
+			strike: 0,
+			totalPayout: Infinity
+		}).strike
+	);
+	const strikes: number[] = $derived(
+		windowAround(allStrikes, allStrikes.indexOf(maxPainStrike), strikeCount)
+	);
+
+	$effect(() => {
+		if (!view) return;
+		return marketFeed.subscribe([view.spot]);
+	});
+
+	$effect(() => {
+		if (!view || !expiry || oiStrikes.length === 0) return;
+		return marketFeed.subscribe(chainTokens(view, expiry, oiStrikes), OI_FIELDS);
+	});
 
 	function handleUpdate(): void {
-		refreshData();
+		void source.load(selectedSymbol);
 	}
 
 	$effect(() => {
@@ -40,22 +71,11 @@
 		if (isExpiryOpen) isSymbolOpen = false;
 	});
 
-	$effect(() => {
-		if (maxPainStrike > 0) {
-			strikes = calculateStrikes(maxPainStrike, selectedSymbol, strikeCount);
-		}
-	});
-
-	let intervalId: any;
-
 	onMount(() => {
-		refreshData();
-		intervalId = setInterval(refreshData, 10000);
+		void source.load(selectedSymbol);
 	});
 
-	onDestroy(() => {
-		if (intervalId) clearInterval(intervalId);
-	});
+	onDestroy(() => source.stop());
 </script>
 
 <svelte:head>

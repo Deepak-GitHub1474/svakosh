@@ -8,7 +8,10 @@
 	import Search from '$lib/components/svg-provider/material/Search.svelte';
 	import SearchOff from '$lib/components/svg-provider/material/SearchOff.svelte';
 
-	type TSearchHit = { name: string; exchange: string; sk_token: string };
+	import { searchSymbols } from './service';
+	import type { TSymbol } from './types';
+
+	const SEARCH_DEBOUNCE_MS = 250;
 
 	interface Props {
 		isOpen: boolean;
@@ -16,7 +19,7 @@
 		watchlistName?: string | null;
 		isPredefined?: boolean;
 		addedTokens?: Set<string>;
-		onadd?: (hit: TSearchHit) => Promise<void> | void;
+		onadd?: (hit: TSymbol) => Promise<void> | void;
 		onseed?: (q: string) => void;
 	}
 
@@ -30,43 +33,36 @@
 		onseed
 	}: Props = $props();
 
-	const POOL: TSearchHit[] = [
-		{ name: 'NIFTY', exchange: 'NSE', sk_token: 'SKT:1:1:NIFTY' },
-		{ name: 'BANKNIFTY', exchange: 'NSE', sk_token: 'SKT:1:1:BANKNIFTY' },
-		{ name: 'FINNIFTY', exchange: 'NSE', sk_token: 'SKT:1:1:FINNIFTY' },
-		{ name: 'MIDCPNIFTY', exchange: 'NSE', sk_token: 'SKT:1:1:MIDCPNIFTY' },
-		{ name: 'NIFTYNXT50', exchange: 'NSE', sk_token: 'SKT:1:1:NIFTYNXT50' },
-		{ name: 'SENSEX', exchange: 'BSE', sk_token: 'SKT:2:1:SENSEX' },
-		{ name: 'BANKEX', exchange: 'BSE', sk_token: 'SKT:2:1:BANKEX' },
-		{ name: 'RELIANCE', exchange: 'NSE', sk_token: 'SKT:1:2:RELIANCE-EQ' },
-		{ name: 'HDFCBANK', exchange: 'NSE', sk_token: 'SKT:1:2:HDFCBANK-EQ' },
-		{ name: 'ICICIBANK', exchange: 'NSE', sk_token: 'SKT:1:2:ICICIBANK-EQ' },
-		{ name: 'INFY', exchange: 'NSE', sk_token: 'SKT:1:2:INFY-EQ' },
-		{ name: 'TCS', exchange: 'NSE', sk_token: 'SKT:1:2:TCS-EQ' },
-		{ name: 'SBIN', exchange: 'NSE', sk_token: 'SKT:1:2:SBIN-EQ' },
-		{ name: 'AXISBANK', exchange: 'NSE', sk_token: 'SKT:1:2:AXISBANK-EQ' },
-		{ name: 'KOTAKBANK', exchange: 'NSE', sk_token: 'SKT:1:2:KOTAKBANK-EQ' },
-		{ name: 'TATAMOTORS', exchange: 'NSE', sk_token: 'SKT:1:2:TATAMOTORS-EQ' },
-		{ name: 'BHARTIARTL', exchange: 'NSE', sk_token: 'SKT:1:2:BHARTIARTL-EQ' },
-		{ name: 'WIPRO', exchange: 'NSE', sk_token: 'SKT:1:2:WIPRO-EQ' },
-		{ name: 'ADANIENT', exchange: 'NSE', sk_token: 'SKT:1:2:ADANIENT-EQ' },
-		{ name: 'JIOFIN', exchange: 'NSE', sk_token: 'SKT:1:2:JIOFIN-EQ' },
-		{ name: 'ASIANPAINT', exchange: 'NSE', sk_token: 'SKT:1:2:ASIANPAINT-EQ' }
-	];
-
 	const trimmed = $derived(query.trim());
 	const hasMinQuery = $derived(trimmed.length > 2);
-	const results = $derived.by(() => {
-		if (!hasMinQuery) return [];
-		const q = trimmed.toUpperCase();
-		return POOL.filter((s) => s.name.includes(q)).slice(0, 30);
+
+	let results = $state<TSymbol[]>([]);
+	let searching = $state(false);
+	let searchError = $state('');
+
+	$effect(() => {
+		const q = trimmed;
+		if (q.length <= 2) {
+			results = [];
+			searchError = '';
+			return;
+		}
+		searching = true;
+		const timer = setTimeout(async () => {
+			const res = await searchSymbols(q);
+			if (q !== trimmed) return;
+			searching = false;
+			results = res.ok ? res.data : [];
+			searchError = res.ok ? '' : res.error;
+		}, SEARCH_DEBOUNCE_MS);
+		return () => clearTimeout(timer);
 	});
 
 	const canAdd = $derived(!!watchlistName && !isPredefined);
 
 	let pendingToken = $state<string | null>(null);
 
-	async function handleAdd(hit: TSearchHit) {
+	async function handleAdd(hit: TSymbol) {
 		if (!canAdd || pendingToken) return;
 		pendingToken = hit.sk_token;
 		try {
@@ -93,6 +89,10 @@
 					actionIcon={Search}
 					onAction={() => onseed?.('NIFTY')}
 				/>
+			{:else if searching && results.length === 0}
+				<EmptyState title="Searching..." icon={ProgressActivity} />
+			{:else if searchError}
+				<EmptyState title="Search unavailable" description={searchError} icon={SearchOff} />
 			{:else if results.length === 0}
 				<EmptyState
 					title="No matches found"
@@ -113,12 +113,14 @@
 						class="group flex items-center gap-3 px-4 lg:px-3 py-2 border-b border-border-subtle hover:bg-glass transition-colors"
 					>
 						<SymbolImage
-							name={hit.name}
+							name={hit.underlying_symbol}
 							class="w-9 h-9 shrink-0 group-hover:border-primary/20"
 						/>
 						<div class="flex-1 min-w-0 flex flex-col">
-							<span class="text-xs text-foreground truncate">{hit.name}</span>
-							<span class="text-[0.625rem] text-muted-foreground truncate">{hit.exchange}</span>
+							<span class="text-xs text-foreground truncate">{hit.trading_symbol}</span>
+							<span class="text-[0.625rem] text-muted-foreground truncate"
+								>{hit.exchange} · {hit.instrument}</span
+							>
 						</div>
 						<button
 							type="button"

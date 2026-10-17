@@ -193,11 +193,3 @@ export function getCallVsPutChartOptions(data: OIDataMap, bullishColor: string =
 		]
 	};
 }
-
-export function generateStrikeList(atmStrike: number, difference: number): number[] {
-	const strikes = [];
-	for (let i = -30; i <= 30; i++) {
-		strikes.push(atmStrike + i * difference);
-	}
-	return strikes.sort((a, b) => a - b);
-}

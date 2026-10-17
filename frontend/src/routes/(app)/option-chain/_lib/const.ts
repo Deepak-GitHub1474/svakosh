@@ -17,13 +17,6 @@ export const PREFERRED_SYMBOL_ORDER = [
 	'BANKEX'
 ];
 
-export const SEGMENT_SYMBOL: Record<string, string> = {
-	'': 'NIFTY',
-	BANK: 'BANKNIFTY',
-	FIN: 'FINNIFTY',
-	MIDCP: 'MIDCPNIFTY'
-};
-
 export const VIEW_TABS: { label: string; value: TViewMode }[] = [
 	{ label: 'OI', value: 'OI' },
 	{ label: 'Greeks', value: 'Greeks' }

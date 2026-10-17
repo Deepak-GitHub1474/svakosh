@@ -14,21 +14,21 @@ export type TOpResult =
 	| { ok: true }
 	| { ok: false; error: string; status?: number };
 
-export type TWatchlistEntry = {
+export type TSymbol = {
 	sk_token: string;
 	trading_symbol: string;
 	exchange: string;
 	instrument: string;
 	lot_size: number;
 	expiry: string | null;
-	expiry_type: string | null;
 	strike: number | null;
-	option_chain_id: string | null;
+	option_type: string | null;
 	underlying_symbol: string;
+};
+
+export type TWatchlistEntry = TSymbol & {
 	company_name?: string | null;
 	symbol_note?: string | null;
-	ltp: number;
-	prev_close: number;
 };
 
 export type TWatchlistEntriesPayload = {

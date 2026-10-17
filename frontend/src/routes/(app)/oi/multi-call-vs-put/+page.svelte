@@ -3,9 +3,13 @@
 	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import type { MultiOIDataMap } from './_lib/types';
-	import { SYMBOLS as symbols, EXPIRIES as expiries, STRIKE_DIFFERENCES as strikeDifferences } from '$lib/utils/const';
-	import { generateStrikeList, aggregateStrikeData } from './_lib/helper';
-	import { generateMultiStrikeMockData, getBaseStrike } from './_lib/mock-data';
+	import { SYMBOLS as symbols, EXPIRIES as expiries } from '$lib/utils/const';
+	import { aggregateStrikeData } from './_lib/helper';
+	import { marketFeed } from '$lib/market/feed.svelte';
+	import { ChainSource } from '$lib/market/chain.svelte';
+	import { TodayBars } from '$lib/market/bars.svelte';
+	import { oiByTime, withLive } from '$lib/market/series';
+	import { nearestIndex, windowAround } from '$lib/market/options';
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshMultiSelector from '$lib/components/svakosh/SvaKoshMultiSelector.svelte';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
@@ -16,17 +20,68 @@
 	let selectedExpiry = $state('CURRENT_WEEK');
 	let selectedCallStrikes = $state<string[]>([]);
 	let selectedPutStrikes = $state<string[]>([]);
-	let atmStrike = $state(0);
 	let chartType = $state<'line' | 'bar'>(page.url.searchParams.get('type') as any || 'line');
 	
-	let rawStrikeData = $state<Record<string, any>>({});
-	let aggregatedData = $state<MultiOIDataMap>({});
+	const INTERVAL = 5;
+	const source = new ChainSource();
+	const bars = new TodayBars();
+	const expiry = $derived(source.view ? source.expiry(selectedExpiry) : '');
+	const allStrikes = $derived(expiry ? source.strikes(expiry) : []);
+	const hasSpot = $derived(source.spot > 0);
+	const atmIndex = $derived(nearestIndex(allStrikes, source.spot));
+	const atmStrike = $derived(hasSpot ? (allStrikes[atmIndex] ?? 0) : 0);
+	const windowStrikes = $derived(hasSpot ? windowAround(allStrikes, atmIndex) : []);
+	const picked = $derived([...new Set([...selectedCallStrikes, ...selectedPutStrikes])].map(Number));
+
+	const rawStrikeData = $derived(
+		Object.fromEntries(
+			picked.map((strike) => {
+				const ce = source.token(expiry, strike, 'CE');
+				const pe = source.token(expiry, strike, 'PE');
+				return [
+					String(strike),
+					oiByTime(
+						withLive(bars.data[ce], marketFeed.quotes[ce], INTERVAL),
+						withLive(bars.data[pe], marketFeed.quotes[pe], INTERVAL)
+					)
+				];
+			})
+		)
+	);
+	const aggregatedData: MultiOIDataMap = $derived(
+		aggregateStrikeData(rawStrikeData, selectedCallStrikes, selectedPutStrikes)
+	);
+
+	$effect(() => {
+		if (atmStrike && selectedCallStrikes.length === 0 && selectedPutStrikes.length === 0) {
+			selectedCallStrikes = [String(atmStrike)];
+			selectedPutStrikes = [String(atmStrike)];
+		}
+	});
+
+	$effect(() => {
+		if (!source.view) return;
+		return marketFeed.subscribe([source.view.spot]);
+	});
+
+	$effect(() => {
+		if (!expiry || picked.length === 0) return;
+		return marketFeed.subscribe(
+			picked.flatMap((strike) => [source.token(expiry, strike, 'CE'), source.token(expiry, strike, 'PE')]),
+			['ltp', 'oi']
+		);
+	});
+
+	function fetchData() {
+		if (expiry) void bars.load(source.subject, source.optionPrefix(expiry), INTERVAL);
+	}
+
+	$effect(fetchData);
 	
 	let isSymbolOpen = $state(false);
 	let isExpiryOpen = $state(false);
 	let isCallStrikesOpen = $state(false);
 	let isPutStrikesOpen = $state(false);
-	let intervalId: any;
 
 	$effect(() => {
 		if (isSymbolOpen) {
@@ -69,56 +124,22 @@
 	});
 
 
-	let strikeOptions = $derived.by(() => {
-		if (atmStrike === 0) return [];
-		const diff = strikeDifferences[selectedSymbol] || 100;
-		const list = generateStrikeList(atmStrike, diff);
-		return list.map(s => ({ label: String(s), value: String(s) }));
-	});
-
-	function fetchData() {
-		let strikesToFetch = strikeOptions.map(o => o.value);
-		
-		if (strikesToFetch.length === 0 && atmStrike !== 0) {
-			const diff = strikeDifferences[selectedSymbol] || 100;
-			strikesToFetch = generateStrikeList(atmStrike, diff).map(String);
-		}
-
-		rawStrikeData = generateMultiStrikeMockData(selectedSymbol, strikesToFetch, selectedExpiry);
-		updateAggregatedData();
-	}
-
-	function updateAggregatedData() {
-		aggregatedData = aggregateStrikeData(rawStrikeData, selectedCallStrikes, selectedPutStrikes);
-	}
+	let strikeOptions = $derived(windowStrikes.map((s) => ({ label: String(s), value: String(s) })));
 
 	function handleSymbolChange(val: string) {
 		selectedSymbol = val;
-		const initial = getBaseStrike(val);
-		atmStrike = initial;
-		selectedCallStrikes = [String(initial)];
-		selectedPutStrikes = [String(initial)];
-		fetchData();
-	}
-
-	function handleSelectionChange() {
-		updateAggregatedData();
+		selectedCallStrikes = [];
+		selectedPutStrikes = [];
+		void source.load(val);
 	}
 
 	onMount(() => {
-		const initial = getBaseStrike(selectedSymbol);
-		atmStrike = initial;
-		selectedCallStrikes = [String(initial)];
-		selectedPutStrikes = [String(initial)];
-		fetchData();
-
-		intervalId = setInterval(() => {
-			fetchData();
-		}, 10000);
+		void source.load(selectedSymbol);
 	});
 
 	onDestroy(() => {
-		if (intervalId) clearInterval(intervalId);
+		source.stop();
+		bars.stop();
 	});
 </script>
 
@@ -162,7 +183,6 @@
 						options={strikeOptions} 
 						bind:value={selectedCallStrikes} 
 						bind:isOpen={isCallStrikesOpen}
-						onSelect={handleSelectionChange}
 						searchable={true}
 						placeholder="Call Strikes"
 					/>
@@ -172,7 +192,6 @@
 						options={strikeOptions} 
 						bind:value={selectedPutStrikes} 
 						bind:isOpen={isPutStrikesOpen}
-						onSelect={handleSelectionChange}
 						searchable={true}
 						placeholder="Put Strikes"
 					/>

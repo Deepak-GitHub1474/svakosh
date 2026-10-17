@@ -1,6 +1,5 @@
 import * as echarts from 'echarts';
 import type { TMaxPainData } from './types';
-import { STRIKE_DIFFERENCES } from '$lib/utils/const';
 
 export const formatVal = (val: number): string => {
 	if (Math.abs(val) >= 10000000) return (val / 10000000).toFixed(2) + ' Cr';
@@ -8,15 +7,6 @@ export const formatVal = (val: number): string => {
 	if (Math.abs(val) >= 1000) return (val / 1000).toFixed(1) + ' K';
 	return val.toString();
 };
-
-export function calculateStrikes(base: number, symbol: string, count: number): number[] {
-	const diff: number = STRIKE_DIFFERENCES[symbol] || 100;
-	const result: number[] = [];
-	for (let i = -count; i <= count; i++) {
-		result.push(base + i * diff);
-	}
-	return result.sort((a, b) => a - b);
-}
 
 export function getMaxPainChartOptions(
 	data: TMaxPainData,

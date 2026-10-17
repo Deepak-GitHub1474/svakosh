@@ -13,11 +13,14 @@ from app.api.endpoints.watchlist.constants import (
     COL_WATCHLIST_NOTES,
     MAX_CUSTOM_WATCHLISTS_PER_USER,
     MAX_SYMBOLS_PER_WATCHLIST,
-    PRE_DEFINED_ENTRIES,
     PRE_DEFINED_TOKEN_INDEX,
+    PRE_DEFINED_TOKENS,
     PRE_DEFINED_WATCHLIST,
 )
+from app.api.endpoints.market.constants import COMPANY_NAMES
+from app.api.endpoints.market.utils import symbol_of
 from app.api.endpoints.watchlist.utils import is_predefined, predefined_count
+from app.market_data import MarketDataClient, MarketDataError
 from app.utils.utils import now_utc
 
 logger = logging.getLogger("svakosh.watchlist.controller")
@@ -102,6 +105,7 @@ async def create_watchlist(
 async def add_symbol_to_watchlist(
     claims: AccessClaims,
     mongo: AsyncIOMotorDatabase,
+    market: MarketDataClient,
     watchlist_name: str,
     sk_token: str,
 ) -> dict[str, Any]:
@@ -109,6 +113,11 @@ async def add_symbol_to_watchlist(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot add symbols to a predefined watchlist.",
+        )
+    if sk_token not in await _instruments(market, [sk_token]):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unknown symbol.",
         )
 
     col = mongo[COL_WATCHLIST]
@@ -221,27 +230,26 @@ async def delete_watchlist(
     return {"name": name}
 
 
-def _custom_entry_stub(token_doc: dict[str, Any]) -> dict[str, Any]:
-    sk_token = token_doc.get("sk_token", "")
-    parts = sk_token.split(":")
-    raw = parts[-1] if parts else sk_token
-    trading_symbol = raw[:-3] if raw.endswith("-EQ") else raw
-    return {
-        "sk_token": sk_token,
-        "trading_symbol": trading_symbol,
-        "exchange": "",
-        "instrument": "",
-        "lot_size": 0,
-        "expiry": None,
-        "expiry_type": None,
-        "strike": None,
-        "option_chain_id": None,
-        "underlying_symbol": trading_symbol,
-        "company_name": None,
-        "symbol_note": token_doc.get("note"),
-        "ltp": 0.0,
-        "prev_close": 0.0,
-    }
+async def _instruments(market: MarketDataClient, tokens: list[str]) -> dict[str, dict[str, Any]]:
+    try:
+        return await market.instruments(tokens)
+    except MarketDataError as e:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)) from e
+
+
+async def _entries(
+    market: MarketDataClient, tokens: list[str], notes: dict[str, str | None],
+) -> list[dict[str, Any]]:
+    found = await _instruments(market, tokens)
+    return [
+        {
+            **symbol_of(found[t]),
+            "company_name": COMPANY_NAMES.get(t),
+            "symbol_note": notes.get(t),
+        }
+        for t in tokens
+        if t in found
+    ]
 
 
 async def _notes_map(
@@ -255,14 +263,11 @@ async def _notes_map(
 
 
 async def get_watchlist_entries(
-    claims: AccessClaims, mongo: AsyncIOMotorDatabase, name: str,
+    claims: AccessClaims, mongo: AsyncIOMotorDatabase, market: MarketDataClient, name: str,
 ) -> dict[str, Any]:
     if is_predefined(name):
         notes = await _notes_map(mongo, claims.user_id, name)
-        entries = [
-            {**e, "symbol_note": notes.get(e["sk_token"])}
-            for e in PRE_DEFINED_ENTRIES.get(name, [])
-        ]
+        entries = await _entries(market, PRE_DEFINED_TOKENS.get(name, []), dict(notes))
         return {"watchlist": name, "predefined": True, "entries": entries}
 
     doc = await mongo[COL_WATCHLIST].find_one(
@@ -275,7 +280,9 @@ async def get_watchlist_entries(
             detail="Watchlist not found.",
         )
 
-    entries = [_custom_entry_stub(t) for t in (doc.get("sk_tokens") or [])]
+    saved = doc.get("sk_tokens") or []
+    notes = {t["sk_token"]: t.get("note") for t in saved}
+    entries = await _entries(market, [t["sk_token"] for t in saved], notes)
     return {"watchlist": name, "predefined": False, "entries": entries}
 
 

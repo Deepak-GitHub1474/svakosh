@@ -45,7 +45,22 @@ export const CHART_CONFIGS = {
 };
 
 export const INDEX_OPTIONS = [
-	{ label: 'NIFTY 50', value: 'NIFTY 50', base: 22419 },
-	{ label: 'BANK NIFTY', value: 'BANK NIFTY', base: 47286 },
-	{ label: 'SENSEX', value: 'SENSEX', base: 73903 }
+	{ label: 'NIFTY 50', value: 'NIFTY 50', token: 'NSE:IDX:NIFTY' },
+	{ label: 'BANK NIFTY', value: 'BANK NIFTY', token: 'NSE:IDX:BANKNIFTY' },
+	{ label: 'SENSEX', value: 'SENSEX', token: 'BSE:IDX:SENSEX' }
 ];
+
+export const METRICS = INDEX_OPTIONS.map(({ label, token }) => ({ label, sk_token: token }));
+
+export const SECTORS = [
+	{ name: 'IT', sk_token: 'NSE:IDX:NIFTYIT' },
+	{ name: 'Auto', sk_token: 'NSE:IDX:NIFTYAUTO' },
+	{ name: 'Pharma', sk_token: 'NSE:IDX:NIFTYPHARMA' },
+	{ name: 'Banking', sk_token: 'NSE:IDX:BANKNIFTY' },
+	{ name: 'FMCG', sk_token: 'NSE:IDX:NIFTYFMCG' },
+	{ name: 'Metal', sk_token: 'NSE:IDX:NIFTYMETAL' },
+	{ name: 'Energy', sk_token: 'NSE:IDX:NIFTYENERGY' }
+];
+
+export const TOP_MOVERS_LIMIT = 5;
+export const INTRADAY_INTERVAL_MS = 15 * 60 * 1000;

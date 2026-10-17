@@ -13,6 +13,7 @@ from app.api.endpoints.watchlist.models import (
     UpsertNoteRequest,
 )
 from app.database import MongoDatabase
+from app.market_data import MarketData
 from app.responses import ok_response
 from app.utils.utils import CurrentClaims
 
@@ -29,9 +30,10 @@ async def list_watchlists(claims: CurrentClaims, mongo: MongoDatabase):
 async def get_entries(
     claims: CurrentClaims,
     mongo: MongoDatabase,
+    market: MarketData,
     name: str = Query(..., min_length=1, max_length=64),
 ):
-    data = await controllers.get_watchlist_entries(claims, mongo, name.strip())
+    data = await controllers.get_watchlist_entries(claims, mongo, market, name.strip())
     return ok_response("Entries fetched.", data=data)
 
 
@@ -50,9 +52,10 @@ async def add_symbol(
     body: AddSymbolRequest,
     claims: CurrentClaims,
     mongo: MongoDatabase,
+    market: MarketData,
 ):
     data = await controllers.add_symbol_to_watchlist(
-        claims, mongo, body.watchlist_name, body.sk_token,
+        claims, mongo, market, body.watchlist_name, body.sk_token,
     )
     return ok_response("Symbol added.", data=data)
 

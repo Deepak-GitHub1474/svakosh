@@ -3,22 +3,71 @@
 	import { goto } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import type { StrangleDataMap } from './_lib/types';
-	import { DEFAULT_SYMBOL, DEFAULT_EXPIRY, STRIKE_DIFFERENCES } from '$lib/utils/const';
-	import { generateMockStrangleData, getBaseStrike } from './_lib/mock-data';
+	import { DEFAULT_SYMBOL, DEFAULT_EXPIRY } from '$lib/utils/const';
+	import { marketFeed } from '$lib/market/feed.svelte';
+	import { ChainSource } from '$lib/market/chain.svelte';
+	import { TodayBars } from '$lib/market/bars.svelte';
+	import { legsByTime, withLive } from '$lib/market/series';
+	import { nearestIndex, windowAround } from '$lib/market/options';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import StrangleChart from './_components/StrangleChart.svelte';
 	import StrangleControls from './_components/StrangleControls.svelte';
 
 	let selectedSymbol = $state(DEFAULT_SYMBOL);
 	let selectedExpiry = $state(DEFAULT_EXPIRY);
-	let initialStrike = getBaseStrike(DEFAULT_SYMBOL);
-	let atmStrike = $state(initialStrike);
-	let ceStrike = $state(initialStrike + (STRIKE_DIFFERENCES[DEFAULT_SYMBOL] || 50));
-	let peStrike = $state(initialStrike - (STRIKE_DIFFERENCES[DEFAULT_SYMBOL] || 50));
-	
-	let strangleData = $state<StrangleDataMap>({});
+	let ceStrike = $state(0);
+	let peStrike = $state(0);
 	let chartType = $state<'line' | 'bar'>(page.url.searchParams.get('type') as any || 'line');
-	let intervalId: any;
+	const INTERVAL = 5;
+	const source = new ChainSource();
+	const bars = new TodayBars();
+	const expiry = $derived(source.view ? source.expiry(selectedExpiry) : '');
+	const allStrikes = $derived(expiry ? source.strikes(expiry) : []);
+	const hasSpot = $derived(source.spot > 0);
+	const atmIndex = $derived(nearestIndex(allStrikes, source.spot));
+	const atmStrike = $derived(hasSpot ? (allStrikes[atmIndex] ?? 0) : 0);
+	const ceToken = $derived(expiry && ceStrike ? source.token(expiry, ceStrike, 'CE') : '');
+	const peToken = $derived(expiry && peStrike ? source.token(expiry, peStrike, 'PE') : '');
+
+	const strangleData: StrangleDataMap = $derived(
+		Object.fromEntries(
+			legsByTime(
+				withLive(bars.data[ceToken], marketFeed.quotes[ceToken], INTERVAL),
+				withLive(bars.data[peToken], marketFeed.quotes[peToken], INTERVAL)
+			).map(({ time, ce, pe }) => [
+				time,
+				{
+					time,
+					ceOI: ce.oi,
+					peOI: pe.oi,
+					strangleRate: Math.round((ce.close + pe.close) * 100) / 100,
+					strangleATP: Math.round((ce.atp + pe.atp) * 100) / 100
+				}
+			])
+		)
+	);
+
+	$effect(() => {
+		if (!atmStrike) return;
+		if (!allStrikes.includes(ceStrike)) ceStrike = allStrikes[atmIndex + 1] ?? atmStrike;
+		if (!allStrikes.includes(peStrike)) peStrike = allStrikes[atmIndex - 1] ?? atmStrike;
+	});
+
+	$effect(() => {
+		if (!source.view) return;
+		return marketFeed.subscribe([source.view.spot]);
+	});
+
+	$effect(() => {
+		if (!ceToken || !peToken) return;
+		return marketFeed.subscribe([ceToken, peToken], ['ltp', 'oi']);
+	});
+
+	function updateData() {
+		if (expiry) void bars.load(source.subject, source.optionPrefix(expiry), INTERVAL);
+	}
+
+	$effect(updateData);
 
 	let isSymbolOpen = $state(false);
 	let isExpiryOpen = $state(false);
@@ -65,36 +114,22 @@
 		}
 	});
 
-	const strikeDifference = $derived(STRIKE_DIFFERENCES[selectedSymbol] || 50);
-	const strikes = $derived.by(() => {
-		const base = atmStrike;
-		const diff = strikeDifference;
-		const lower = Array.from({ length: 30 }, (_, i) => base - diff * (i + 1));
-		const upper = Array.from({ length: 30 }, (_, i) => base + diff * (i + 1));
-		return [...lower, base, ...upper].sort((a, b) => a - b);
-	});
-
-	function updateData() {
-		strangleData = generateMockStrangleData(selectedSymbol, ceStrike, peStrike, selectedExpiry);
-	}
+	const strikes = $derived(hasSpot ? windowAround(allStrikes, atmIndex) : []);
 
 	function handleSymbolChange(val: string) {
 		selectedSymbol = val;
-		const base = getBaseStrike(val);
-		const diff = STRIKE_DIFFERENCES[val] || 50;
-		atmStrike = base;
-		ceStrike = base + diff;
-		peStrike = base - diff;
-		updateData();
+		ceStrike = 0;
+		peStrike = 0;
+		void source.load(val);
 	}
 
 	onMount(() => {
-		updateData();
-		intervalId = setInterval(updateData, 10000);
+		void source.load(selectedSymbol);
 	});
 
 	onDestroy(() => {
-		if (intervalId) clearInterval(intervalId);
+		source.stop();
+		bars.stop();
 	});
 </script>
 

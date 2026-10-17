@@ -7,21 +7,60 @@
 	import TrackerTable from './_components/TrackerTable.svelte';
 	import TrackerChart from './_components/TrackerChart.svelte';
 	import SvaKoshSwitch from '$lib/components/svakosh/SvaKoshSwitch.svelte';
-	import { LOADED_TRACKER_DATA, generateTrackerGraphData } from './_lib/mock-data';
-	import { roundLakh } from '$lib/utils';
-	import type { TFullTrackerData, TTrackerTimeframe } from './_lib/types';
+	import { TRACKER_TIMEFRAMES } from './_lib/const';
+	import { trackSymbols, type SymbolOI } from '$lib/market/oi.svelte';
+	import { TRACKER_BUCKETS, bucketMetrics, lakh, timeline, totalAt } from '$lib/market/oi';
+	import { istTime } from '$lib/market/time';
+	import type { TTrackerSymbolDetail } from './_lib/types';
 
 	let activeTab = $state<'tables' | 'graphs'>(page.url.searchParams.get('tab') as any || 'tables');
 	let expiry = $state('CURRENT_WEEK');
 	let selectedSymbols = $state<string[]>(['NIFTY']);
-	
-	let trackerData = $state<TFullTrackerData>(JSON.parse(JSON.stringify(LOADED_TRACKER_DATA)));
-	let graphData = $state<Record<string, any>>({});
-
 	let oiOption = $state('Total OI');
 	let combined = $state(false);
 
-	const currentExpiryData = $derived(trackerData[expiry] || trackerData['CURRENT_WEEK']);
+	const tracker = trackSymbols(3);
+	let sources = $state.raw<SymbolOI[]>([]);
+
+	$effect(() => {
+		sources = tracker.sync(selectedSymbols, expiry);
+	});
+
+	function refreshGraphData() {
+		sources.forEach((source) => source.refresh());
+	}
+
+	const currentExpiryData = $derived(
+		Object.fromEntries(
+			sources.map((source) => {
+				const detail: TTrackerSymbolDetail = { CE: {}, PE: {} };
+				for (const side of ['CE', 'PE'] as const) {
+					for (const bucket of TRACKER_BUCKETS) {
+						detail[side][bucket.name] = bucketMetrics(source.bucket(side, bucket), TRACKER_TIMEFRAMES);
+					}
+				}
+				return [source.underlying, detail];
+			})
+		)
+	);
+
+	const graphData = $derived(
+		activeTab !== 'graphs'
+			? {}
+			: Object.fromEntries(
+					sources.map((source) => {
+						const stamps = timeline([...source.legs('CE'), ...source.legs('PE')]);
+						const data: Record<'CE' | 'PE', Record<string, number[]>> = { CE: {}, PE: {} };
+						for (const side of ['CE', 'PE'] as const) {
+							for (const bucket of TRACKER_BUCKETS) {
+								const legs = source.bucket(side, bucket);
+								data[side][bucket.name] = stamps.map((ts) => lakh(totalAt(legs, ts)));
+							}
+						}
+						return [source.underlying, { timestamps: stamps.map(istTime), data }];
+					})
+				)
+	);
 
 	function handleTabChange(tab: 'tables' | 'graphs') {
 		const url = new URL(page.url);
@@ -38,49 +77,9 @@
 
 	function handleSymbolsChange(symbols: string[]) {
 		selectedSymbols = symbols;
-		if (activeTab === 'graphs') {
-			refreshGraphData();
-		}
 	}
 
-	function refreshGraphData() {
-		const newGraphData: Record<string, any> = {};
-		selectedSymbols.forEach(sym => {
-			newGraphData[sym] = generateTrackerGraphData(sym, expiry);
-		});
-		graphData = newGraphData;
-	}
-
-	$effect(() => {
-		if (activeTab === 'graphs') {
-			refreshGraphData();
-		}
-	});
-
-	let interval: any;
-	$effect(() => {
-		interval = setInterval(() => {
-			if (activeTab === 'tables') {
-				selectedSymbols.forEach(sym => {
-					const detail = trackerData[expiry][sym];
-					if (!detail) return;
-					(['CE', 'PE'] as const).forEach(side => {
-						const sideData = detail[side];
-						Object.keys(sideData).forEach(cat => {
-							const metrics = sideData[cat];
-							(Object.keys(metrics) as TTrackerTimeframe[]).forEach(tf => {
-								metrics[tf] = roundLakh(metrics[tf] + (Math.random() - 0.5) * 5);
-							});
-						});
-					});
-				});
-			} else {
-				refreshGraphData();
-			}
-		}, 10000);
-
-		return () => clearInterval(interval);
-	});
+	onDestroy(() => tracker.stop());
 </script>
 
 <svelte:head>

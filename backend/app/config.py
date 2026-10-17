@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     MONGODB_URI: str
     MONGODB_DB_NAME: str
     REDIS_URL: str
+    NATS_URL: str = "nats://127.0.0.1:4222"
     CORS_ORIGINS: str
 
     JWT_SECRET: str
