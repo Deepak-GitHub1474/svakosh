@@ -264,8 +264,6 @@ Code quality gates: `pnpm validate` on the frontend, `uv sync` committed alongsi
 
 **Svakosh is a personal portfolio project built to demonstrate full-stack engineering. It is not a commercial product, a financial service, or a trading platform.**
 
-**Market data is live but not guaranteed.** It may be delayed, incomplete, or interrupted.
-
 Specifically:
 
 - **No investment advice.** Nothing here is a recommendation to buy, sell, or hold any security. No output should inform a real trading decision.
