@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_USE_TLS: bool = True
 
+    SMS_GATEWAY_USER: str = ""
+    SMS_GATEWAY_PASSWORD: str = ""
+    SMS_DAILY_LIMIT: int = 50
+
     GOOGLE_CLIENT_ID: str | None = None
     GOOGLE_JWKS_URL: str = "https://www.googleapis.com/oauth2/v3/certs"
     GOOGLE_ISSUERS: str = "https://accounts.google.com,accounts.google.com"

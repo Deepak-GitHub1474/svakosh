@@ -39,6 +39,7 @@ uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | `SMTP_HOST` / `SMTP_PORT` | e.g. `smtp.gmail.com` / `587` |
 | `SMTP_USERNAME` / `SMTP_PASSWORD` | Gmail address and 16-char App Password |
 | `SMTP_USE_TLS` | STARTTLS encryption (default: `true` for 587) |
+| `SMS_GATEWAY_USER` / `SMS_GATEWAY_PASSWORD` | sms-gate.app cloud credentials from the Android app; empty logs OTPs only |
 
 ## Git — commit prefixes
 

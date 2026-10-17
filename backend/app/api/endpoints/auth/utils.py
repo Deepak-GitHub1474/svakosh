@@ -33,6 +33,7 @@ from webauthn.helpers.structs import (
 from app.api.endpoints.auth.models import EMAIL_RE
 from app.config import get_settings
 from app.mail import otp_email, send_email
+from app.sms import send_sms
 
 logger = logging.getLogger("svakosh.auth.utils")
 
@@ -84,6 +85,10 @@ def otp_key(identifier: str) -> str:
 
 def otp_cooldown_key(identifier: str) -> str:
     return f"{NS}:OTP_CD:{identifier}"
+
+
+def sms_daily_key(day: str) -> str:
+    return f"{NS}:SMS_DAILY:{day}"
 
 
 def passkey_reg_challenge_key(user_id: str) -> str:
@@ -673,9 +678,19 @@ async def send_otp_email(email: str, otp: str, purpose: str = "signin") -> bool:
     return await send_email(to=email, subject=subject, text=text, html=html)
 
 
-async def send_otp_mobile(mobile: str, otp: str) -> None:
-    # TODO: wire later. Dev: print so it always shows in uvicorn stdout.
+async def send_otp_mobile(redis: Any, mobile: str, otp: str) -> bool:
     print(f"[DEV] otp.mobile to={mobile} otp={otp}", flush=True)
+    s = get_settings()
+    key = sms_daily_key(datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+    sent = await redis.incr(key)
+    if sent == 1:
+        await redis.expire(key, 2 * 86400)
+    if sent > s.SMS_DAILY_LIMIT:
+        logger.warning("sms_daily_limit_reached limit=%d", s.SMS_DAILY_LIMIT)
+        return False
+    minutes = max(1, s.OTP_TTL_SECONDS // 60)
+    text = f"{otp} is your Svakosh code. Valid for {minutes} min."
+    return await send_sms(to=f"+91{mobile}", text=text, ttl_seconds=s.OTP_TTL_SECONDS)
 
 
 async def send_otp_whatsapp(whatsapp_number: str, otp: str) -> None:
