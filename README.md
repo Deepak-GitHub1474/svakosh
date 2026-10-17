@@ -20,7 +20,7 @@ The project exists to answer a specific question: *how fast can a data-dense tra
 
 Every interactive element — modal, drawer, toast, tabs, selector, tooltip, switch — is written from scratch. The entire frontend ships **three runtime dependencies**.
 
-> **Current data status.** Authentication, profile, watchlists, and every analytics dashboard run on **live NSE/BSE market data**. A separate broker-data-provider service publishes quotes over NATS, and the API streams them to the browser over WebSocket. Outside market hours the dashboards show the last session — see [Disclaimer](#disclaimer).
+> **Live data.** All dashboards and watchlists run on live NSE/BSE market data. Outside market hours they show the last session.
 
 ---
 
@@ -100,21 +100,15 @@ graph LR
 
 **REST calls never go from the browser to the API directly.** SvelteKit server routes under `src/routes/api/**` act as a backend-for-frontend layer: they hold the auth cookies, forward requests server-side, and transparently retry once after refreshing an expired access token. Tokens never touch client JavaScript.
 
-The live price feed is the one direct connection: the browser asks the BFF for a 30-second, single-use socket ticket and opens the API WebSocket with it, so the access token still never leaves the server.
+The live price WebSocket is the one direct connection, opened with a short-lived single-use ticket.
 
 ### Market data pipeline
 
-Market data comes from **broker-data-provider**, a separate service written in **Go**. It is the only part of the system that talks to a broker, so the API never holds broker credentials and the feed can be deployed, restarted, or scaled on its own.
-
 ```
-Broker WebSocket ──► broker-data-provider (Go) ──► NATS ──► FastAPI ──► Browser WebSocket
+Broker ──► broker-data-provider (Go) ──► NATS ──► FastAPI ──► Browser (WebSocket)
 ```
 
-- **Built for multiple brokers.** Each broker is a module behind one Go `Broker` interface (login, instrument list, live stream, history, subscribe). Angel One SmartAPI is live today; adding another broker means adding a module, with no change to the API or the frontend.
-- **One token per instrument, for every broker.** A canonical layer turns each broker's raw symbols into a single format, `EXCHANGE:KIND:UNDERLYING[:EXPIRY[:STRIKE:TYPE]]` — e.g. `NSE:EQ:RELIANCE` or `NFO:OPT:NIFTY:20261027:25000:CE`. Tests pin known instruments to their tokens, and a daily check flags duplicates, so a broker renaming something cannot break the app.
-- **NATS as the contract.** The provider publishes changed fields only on `md.<EXCH>.<UNDERLYING>`, answers snapshot and reference requests (search, option chains, history, intraday bars), and keeps FII/DII and average volumes in a key-value store. Index, stock, and near-the-money option quotes stream all day; anything else streams only while the API holds a short, renewable lease for it.
-- **API as the fan-out.** FastAPI keeps one NATS connection and an in-memory quote cache, then serves every browser over WebSocket with only the tokens and fields each page subscribed to. Slow clients are dropped instead of slowing everyone else.
-- **Market calendar aware.** The provider logs in again each trading morning, skips weekends and NSE holidays, and keeps serving the last session's data while the market is closed.
+Market data streams from **broker-data-provider**, a separate **Go** service. Each broker plugs in as its own module (Angel One today) and maps to one Svakosh token format, so adding a broker needs no API or frontend change.
 
 ### Predictable response contract
 
@@ -270,7 +264,7 @@ Code quality gates: `pnpm validate` on the frontend, `uv sync` committed alongsi
 
 **Svakosh is a personal portfolio project built to demonstrate full-stack engineering. It is not a commercial product, a financial service, or a trading platform.**
 
-**Market data is live but carries no guarantee.** Prices, open interest, and charts come from a broker feed (Angel One SmartAPI) through the broker-data-provider service. They may be delayed, incomplete, or interrupted, and outside market hours they show the last session.
+**Market data is live but not guaranteed.** It may be delayed, incomplete, or interrupted.
 
 Specifically:
 
