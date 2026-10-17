@@ -14,7 +14,7 @@
 
 ## Overview
 
-Svakosh is a market analytics workspace for Indian equities and derivatives. It pairs a **passwordless authentication system** — WebAuthn passkeys, Google OAuth, and OTP — with **multi-watchlist tracking** and **17 charting dashboards** covering open interest, max pain, straddle/strangle spreads, PCR, and breakout screeners.
+Svakosh is a market analytics workspace for Indian equities and derivatives. It pairs a **passwordless authentication system** — WebAuthn passkeys, Google OAuth, and OTP — with **multi-watchlist tracking** and **18 live dashboards** covering option chain, open interest, max pain, straddle/strangle spreads, PCR, and breakout screeners.
 
 The project exists to answer a specific question: *how fast can a data-dense trading interface be if you refuse to reach for a component library?*
 
@@ -61,11 +61,11 @@ Passwordless by default, with layered fallbacks:
 
 ### 📈 Market Analytics
 
-Seventeen dashboards across equity and derivatives:
+Eighteen dashboards across equity and derivatives:
 
 **Open Interest** — OI Tracker · Lookup · Glimpse · Buildup · Call vs Put · Multi-Symbol OI · Max Pain
 
-**Options Strategy** — Straddle Analysis · Strangle Analysis · Air-in-Premiums · Options Chart
+**Options** — Option Chain · Straddle Analysis · Strangle Analysis · Air-in-Premiums · Options Chart
 
 **Equity** — Stock Screener · 52-Week Breakout · Volume Breakout
 
@@ -156,6 +156,7 @@ src/
 │   │   ├── watchlist/    # feature module
 │   │   └── header/ sidebar/ account/ dashboard/
 │   ├── store/            # runes-based global state
+│   ├── market/           # live feed + market services
 │   ├── config/           # environment presets
 │   └── utils/
 └── routes/
@@ -236,7 +237,7 @@ Planned work, roughly in order:
 - [x] **WebSocket streaming** — push live LTP, OI, and option-chain updates to the client
 - [x] **Replace the stubbed data layer** with the live feed
 - [x] **Full option chain** with strike-wise Greeks and live OI change
-- [ ] **OTP delivery** — SMTP and SMS provider integration. Generation, hashing, expiry, lockout, and verification are complete; only the transport adapter is stubbed
+- [ ] **SMS / WhatsApp OTP** — email OTP is live over SMTP; mobile delivery is still stubbed
 - [ ] **Optional password login** — user-enabled from Settings, so accounts can keep passwordless-only as the default while allowing a password fallback for those who want one
 - [ ] **Price and OI alerts** with browser push notifications
 - [ ] **Portfolio tracking** with realised and unrealised P&L
