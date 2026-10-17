@@ -37,8 +37,12 @@
 	let active = true;
 	const sentimentClasses = { bullish: 'text-bullish', bearish: 'text-bearish', muted: 'text-muted-foreground' };
 
+	let intradayToken = '';
+
 	async function loadIntraday(token: string) {
+		intradayToken = token;
 		const res = await getIntraday(token);
+		if (token !== intradayToken) return;
 		candles = res.ok ? res.data : [];
 	}
 

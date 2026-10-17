@@ -20,6 +20,7 @@ FEED_FIELDS = frozenset({
     "bid", "bid_qty", "ask", "ask_qty", "total_buy_qty", "total_sell_qty",
     "oi", "prev_oi", "upper_circuit", "lower_circuit", "high_52w", "low_52w",
 })
+SUBJECT_UNSAFE_CHARS = frozenset(" .*>")
 MAX_TOKENS_PER_SOCKET = 1000
 SEND_QUEUE_LIMIT = 2000
 SEARCH_LIMIT = 30
@@ -78,7 +79,7 @@ COMPANY_NAMES: dict[str, str] = {
     "NSE:EQ:SUNPHARMA": "Sun Pharmaceutical",
     "NSE:EQ:TCS": "Tata Consultancy Services",
     "NSE:EQ:TATACONSUM": "Tata Consumer Products",
-    "NSE:EQ:TATAMOTORS": "Tata Motors",
+    "NSE:EQ:TMPV": "Tata Motors Passenger Vehicles",
     "NSE:EQ:TATASTEEL": "Tata Steel",
     "NSE:EQ:TECHM": "Tech Mahindra",
     "NSE:EQ:TITAN": "Titan",

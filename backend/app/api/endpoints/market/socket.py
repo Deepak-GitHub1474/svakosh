@@ -12,6 +12,7 @@ from app.api.endpoints.market.constants import (
     MAX_TOKENS_PER_SOCKET,
     SEND_QUEUE_LIMIT,
 )
+from app.api.endpoints.market.utils import is_feed_token
 from app.market_data import MarketDataClient
 
 
@@ -61,7 +62,7 @@ async def receive(
         if event not in ("subscribe", "unsubscribe") or not isinstance(requested, list):
             await outbox.put(json.dumps({"type": "error", "message": "Send {event: subscribe|unsubscribe, tokens: [...], fields?: [...]}."}))
             continue
-        wanted = {t for t in requested if isinstance(t, str)}
+        wanted = {t for t in requested if is_feed_token(t)}
         chosen = {f for f in fields if f in FEED_FIELDS} if isinstance(fields, list) else set(DEFAULT_FIELDS)
         if event == "unsubscribe":
             gone = []

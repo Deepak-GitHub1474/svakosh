@@ -3,7 +3,16 @@ from __future__ import annotations
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
 
+from app.api.endpoints.market.constants import SUBJECT_UNSAFE_CHARS
+
 IST = timezone(timedelta(hours=5, minutes=30), "IST")
+
+
+def is_feed_token(token: Any) -> bool:
+    if not isinstance(token, str):
+        return False
+    parts = token.split(":")
+    return len(parts) >= 3 and SUBJECT_UNSAFE_CHARS.isdisjoint(parts[0] + parts[2])
 
 
 def session_status(now: datetime, live: bool, pre_open: time | None, opens: time, closes: time) -> str:
