@@ -57,7 +57,7 @@ export const TICKERS = [
 	{ symbol: 'INFY', price: '1,904.10', change: -0.74 },
 	{ symbol: 'ICICIBANK', price: '1,276.35', change: 1.15 },
 	{ symbol: 'SBIN', price: '842.55', change: 2.46 },
-	{ symbol: 'TATAMOTORS', price: '1,042.30', change: 3.84 },
+	{ symbol: 'TMPV', price: '286.85', change: 3.84 },
 	{ symbol: 'BHARTIARTL', price: '1,632.75', change: -0.26 }
 ];
 
