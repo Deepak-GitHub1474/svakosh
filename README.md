@@ -102,6 +102,20 @@ graph LR
 
 The live price feed is the one direct connection: the browser asks the BFF for a 30-second, single-use socket ticket and opens the API WebSocket with it, so the access token still never leaves the server.
 
+### Market data pipeline
+
+Market data comes from **broker-data-provider**, a separate service written in **Go**. It is the only part of the system that talks to a broker, so the API never holds broker credentials and the feed can be deployed, restarted, or scaled on its own.
+
+```
+Broker WebSocket ──► broker-data-provider (Go) ──► NATS ──► FastAPI ──► Browser WebSocket
+```
+
+- **Built for multiple brokers.** Each broker is a module behind one Go `Broker` interface (login, instrument list, live stream, history, subscribe). Angel One SmartAPI is live today; adding another broker means adding a module, with no change to the API or the frontend.
+- **One token per instrument, for every broker.** A canonical layer turns each broker's raw symbols into a single format, `EXCHANGE:KIND:UNDERLYING[:EXPIRY[:STRIKE:TYPE]]` — e.g. `NSE:EQ:RELIANCE` or `NFO:OPT:NIFTY:20261027:25000:CE`. Tests pin known instruments to their tokens, and a daily check flags duplicates, so a broker renaming something cannot break the app.
+- **NATS as the contract.** The provider publishes changed fields only on `md.<EXCH>.<UNDERLYING>`, answers snapshot and reference requests (search, option chains, history, intraday bars), and keeps FII/DII and average volumes in a key-value store. Index, stock, and near-the-money option quotes stream all day; anything else streams only while the API holds a short, renewable lease for it.
+- **API as the fan-out.** FastAPI keeps one NATS connection and an in-memory quote cache, then serves every browser over WebSocket with only the tokens and fields each page subscribed to. Slow clients are dropped instead of slowing everyone else.
+- **Market calendar aware.** The provider logs in again each trading morning, skips weekends and NSE holidays, and keeps serving the last session's data while the market is closed.
+
 ### Predictable response contract
 
 Every endpoint — success or failure, including unhandled exceptions — returns the same envelope:
