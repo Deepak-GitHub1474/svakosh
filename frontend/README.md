@@ -11,18 +11,16 @@ SvelteKit + TypeScript + Tailwind CSS v4 + pnpm.
 - `pnpm lint` — Prettier + ESLint
 - `pnpm validate` — check + lint + build
 
-## Environment (server-only)
+## Environment
 
-Set in `.env` (not committed). Loaded in `+layout.server.ts` via `$env/dynamic/private`:
+Set in `.env` (not committed):
 
-| Variable          | Purpose       | Example                 |
-| ----------------- | ------------- | ----------------------- |
-| `SVAKOSH_API_URL` | REST base URL | `http://127.0.0.1:8000` |
-| `SVAKOSH_WS_URL`  | WebSocket URL | `ws://127.0.0.1:8000`   |
+| Variable                  | Purpose                  | Example       |
+| ------------------------- | ------------------------ | ------------- |
+| `PUBLIC_SVAKOSH_APP_ENV`  | Picks the backend preset | `development` |
+| `PUBLIC_GOOGLE_CLIENT_ID` | Google sign-in client id |               |
 
-If unset, dev defaults to `127.0.0.1:8000`; prod build defaults to `https://api.svakosh.com` (see `src/lib/config/presets.ts`).
-
-Use `data.backend` from layout load in pages: `let { data } = $props();` then `data.backend.apiUrl`, etc.
+`development` uses `http://127.0.0.1:8000` and `ws://127.0.0.1:8000`; `production` uses the deployed API. Both REST and WebSocket URLs live in `src/lib/config/presets.ts`, read through `resolveBackendConfig()`.
 
 ## Project docs
 
@@ -34,11 +32,11 @@ Product/requirements may live in a parent monorepo as `SVAKOSH-PROJECT.md` / `SV
 
 ## Git — commit prefixes
 
-| Prefix | Use when |
-| ------ | -------- |
-| `feat:` | New API behavior clients can rely on |
-| `fix:` | Bug fixes, no new feature |
-| `refactor:` | Internal structure; same external behavior |
-| `optimization:` | Performance; same API contract |
-| `style:` | Formatting, logs, OpenAPI text only |
-| `docs:` | Documentation only |
+| Prefix          | Use when                                   |
+| --------------- | ------------------------------------------ |
+| `feat:`         | New API behavior clients can rely on       |
+| `fix:`          | Bug fixes, no new feature                  |
+| `refactor:`     | Internal structure; same external behavior |
+| `optimization:` | Performance; same API contract             |
+| `style:`        | Formatting, logs, OpenAPI text only        |
+| `docs:`         | Documentation only                         |

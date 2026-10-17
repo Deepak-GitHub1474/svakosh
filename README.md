@@ -20,7 +20,7 @@ The project exists to answer a specific question: *how fast can a data-dense tra
 
 Every interactive element — modal, drawer, toast, tabs, selector, tooltip, switch — is written from scratch. The entire frontend ships **three runtime dependencies**.
 
-> **Current data status.** Authentication, profile, and watchlist are wired end-to-end against the FastAPI backend. The analytics dashboards render against typed interfaces backed by **simulated mock data** while the market-data ingestion service is built — see [Roadmap](#roadmap) and [Disclaimer](#disclaimer).
+> **Current data status.** Authentication, profile, watchlists, and every analytics dashboard run on **live NSE/BSE market data**. A separate broker-data-provider service publishes quotes over NATS, and the API streams them to the browser over WebSocket. Outside market hours the dashboards show the last session — see [Disclaimer](#disclaimer).
 
 ---
 
@@ -92,12 +92,15 @@ Design decisions that carry through the whole app:
 graph LR
     B["Browser"] -->|"HTTPS"| V["SvelteKit on Vercel<br/>SSR + BFF proxy routes"]
     V -->|"REST, HTTP-only cookies"| A["FastAPI<br/>AWS VPS via Dokploy"]
+    B -->|"WebSocket, one-time ticket"| A
     A --> M[("MongoDB<br/>users · watchlists · profiles")]
     A --> R[("Redis<br/>sessions · OTP · cooldowns")]
-    A -.->|"planned"| W["Market Data Service<br/>WebSocket streaming"]
+    A -->|"NATS"| P["broker-data-provider<br/>live quotes · chains · history"]
 ```
 
-**The frontend never talks to the API directly from the browser.** SvelteKit server routes under `src/routes/api/**` act as a backend-for-frontend layer: they hold the auth cookies, forward requests server-side, and transparently retry once after refreshing an expired access token. Tokens never touch client JavaScript.
+**REST calls never go from the browser to the API directly.** SvelteKit server routes under `src/routes/api/**` act as a backend-for-frontend layer: they hold the auth cookies, forward requests server-side, and transparently retry once after refreshing an expired access token. Tokens never touch client JavaScript.
+
+The live price feed is the one direct connection: the browser asks the BFF for a 30-second, single-use socket ticket and opens the API WebSocket with it, so the access token still never leaves the server.
 
 ### Predictable response contract
 
@@ -123,9 +126,11 @@ app/
 ├── error_handlers.py     # centralised exception handling
 ├── api/endpoints/
 │   ├── auth/             # routes · controllers · models · utils
+│   ├── market/           # market REST + live WebSocket feed
 │   ├── profile/
 │   ├── watchlist/
 │   └── health.py
+├── market_data/          # NATS client for the broker-data-provider
 ├── database/             # Mongo + Redis clients
 └── utils/                # crypto, encoding, shared helpers
 ```
@@ -168,6 +173,7 @@ Each feature keeps its own `_components/`, `_lib/helper.ts`, and `_lib/types.ts`
 | **API** | FastAPI · Pydantic v2 |
 | **Database** | MongoDB (Motor async driver) |
 | **Cache & Sessions** | Redis |
+| **Market Data** | NATS · broker-data-provider (Go, Angel One SmartAPI) |
 | **Auth** | WebAuthn · Google OAuth (JWKS) · PyJWT · Argon2 |
 | **Tooling** | pnpm · uv · ESLint · Prettier · svelte-check |
 | **Deployment** | Vercel (frontend) · AWS VPS + Dokploy + Docker Compose (backend) |
@@ -218,10 +224,10 @@ Full environment variable tables live in [`backend/README.md`](backend/README.md
 
 Planned work, roughly in order:
 
-- [ ] **Market-data ingestion microservice** — a separate service consuming live exchange data, decoupled from the API so ingestion can scale independently
-- [ ] **WebSocket streaming** — push live LTP, OI, and option-chain updates to the client; `SVAKOSH_WS_URL` is already wired through the config layer
-- [ ] **Replace the stubbed data layer** with the live feed. Dashboards already consume typed interfaces, so this is a service-layer swap rather than a UI rewrite
-- [ ] **Full option chain** with strike-wise Greeks and live OI change
+- [x] **Market-data ingestion microservice** — a separate service consuming live exchange data, decoupled from the API so ingestion can scale independently
+- [x] **WebSocket streaming** — push live LTP, OI, and option-chain updates to the client
+- [x] **Replace the stubbed data layer** with the live feed
+- [x] **Full option chain** with strike-wise Greeks and live OI change
 - [ ] **OTP delivery** — SMTP and SMS provider integration. Generation, hashing, expiry, lockout, and verification are complete; only the transport adapter is stubbed
 - [ ] **Optional password login** — user-enabled from Settings, so accounts can keep passwordless-only as the default while allowing a password fallback for those who want one
 - [ ] **Price and OI alerts** with browser push notifications
@@ -250,17 +256,17 @@ Code quality gates: `pnpm validate` on the frontend, `uv sync` committed alongsi
 
 **Svakosh is a personal portfolio project built to demonstrate full-stack engineering. It is not a commercial product, a financial service, or a trading platform.**
 
-**All market data shown is simulated.** Every number, chart, price, and open-interest figure in the analytics dashboards is generated from static mock fixtures committed to this repository. Nothing is sourced from any exchange, broker, or market data vendor. Nothing is live, delayed, or historically accurate.
+**Market data is live but carries no guarantee.** Prices, open interest, and charts come from a broker feed (Angel One SmartAPI) through the broker-data-provider service. They may be delayed, incomplete, or interrupted, and outside market hours they show the last session.
 
 Specifically:
 
 - **No investment advice.** Nothing here is a recommendation to buy, sell, or hold any security. No output should inform a real trading decision.
-- **No affiliation.** Not affiliated with, endorsed by, or connected to NSE, BSE, SEBI, any broker, or any market data provider. Instrument names and symbols appear only as realistic sample data.
+- **No affiliation.** Not affiliated with, endorsed by, or connected to NSE, BSE, SEBI, or Angel One. Market data is read through a personal SmartAPI account.
 - **No regulatory standing.** This project is not a registered investment adviser, research analyst, or broker, and makes no claim to comply with any financial regulation.
 - **No service commitment.** The demo deployment carries no uptime, availability, accuracy, or data-retention guarantee, and may change or disappear without notice.
 - **No warranty.** Provided as-is, without warranty of any kind. The author accepts no liability for any loss arising from use of this code or the demo.
 
-Do not treat this application as a source of market information. It exists to showcase architecture, authentication design, UI engineering, and code quality.
+Do not rely on this application for trading decisions. It exists to showcase architecture, authentication design, UI engineering, and code quality.
 
 ---
 

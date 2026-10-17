@@ -32,6 +32,7 @@ uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | `MONGODB_URI` | Mongo connection URI |
 | `MONGODB_DB_NAME` | Database name |
 | `REDIS_URL` | Redis URL |
+| `NATS_URL` | broker-data-provider NATS, e.g. `nats://svakosh:<password>@127.0.0.1:4222` |
 | `CORS_ORIGINS` | Comma-separated origins |
 | `MAIL_PROVIDER` | `smtp` sends real mail, `console` prints it |
 | `MAIL_FROM` | From header (e.g. `Svakosh <your-email@gmail.com>`) |
