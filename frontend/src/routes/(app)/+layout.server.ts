@@ -1,5 +1,5 @@
 import { redirect, type Cookies, type ServerLoad } from '@sveltejs/kit';
-import { resolveBackendConfig } from '$lib/config';
+import { isMobileAuthEnabled, resolveBackendConfig } from '$lib/config';
 import { ACCESS_COOKIE } from '$lib/auth/cookies';
 import { accessCookieHeader, tryRefreshTokens } from '$lib/server/auth-refresh';
 import type { TWatchlistItem } from '$lib/components/watchlist/types';
@@ -39,7 +39,7 @@ export const load: ServerLoad = async ({ cookies, url, fetch }) => {
 	]);
 
 	const user = meJson?.data ?? null;
-	if (user && (!user.email_verified || !user.mobile_number_verified)) {
+	if (user && (!user.email_verified || (isMobileAuthEnabled() && !user.mobile_number_verified))) {
 		throw redirect(303, `/auth/complete-signup?redirect=${encodeURIComponent(target)}`);
 	}
 

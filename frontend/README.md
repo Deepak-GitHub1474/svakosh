@@ -15,10 +15,11 @@ SvelteKit + TypeScript + Tailwind CSS v4 + pnpm.
 
 Set in `.env` (not committed):
 
-| Variable                  | Purpose                  | Example       |
-| ------------------------- | ------------------------ | ------------- |
-| `PUBLIC_SVAKOSH_APP_ENV`  | Picks the backend preset | `development` |
-| `PUBLIC_GOOGLE_CLIENT_ID` | Google sign-in client id |               |
+| Variable                     | Purpose                                             | Example       |
+| ---------------------------- | --------------------------------------------------- | ------------- |
+| `PUBLIC_SVAKOSH_APP_ENV`     | Picks the backend preset                            | `development` |
+| `PUBLIC_GOOGLE_CLIENT_ID`    | Google sign-in client id                            |               |
+| `PUBLIC_SVAKOSH_MOBILE_AUTH` | `true` turns on mobile OTP sign-in and verification | `false`       |
 
 `development` uses `http://127.0.0.1:8000` and `ws://127.0.0.1:8000`; `production` uses the deployed API. Both REST and WebSocket URLs live in `src/lib/config/presets.ts`, read through `resolveBackendConfig()`.
 

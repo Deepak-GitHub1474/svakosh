@@ -1,5 +1,5 @@
 import { fail, redirect, type Actions, type ServerLoad } from '@sveltejs/kit';
-import { resolveBackendConfig } from '$lib/config';
+import { isMobileAuthEnabled, resolveBackendConfig } from '$lib/config';
 import { authForwardHeaders, forwardSetCookies, safeRedirectPath } from '$lib/auth/cookies';
 import { backendGet } from '$lib/server/backend-fetch';
 
@@ -14,7 +14,7 @@ export const load: ServerLoad = async ({ cookies, fetch, url }) => {
 	}
 	const user = res.data;
 	const redirectTo = safeRedirectPath(url.searchParams.get('redirect'));
-	if (user.email_verified && user.mobile_number_verified) {
+	if (user.email_verified && (!isMobileAuthEnabled() || user.mobile_number_verified)) {
 		throw redirect(303, redirectTo);
 	}
 	const pendingChannel: 'email' | 'mobile' = user.email_verified ? 'mobile' : 'email';

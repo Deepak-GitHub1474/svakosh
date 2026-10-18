@@ -17,3 +17,7 @@ export function resolveBackendConfig(): TBackendConfig {
 		isProd
 	};
 }
+
+export function isMobileAuthEnabled(): boolean {
+	return env.PUBLIC_SVAKOSH_MOBILE_AUTH === 'true';
+}

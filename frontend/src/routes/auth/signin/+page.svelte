@@ -19,6 +19,7 @@
 	const formIdentifier = $derived(String(form?.identifier ?? ''));
 	const redirectTo = $derived(String(form?.redirect ?? data?.redirect ?? ''));
 	const isEmail = $derived(formIdentifier.includes('@'));
+	const mobileAuth = $derived(Boolean(data?.mobileAuth));
 	const isGoogleError = $derived(form?.source === 'google');
 	const isPasskeyError = $derived(form?.source === 'passkey');
 	const otpMessage = $derived(isGoogleError || isPasskeyError ? undefined : form?.message);
@@ -62,8 +63,8 @@
 						</div>
 						<IdentifierForm
 							action="?/sendOtp"
-							label="Email or mobile number"
-							placeholder="you@example.com or 9876543210"
+							label={mobileAuth ? 'Email or mobile number' : 'Email'}
+							placeholder={mobileAuth ? 'you@example.com or 9876543210' : 'you@example.com'}
 							iconType="mail"
 							inputId="signin-identifier"
 							ctaLabel="Continue"

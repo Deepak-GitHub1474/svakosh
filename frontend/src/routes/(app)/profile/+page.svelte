@@ -11,6 +11,7 @@
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import ProfileCover from './_components/ProfileCover.svelte';
 	import WhatsappField from './_components/WhatsappField.svelte';
+	import { isMobileAuthEnabled } from '$lib/config';
 
 	let { data }: Props = $props();
 
@@ -120,10 +121,12 @@
 				<SvaKoshLabel for="email">Email</SvaKoshLabel>
 				<SvaKoshInput id="email" value={profile?.email ?? ''} disabled />
 			</div>
-			<div>
-				<SvaKoshLabel for="mobile">Mobile Number</SvaKoshLabel>
-				<SvaKoshInput id="mobile" value={profile?.mobile_number ?? ''} disabled />
-			</div>
+			{#if isMobileAuthEnabled()}
+				<div>
+					<SvaKoshLabel for="mobile">Mobile Number</SvaKoshLabel>
+					<SvaKoshInput id="mobile" value={profile?.mobile_number ?? ''} disabled />
+				</div>
+			{/if}
 			<div>
 				<SvaKoshLabel for="full_name">Full Name</SvaKoshLabel>
 				<SvaKoshInput

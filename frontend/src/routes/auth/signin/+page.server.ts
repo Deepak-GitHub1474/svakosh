@@ -1,5 +1,5 @@
 import { fail, redirect, type Actions, type ServerLoad } from '@sveltejs/kit';
-import { resolveBackendConfig } from '$lib/config';
+import { isMobileAuthEnabled, resolveBackendConfig } from '$lib/config';
 import { ACCESS_COOKIE, forwardSetCookies, safeRedirectPath } from '$lib/auth/cookies';
 
 export const load: ServerLoad = ({ cookies, url }) => {
@@ -7,7 +7,7 @@ export const load: ServerLoad = ({ cookies, url }) => {
 	if (token) {
 		throw redirect(303, safeRedirectPath(url.searchParams.get('redirect')));
 	}
-	return { redirect: url.searchParams.get('redirect') ?? '' };
+	return { redirect: url.searchParams.get('redirect') ?? '', mobileAuth: isMobileAuthEnabled() };
 };
 
 export const actions: Actions = {
@@ -16,6 +16,9 @@ export const actions: Actions = {
 		const identifier = String(data.get('identifier') ?? '').trim();
 		const redirectTo = String(data.get('redirect') ?? '');
 		if (!identifier) return fail(400, { message: 'Identifier required.', identifier, redirect: redirectTo });
+		if (!isMobileAuthEnabled() && !identifier.includes('@')) {
+			return fail(400, { message: 'Enter your email address.', identifier, redirect: redirectTo });
+		}
 
 		const { apiUrl } = resolveBackendConfig();
 		const res = await fetch(`${apiUrl}/auth/send-otp`, {
