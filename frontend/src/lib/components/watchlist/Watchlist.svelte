@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { uiState } from '$lib/store/ui.svelte';
 	import { changeOf, marketFeed } from '$lib/market/feed.svelte';
@@ -11,6 +12,8 @@
 	import WatchlistNamePopover from './WatchlistNamePopover.svelte';
 	import DeleteWatchlistConfirm from './DeleteWatchlistConfirm.svelte';
 	import NoteEditorPopover from './NoteEditorPopover.svelte';
+	import OrderModal from '$lib/components/order/OrderModal.svelte';
+	import type { TOrderTicket } from '$lib/components/order/types';
 	import CloseIcon from '$lib/components/svg-provider/CloseIcon.svelte';
 	import ArrowDropDownCircle from '$lib/components/svg-provider/material/ArrowDropDownCircle.svelte';
 	import ErrorIcon from '$lib/components/svg-provider/material/ErrorIcon.svelte';
@@ -39,14 +42,55 @@
 
 	let { watchlists }: Props = $props();
 
+	const SELECTED_KEY = 'svakosh:watchlist';
+
 	let userSelection = $state<string | null>(null);
 	const selectedName = $derived(userSelection ?? watchlists[0]?.name ?? null);
 	const selectedItem = $derived(watchlists.find((w) => w.name === selectedName) ?? null);
+
+	function choose(name: string | null) {
+		userSelection = name;
+		try {
+			if (name) localStorage.setItem(SELECTED_KEY, name);
+			else localStorage.removeItem(SELECTED_KEY);
+		} catch {
+			return;
+		}
+	}
+
+	$effect(() => {
+		untrack(() => {
+			try {
+				const saved = localStorage.getItem(SELECTED_KEY);
+				if (saved && watchlists.some((w) => w.name === saved)) userSelection = saved;
+			} catch {
+				return;
+			}
+		});
+	});
 
 	let entries = $state<TWatchlistEntry[]>([]);
 	let entriesLoading = $state(false);
 	let entriesError = $state<string | null>(null);
 	const addedTokens = $derived(new Set(entries.map((e) => e.sk_token)));
+
+	let orderOpen = $state(false);
+	let orderEntry = $state<TWatchlistEntry | null>(null);
+	let orderDraft = $state<TOrderTicket | null>(null);
+	const orderQuote = $derived(orderEntry ? marketFeed.quotes[orderEntry.sk_token] : undefined);
+
+	function openOrder(entry: TWatchlistEntry, transaction: 'BUY' | 'SELL') {
+		orderEntry = entry;
+		orderDraft = {
+			transaction,
+			orderType: 'Market',
+			product: 'MIS',
+			lots: 1,
+			price: marketFeed.quotes[entry.sk_token]?.ltp ?? 0,
+			lotSize: Math.max(1, entry.lot_size || 1)
+		};
+		orderOpen = true;
+	}
 
 	$effect(() => marketFeed.subscribe(entries.map((e) => e.sk_token)));
 
@@ -130,7 +174,7 @@
 	let sortDirection = $state<TSortDirection>('asc');
 
 	function selectWatchlist(name: string) {
-		userSelection = name;
+		choose(name);
 	}
 
 	function clearSearch() {
@@ -162,7 +206,7 @@
 		const res = await createWatchlist(name);
 		if (!res.ok) return res;
 		await invalidateAll();
-		userSelection = res.data.name;
+		choose(res.data.name);
 		return { ok: true as const };
 	}
 
@@ -172,7 +216,7 @@
 		const res = await renameWatchlist(oldName, newName);
 		if (!res.ok) return res;
 		await invalidateAll();
-		if (userSelection === oldName) userSelection = res.data.new_name;
+		if (userSelection === oldName) choose(res.data.new_name);
 		return { ok: true as const };
 	}
 
@@ -182,7 +226,7 @@
 		const res = await deleteWatchlist(name);
 		if (!res.ok) return res;
 		await invalidateAll();
-		if (userSelection === name) userSelection = null;
+		if (userSelection === name) choose(null);
 		return { ok: true as const };
 	}
 
@@ -367,6 +411,7 @@
 								note: entry.symbol_note ?? ''
 							})}
 						onRemove={() => requestRemoveSymbol(entry.sk_token, entry.trading_symbol)}
+						onOrder={(transaction) => openOrder(entry, transaction)}
 					/>
 				{/each}
 			{/if}
@@ -433,4 +478,13 @@
 	onClose={() => (noteTarget = null)}
 	onSave={handleSaveNote}
 	onClear={handleClearNote}
+/>
+
+<OrderModal
+	bind:isOpen={orderOpen}
+	draft={orderDraft}
+	title={orderEntry?.trading_symbol ?? ''}
+	subtitle={orderEntry?.exchange ?? ''}
+	ltp={orderQuote?.ltp ?? orderDraft?.price ?? 0}
+	prevClose={orderQuote?.prev_close}
 />

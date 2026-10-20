@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { TRADE_BUTTON } from '$lib/components/order/const';
 	import { fade } from 'svelte/transition';
 	import SvaKoshDrawer from '$lib/components/svakosh/SvaKoshDrawer.svelte';
 	import Delete from '$lib/components/svg-provider/material/Delete.svelte';
@@ -11,7 +12,9 @@
 		symbolName: string;
 		showNote: boolean;
 		showDelete: boolean;
+		showTrade?: boolean;
 		hasNote: boolean;
+		onTrade?: (transaction: 'BUY' | 'SELL') => void;
 		onNote: () => void;
 		onDelete: () => void;
 		onClose: () => void;
@@ -24,7 +27,9 @@
 		symbolName,
 		showNote,
 		showDelete,
+		showTrade = false,
 		hasNote,
+		onTrade,
 		onNote,
 		onDelete,
 		onClose
@@ -74,6 +79,24 @@
 	{:else}
 		<SvaKoshDrawer isOpen={true} {onClose} title={symbolName}>
 			<div class="p-2">
+				{#if showTrade}
+					<div class="flex gap-2 px-1 pb-2">
+						<button
+							type="button"
+							onclick={() => onTrade?.('BUY')}
+							class="flex-1 cursor-pointer rounded-md border py-2.5 text-xs font-medium {TRADE_BUTTON.BUY}"
+						>
+							Buy
+						</button>
+						<button
+							type="button"
+							onclick={() => onTrade?.('SELL')}
+							class="flex-1 cursor-pointer rounded-md border py-2.5 text-xs font-medium {TRADE_BUTTON.SELL}"
+						>
+							Sell
+						</button>
+					</div>
+				{/if}
 				{@render items('py-3.5')}
 			</div>
 		</SvaKoshDrawer>

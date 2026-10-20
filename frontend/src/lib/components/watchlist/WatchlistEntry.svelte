@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { TRADE_BUTTON } from '$lib/components/order/const';
 	import SymbolImage from '$lib/components/symbol-image/SymbolImage.svelte';
 	import WatchlistEntryActionPanel from './WatchlistEntryActionPanel.svelte';
 	import { formatNumber } from '$lib/utils';
@@ -18,6 +19,7 @@
 		hasNote?: boolean;
 		onNote?: () => void;
 		onRemove?: () => void;
+		onOrder?: (transaction: 'BUY' | 'SELL') => void;
 	}
 
 	let {
@@ -31,7 +33,8 @@
 		canMutate = false,
 		hasNote = false,
 		onNote,
-		onRemove
+		onRemove,
+		onOrder
 	}: Props = $props();
 
 	const subtitle = $derived(companyName?.trim() || exchange || '');
@@ -44,6 +47,9 @@
 	const showNote = $derived(tradable || canMutate);
 	const showDelete = $derived(canMutate);
 	const hasActions = $derived(showNote || showDelete);
+	const showTrade = $derived(tradable && !!onOrder);
+	const trade =
+		'inline-flex size-7 items-center justify-center rounded border text-xs font-medium transition-colors cursor-pointer';
 
 	let actionsOpen = $state(false);
 	let openUp = $state(false);
@@ -96,6 +102,11 @@
 		actionsOpen = false;
 		onRemove?.();
 	}
+
+	function handleTrade(transaction: 'BUY' | 'SELL') {
+		actionsOpen = false;
+		onOrder?.(transaction);
+	}
 </script>
 
 <div
@@ -145,6 +156,31 @@
 				</span>
 			</div>
 
+			{#if showTrade}
+				<div
+					class="mr-2.5 items-center gap-2.5 {actionsOpen && isDesktop
+						? 'flex'
+						: 'hidden lg:group-hover:flex'}"
+				>
+					<button
+						type="button"
+						onclick={() => handleTrade('BUY')}
+						aria-label="Buy {name}"
+						class="{trade} {TRADE_BUTTON.BUY}"
+					>
+						B
+					</button>
+					<button
+						type="button"
+						onclick={() => handleTrade('SELL')}
+						aria-label="Sell {name}"
+						class="{trade} {TRADE_BUTTON.SELL}"
+					>
+						S
+					</button>
+				</div>
+			{/if}
+
 			{#if hasActions}
 				<div use:clickOutside class="relative flex items-center">
 					<button
@@ -168,7 +204,9 @@
 						symbolName={name}
 						{showNote}
 						{showDelete}
+						{showTrade}
 						{hasNote}
+						onTrade={handleTrade}
 						onNote={handleNote}
 						onDelete={handleDelete}
 						onClose={() => (actionsOpen = false)}

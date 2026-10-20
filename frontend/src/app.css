@@ -30,11 +30,15 @@
 	--bullish-muted: rgba(0, 255, 136, 0.45);
 	--bullish-subtle: rgba(0, 255, 136, 0.05);
 	--bullish-hover: rgba(0, 255, 136, 0.08);
+	--bullish-solid: color-mix(in oklab, var(--bullish) 50%, var(--background));
+	--bullish-solid-hover: color-mix(in oklab, var(--bullish) 60%, var(--background));
 
 	--bearish: #ff3d00;
 	--bearish-muted: rgba(255, 61, 0, 0.45);
 	--bearish-subtle: rgba(255, 61, 0, 0.05);
 	--bearish-hover: rgba(255, 61, 0, 0.08);
+	--bearish-solid: color-mix(in oklab, var(--bearish) 65%, var(--background));
+	--bearish-solid-hover: color-mix(in oklab, var(--bearish) 75%, var(--background));
 
 	--glass: rgba(255, 255, 255, 0.04);
 	--glass-border: rgba(255, 255, 255, 0.04);
@@ -80,11 +84,15 @@
 	--color-bullish-muted: var(--bullish-muted);
 	--color-bullish-subtle: var(--bullish-subtle);
 	--color-bullish-hover: var(--bullish-hover);
+	--color-bullish-solid: var(--bullish-solid);
+	--color-bullish-solid-hover: var(--bullish-solid-hover);
 
 	--color-bearish: var(--bearish);
 	--color-bearish-muted: var(--bearish-muted);
 	--color-bearish-subtle: var(--bearish-subtle);
 	--color-bearish-hover: var(--bearish-hover);
+	--color-bearish-solid: var(--bearish-solid);
+	--color-bearish-solid-hover: var(--bearish-solid-hover);
 
 	--color-glass: var(--glass);
 	--color-glass-border: var(--glass-border);

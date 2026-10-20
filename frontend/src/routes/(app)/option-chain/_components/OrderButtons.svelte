@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { TRADE_BUTTON } from '$lib/components/order/const';
 	let {
 		side,
 		strike,
@@ -25,7 +26,7 @@
 	<button
 		type="button"
 		onclick={() => onorder(side, 'BUY')}
-		class="{action} border-bullish-muted bg-bullish-subtle text-bullish hover:bg-bullish-hover"
+		class="{action} {TRADE_BUTTON.BUY}"
 		aria-label="Buy {strike} {contract}"
 	>
 		B
@@ -33,7 +34,7 @@
 	<button
 		type="button"
 		onclick={() => onorder(side, 'SELL')}
-		class="{action} border-bearish-muted bg-bearish-subtle text-bearish hover:bg-bearish-hover"
+		class="{action} {TRADE_BUTTON.SELL}"
 		aria-label="Sell {strike} {contract}"
 	>
 		S

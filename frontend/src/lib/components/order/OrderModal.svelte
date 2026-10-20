@@ -9,12 +9,10 @@
 	import SvaKoshSwitch from '$lib/components/svakosh/SvaKoshSwitch.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
-	import { changePct, expiryLabel, formatDecimal } from '../_lib/helper';
-	import { chain } from '../_lib/state.svelte';
-	import type { TOrderDraft } from '../_lib/types';
+	import type { TOrderTicket } from './types';
 
-	type TOrderType = TOrderDraft['orderType'];
-	type TProduct = TOrderDraft['product'];
+	type TOrderType = TOrderTicket['orderType'];
+	type TProduct = TOrderTicket['product'];
 	type TUnit = 'Lots' | 'Qty';
 
 	const TICK = 0.05;
@@ -23,6 +21,10 @@
 	const PRODUCT_TABS: { label: string; value: TProduct }[] = [
 		{ label: 'Intraday', value: 'MIS' },
 		{ label: 'Overnight', value: 'NRML' }
+	];
+	const EQUITY_PRODUCT_TABS: { label: string; value: TProduct }[] = [
+		{ label: 'Intraday', value: 'MIS' },
+		{ label: 'Delivery', value: 'CNC' }
 	];
 	const ORDER_TYPE_TABS: { label: string; value: TOrderType }[] = [
 		{ label: 'Market', value: 'Market' },
@@ -33,8 +35,21 @@
 		{ label: 'Qty', value: 'Qty' }
 	];
 
-	let { isOpen = $bindable(false), draft }: { isOpen: boolean; draft: TOrderDraft | null } =
-		$props();
+	let {
+		isOpen = $bindable(false),
+		draft,
+		title,
+		subtitle = '',
+		ltp,
+		prevClose
+	}: {
+		isOpen: boolean;
+		draft: TOrderTicket | null;
+		title: string;
+		subtitle?: string;
+		ltp: number;
+		prevClose?: number;
+	} = $props();
 
 	let isSell = $state(false);
 	let orderType = $state<TOrderType>('Market');
@@ -54,11 +69,11 @@
 		priceText = draft.price.toFixed(2);
 	});
 
-	const row = $derived(draft ? chain.data?.options_data[draft.strike] : undefined);
-	const isCall = $derived(draft?.side === 'CE');
-	const liveLtp = $derived((isCall ? row?.ce_ltp : row?.pe_ltp) ?? draft?.price ?? 0);
-	const prevClose = $derived(isCall ? row?.ce_prev_close : row?.pe_prev_close);
-	const ltpChange = $derived(changePct(liveLtp, prevClose));
+	const formatDecimal = (value: number) => (Number.isNaN(value) ? '—' : value.toFixed(2));
+
+	const liveLtp = $derived(ltp);
+	const ltpChange = $derived(prevClose ? ((liveLtp - prevClose) / prevClose) * 100 : null);
+	const isEquity = $derived(draft?.lotSize === 1);
 
 	const isLimit = $derived(orderType === 'Limit');
 	const limitPrice = $derived(Math.round(Number(priceText) / TICK) * TICK);
@@ -71,7 +86,6 @@
 	);
 	const quantity = $derived(lots * lotSize);
 	const premium = $derived(quantity * (isLimit ? limitPrice : liveLtp));
-	const contract = $derived(draft ? `${chain.symbol} ${draft.strike} ${draft.side}` : '');
 
 	function setOrderType(next: TOrderType) {
 		orderType = next;
@@ -104,7 +118,7 @@
 		event.preventDefault();
 		if (!draft || !priceValid) return;
 		toast.success({
-			title: `${isSell ? 'Sold' : 'Bought'} ${quantity} ${contract}`,
+			title: `${isSell ? 'Sold' : 'Bought'} ${quantity} ${title}`,
 			description: isLimit ? `Limit at ${formatDecimal(limitPrice)}` : 'At market'
 		});
 		isOpen = false;
@@ -120,7 +134,9 @@
 		return () => mq.removeEventListener('change', sync);
 	});
 
-	const tabsFill = 'w-full [&>button]:flex-1 [&>button]:justify-center [&>button]:px-2';
+	const tabsSoft =
+		'[&>div]:bg-none [&>div]:bg-primary/15 [&>div]:shadow-none [&>div]:ring-1 [&>div]:ring-inset [&>div]:ring-primary/40 [&>button.text-black]:text-primary';
+	const tabsFill = `w-full [&>button]:flex-1 [&>button]:justify-center [&>button]:px-2 ${tabsSoft}`;
 	const fieldHead = 'mb-1.5 flex h-8 items-center justify-between gap-2';
 </script>
 
@@ -135,7 +151,7 @@
 				<div aria-hidden="true" class="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15"></div>
 			{/if}
 			<div class="flex items-start justify-between gap-4">
-				<h2 class="text-foreground truncate text-base font-medium tabular-nums">{contract}</h2>
+				<h2 class="text-foreground truncate text-base font-medium tabular-nums">{title}</h2>
 				{#if closable}
 					<button
 						type="button"
@@ -150,8 +166,8 @@
 
 			<div class="mt-1.5 flex items-center justify-between gap-4">
 				<p class="text-muted-foreground flex items-baseline gap-2 text-xs tabular-nums">
-					{#if chain.expiry}
-						<span>{expiryLabel(chain.expiry)}</span>
+					{#if subtitle}
+						<span>{subtitle}</span>
 					{/if}
 					<span class="text-foreground">{formatDecimal(liveLtp)}</span>
 					{#if ltpChange !== null}
@@ -166,7 +182,7 @@
 					<SvaKoshSwitch
 						bind:checked={isSell}
 						label="Switch between buy and sell"
-						class={isSell ? 'bg-bearish' : 'bg-bullish'}
+						class={isSell ? 'bg-bearish-solid' : 'bg-bullish-solid'}
 					/>
 					<span class={isSell ? 'text-bearish font-medium' : 'text-muted-foreground'}>Sell</span>
 				</div>
@@ -178,7 +194,7 @@
 				<div>
 					<SvaKoshLabel>Product</SvaKoshLabel>
 					<SvaKoshTabs
-						tabs={PRODUCT_TABS}
+						tabs={isEquity ? EQUITY_PRODUCT_TABS : PRODUCT_TABS}
 						activeTab={product}
 						onTabChange={(value: TProduct) => (product = value)}
 						class={tabsFill}
@@ -199,12 +215,14 @@
 				<div>
 					<div class={fieldHead}>
 						<SvaKoshLabel class="mb-0">Quantity</SvaKoshLabel>
-						<SvaKoshTabs
-							tabs={UNIT_TABS}
-							activeTab={unit}
-							onTabChange={setUnit}
-							class="p-0.5 [&>button]:px-2.5 [&>button]:py-1 [&>div]:top-0.5 [&>div]:bottom-0.5"
-						/>
+						{#if !isEquity}
+							<SvaKoshTabs
+								tabs={UNIT_TABS}
+								activeTab={unit}
+								onTabChange={setUnit}
+								class="p-0.5 [&>button]:px-2.5 [&>button]:py-1 [&>div]:top-0.5 [&>div]:bottom-0.5 {tabsSoft}"
+							/>
+						{/if}
 					</div>
 					<div onfocusin={onAmountFocusIn} onfocusout={onAmountFocusOut}>
 						<SvaKoshNumberInput
@@ -233,7 +251,7 @@
 							step={TICK}
 							bind:value={priceText}
 							onblur={snapPrice}
-							class="[appearance:textfield] py-2.5 text-right tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none {priceValid
+							class="h-[calc(2.5rem+2px)] [appearance:textfield] py-0 text-right tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none {priceValid
 								? ''
 								: 'border-bearish-muted'}"
 						/>
@@ -242,7 +260,7 @@
 							id="order-price"
 							value={formatDecimal(liveLtp)}
 							disabled
-							class="py-2.5 text-right tabular-nums"
+							class="h-[calc(2.5rem+2px)] py-0 text-right tabular-nums"
 						/>
 					{/if}
 				</div>
@@ -250,7 +268,7 @@
 
 			<div class="border-border-subtle flex items-center justify-between gap-4 border-t pt-4">
 				<dl class="flex items-center gap-2 tabular-nums">
-					<dt class="text-muted-foreground text-xs">Premium</dt>
+					<dt class="text-muted-foreground text-xs">{isEquity ? 'Amount' : 'Premium'}</dt>
 					<dd class="text-foreground text-sm font-medium">
 						₹{premium.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
 					</dd>
@@ -261,7 +279,9 @@
 					variant={isSell ? 'bearish' : 'bullish'}
 					label={isSell ? 'Sell' : 'Buy'}
 					disabled={!priceValid}
-					class="min-w-[10rem]"
+					class="min-w-[10rem] font-semibold [--terminal-fg:white] {isSell
+						? '[--terminal-bg-hover:var(--bearish-solid-hover)] [--terminal-bg:var(--bearish-solid)] [--terminal-border-hover:transparent] [--terminal-border:transparent]'
+						: '[--terminal-bg-hover:var(--bullish-solid-hover)] [--terminal-bg:var(--bullish-solid)] [--terminal-border-hover:transparent] [--terminal-border:transparent]'}"
 				/>
 			</div>
 		</form>
@@ -269,7 +289,7 @@
 {/snippet}
 
 {#if isDesktop}
-	<SvaKoshModal bind:isOpen width="26rem" class="overflow-hidden">
+	<SvaKoshModal bind:isOpen width="26rem" class="overflow-hidden" movable>
 		{@render orderContent(true)}
 	</SvaKoshModal>
 {:else}

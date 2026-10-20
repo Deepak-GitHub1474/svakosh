@@ -78,7 +78,7 @@
 	});
 </script>
 
-<header class="fixed top-0 z-[1050] flex h-12 w-full items-center justify-between border-b border-border-subtle bg-background px-4">
+<header data-app-header class="fixed top-0 z-[1050] flex h-12 w-full items-center justify-between border-b border-border-subtle bg-background px-4">
 	<div class="flex items-center h-full">
 		<div 
 			class="flex items-center transition-all duration-300 ease-in-out shrink-0 

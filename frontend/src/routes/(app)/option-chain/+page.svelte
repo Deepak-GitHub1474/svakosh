@@ -5,7 +5,7 @@
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import ChainTable from './_components/ChainTable.svelte';
-	import OrderModal from './_components/OrderModal.svelte';
+	import OrderModal from '$lib/components/order/OrderModal.svelte';
 	import StrikeRangeStepper from './_components/StrikeRangeStepper.svelte';
 	import { VIEW_TABS } from './_lib/const';
 	import { daysToExpiry, expiryLabel } from './_lib/helper';
@@ -31,6 +31,9 @@
 			meta: `${daysToExpiry(item)}d`
 		}))
 	);
+
+	const orderRow = $derived(draft ? chain.data?.options_data[draft.strike] : undefined);
+	const orderIsCall = $derived(draft?.side === 'CE');
 
 	function openOrder(strike: string, side: 'CE' | 'PE', transaction: 'BUY' | 'SELL') {
 		const row = chain.data?.options_data[strike];
@@ -101,4 +104,11 @@
 	<ChainTable onorder={openOrder} />
 </div>
 
-<OrderModal bind:isOpen={orderOpen} {draft} />
+<OrderModal
+	bind:isOpen={orderOpen}
+	{draft}
+	title={draft ? `${chain.symbol} ${draft.strike} ${draft.side}` : ''}
+	subtitle={chain.expiry ? expiryLabel(chain.expiry) : ''}
+	ltp={(orderIsCall ? orderRow?.ce_ltp : orderRow?.pe_ltp) ?? draft?.price ?? 0}
+	prevClose={orderIsCall ? orderRow?.ce_prev_close : orderRow?.pe_prev_close}
+/>

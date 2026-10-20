@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
 	import { cn } from '$lib/utils';
+	import { draggable } from '$lib/utils/draggable';
 	import type { Snippet } from 'svelte';
 	import CloseIcon from '$lib/components/svg-provider/CloseIcon.svelte';
 
@@ -17,7 +18,8 @@
 		position = 'center',
 		showBackdrop = true,
 		backdropClass = '',
-		showClose = false
+		showClose = false,
+		movable = false
 	}: {
 		isOpen: boolean;
 		onClose?: () => void;
@@ -30,6 +32,7 @@
 		showBackdrop?: boolean;
 		backdropClass?: string;
 		showClose?: boolean;
+		movable?: boolean;
 	} = $props();
 
 	function handleClose() {
@@ -84,6 +87,7 @@
 		)}
 		style="width: {width}; max-width: calc(100vw - 2rem); max-height: calc(100vh - 2rem);"
 		transition:fly={transitionParams}
+		use:draggable={movable}
 	>
 		{#if title || icon}
 			<div class="flex items-center gap-3 p-4 border-b border-border-subtle shrink-0">
