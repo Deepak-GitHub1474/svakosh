@@ -251,7 +251,7 @@
 							step={TICK}
 							bind:value={priceText}
 							onblur={snapPrice}
-							class="h-[calc(2.5rem+2px)] [appearance:textfield] py-0 text-right tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none {priceValid
+							class="h-[calc(2.5rem+2px)] [appearance:textfield] rounded-xl py-0 text-right tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none {priceValid
 								? ''
 								: 'border-bearish-muted'}"
 						/>
@@ -260,7 +260,7 @@
 							id="order-price"
 							value={formatDecimal(liveLtp)}
 							disabled
-							class="h-[calc(2.5rem+2px)] py-0 text-right tabular-nums"
+							class="h-[calc(2.5rem+2px)] rounded-xl py-0 text-right tabular-nums"
 						/>
 					{/if}
 				</div>
