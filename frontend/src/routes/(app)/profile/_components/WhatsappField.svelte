@@ -2,6 +2,7 @@
 	import { onDestroy, untrack } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { apiCall } from '$lib/api';
+	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
 	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
@@ -16,8 +17,6 @@
 	let otp = $state('');
 	let modalOpen = $state(false);
 	let busy = $state(false);
-	let msg = $state('');
-	let err = $state(false);
 	let cooldown = $state(0);
 	let cooldownId: ReturnType<typeof setInterval> | undefined;
 
@@ -39,39 +38,32 @@
 
 	async function sendOtp() {
 		busy = true;
-		msg = '';
-		err = false;
 		const res = await apiCall('/api/profile/whatsapp/send-otp', 'POST', { whatsapp_number: number });
 		busy = false;
 		if (!res.ok) {
-			err = true;
-			msg = res.error;
+			toast.error({ description: res.error });
 			return;
 		}
 		otp = '';
-		msg = '';
 		modalOpen = true;
 		startCooldown();
 	}
 
 	async function verify() {
 		busy = true;
-		msg = '';
-		err = false;
 		const res = await apiCall('/api/profile/whatsapp/verify', 'POST', {
 			whatsapp_number: number,
 			otp
 		});
 		if (!res.ok) {
 			busy = false;
-			err = true;
-			msg = res.error;
+			toast.error({ description: res.error });
 			return;
 		}
 		current = number;
 		modalOpen = false;
 		otp = '';
-		msg = 'WhatsApp number verified.';
+		toast.success({ description: 'WhatsApp number verified.' });
 		await invalidateAll();
 		busy = false;
 	}
@@ -93,20 +85,13 @@
 		/>
 	{/if}
 </div>
-{#if msg && !modalOpen}
-	<p class="mt-1 ml-1 text-[0.7rem] {err ? 'text-bearish' : 'text-bullish'}">{msg}</p>
-{/if}
 
 <SvaKoshModal
 	bind:isOpen={modalOpen}
 	title="Verify WhatsApp Number"
 	width="24rem"
 	showClose
-	onClose={() => {
-		otp = '';
-		msg = '';
-		err = false;
-	}}
+	onClose={() => (otp = '')}
 >
 	<div class="flex flex-col gap-4 p-5">
 		<p class="text-muted-foreground text-sm">
@@ -121,9 +106,6 @@
 			onclick={verify}
 			class="w-full"
 		/>
-		{#if msg}
-			<p class="text-[0.75rem] {err ? 'text-bearish' : 'text-bullish'}">{msg}</p>
-		{/if}
 		<div class="flex items-center justify-between text-xs">
 			<span class="text-muted-foreground">Didn't get the code?</span>
 			{#if cooldown > 0}

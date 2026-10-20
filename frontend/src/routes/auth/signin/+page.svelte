@@ -20,11 +20,6 @@
 	const redirectTo = $derived(String(form?.redirect ?? data?.redirect ?? ''));
 	const isEmail = $derived(formIdentifier.includes('@'));
 	const mobileAuth = $derived(Boolean(data?.mobileAuth));
-	const isGoogleError = $derived(form?.source === 'google');
-	const isPasskeyError = $derived(form?.source === 'passkey');
-	const otpMessage = $derived(isGoogleError || isPasskeyError ? undefined : form?.message);
-	const googleMessage = $derived(isGoogleError ? String(form?.message ?? '') : '');
-	const passkeyMessage = $derived(isPasskeyError ? String(form?.message ?? '') : '');
 	const illustrations = [
 		{ src: bull, alt: 'Bull' },
 		{ src: globe, alt: 'Globe' },
@@ -69,7 +64,6 @@
 							inputId="signin-identifier"
 							ctaLabel="Continue"
 							{redirectTo}
-							message={otpMessage}
 						/>
 
 						<div class="my-5 flex items-center gap-3">
@@ -78,7 +72,7 @@
 							<span class="h-px flex-1 bg-border-subtle"></span>
 						</div>
 
-						<OAuthButtons {redirectTo} {googleMessage} {passkeyMessage} />
+						<OAuthButtons {redirectTo} />
 					{:else}
 						<OtpVerifyForm
 							verifyAction="?/verifyOtp"
@@ -87,8 +81,6 @@
 							{redirectTo}
 							ctaLabel="Verify & sign in"
 							changeLabel={isEmail ? 'Use different email' : 'Use different mobile'}
-							message={form?.message}
-							error={form?.error}
 							onChange={changeIdentifier}
 						/>
 					{/if}

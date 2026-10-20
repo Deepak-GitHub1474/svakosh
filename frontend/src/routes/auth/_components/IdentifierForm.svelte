@@ -2,9 +2,9 @@
 	import { enhance } from '$app/forms';
 	import { cn, safeSubmit } from '$lib/utils';
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
-	import OtpFeedback from './OtpFeedback.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import type { TIdentifierForm } from '../_lib/types';
+	import { toastAuthResult } from '../_lib/helper';
 	import ArrowForward from '$lib/components/svg-provider/material/ArrowForward.svelte';
 
 	let {
@@ -15,7 +15,6 @@
 		inputId,
 		ctaLabel,
 		redirectTo,
-		message,
 		autocomplete = 'username'
 	}: TIdentifierForm = $props();
 
@@ -29,7 +28,7 @@
 	class="mt-8 space-y-4"
 	method="POST"
 	{action}
-	use:enhance={safeSubmit((b) => (submitting = b))}
+	use:enhance={safeSubmit((b) => (submitting = b), undefined, toastAuthResult)}
 >
 	<div>
 		<label for={inputId} class="mb-1.5 block text-sm tracking-wide text-muted-foreground">
@@ -69,10 +68,6 @@
 			/>
 		</div>
 	</div>
-
-	{#if message}
-		<OtpFeedback {message} />
-	{/if}
 
 	<input type="hidden" name="identifier" value={identifier} />
 	<input type="hidden" name="redirect" value={redirectTo} />

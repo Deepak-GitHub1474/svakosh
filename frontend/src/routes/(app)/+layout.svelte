@@ -6,6 +6,7 @@
 	import Sidebar from '$lib/components/sidebar/Sidebar.svelte';
 	import Watchlist from '$lib/components/watchlist/Watchlist.svelte';
 	import MobileMenu from '$lib/components/MobileMenu.svelte';
+	import LogoutConfirm from '$lib/components/account/LogoutConfirm.svelte';
 
 	let { children, data } = $props();
 
@@ -41,4 +42,5 @@
 		</main>
 	</div>
 	<MobileMenu user={data.user} />
+	<LogoutConfirm />
 </div>

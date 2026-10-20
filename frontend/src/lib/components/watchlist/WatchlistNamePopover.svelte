@@ -1,5 +1,6 @@
 <script lang="ts">
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
+	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import type { TOpResult } from './types';
 
 	interface Props {
@@ -23,14 +24,12 @@
 	let modalOpen = $state(false);
 	let name = $state('');
 	let isLoading = $state(false);
-	let error = $state<string | null>(null);
 	let inputEl = $state<HTMLInputElement>();
 
 	$effect(() => {
 		modalOpen = isOpen;
 		if (isOpen) {
 			name = initialName;
-			error = null;
 			setTimeout(() => {
 				inputEl?.focus();
 				inputEl?.select();
@@ -48,7 +47,7 @@
 	async function handleSubmit() {
 		const trimmed = name.trim();
 		if (!trimmed) {
-			error = 'Name is required.';
+			toast.error({ description: 'Name is required.' });
 			return;
 		}
 		if (trimmed === initialName.trim()) {
@@ -56,11 +55,10 @@
 			return;
 		}
 		isLoading = true;
-		error = null;
 		const res = await onSubmit(trimmed);
 		isLoading = false;
 		if (res.ok) close();
-		else error = res.error;
+		else toast.error({ description: res.error });
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -83,10 +81,6 @@
 			onkeydown={handleKeydown}
 			class="w-full px-3 py-2 text-xs text-foreground bg-glass border border-border-subtle rounded outline-none focus:border-primary disabled:opacity-50"
 		/>
-
-		{#if error}
-			<span class="text-xs text-error">{error}</span>
-		{/if}
 
 		<div class="flex justify-end gap-2">
 			<button

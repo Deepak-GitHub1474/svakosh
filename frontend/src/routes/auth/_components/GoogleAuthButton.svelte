@@ -4,14 +4,15 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { env } from '$env/dynamic/public';
 	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
+	import { toast } from '$lib/components/svakosh/toast.svelte';
+	import { toastAuthResult } from '../_lib/helper';
 
 	type Props = {
 		redirectTo?: string;
 		action?: string;
-		error?: string;
 	};
 
-	let { redirectTo = '', action = '?/googleAuth', error = $bindable('') }: Props = $props();
+	let { redirectTo = '', action = '?/googleAuth' }: Props = $props();
 
 	type GoogleId = {
 		accounts: {
@@ -38,19 +39,19 @@
 	async function handleCredential(response: { credential?: string }) {
 		if (loading) return;
 		if (!response?.credential) {
-			error = 'Google sign-in failed. Try again.';
+			toast.error({ description: 'Google sign-in failed. Try again.' });
 			return;
 		}
-		error = '';
 		loading = true;
 		idToken = response.credential;
 		await tick();
 		formRef?.requestSubmit();
 	}
 
-	const onGoogleSubmit: SubmitFunction = () => async ({ update }) => {
+	const onGoogleSubmit: SubmitFunction = () => async ({ update, result }) => {
 		await update();
 		loading = false;
+		toastAuthResult(result);
 	};
 
 	function initGoogle() {
@@ -75,7 +76,7 @@
 		try {
 			w.google.accounts.id.prompt();
 		} catch {
-			error = '';
+			return;
 		}
 	}
 
@@ -96,13 +97,13 @@
 		script.defer = true;
 		script.dataset.gsi = '1';
 		script.onload = initGoogle;
-		script.onerror = () => (error = 'Could not load Google sign-in.');
+		script.onerror = () => toast.error({ description: 'Could not load Google sign-in.' });
 		document.head.appendChild(script);
 	}
 
 	onMount(() => {
 		if (!clientId) {
-			error = 'Google sign-in is not configured.';
+			toast.error({ description: 'Google sign-in is not configured.' });
 			return;
 		}
 		loadGsi();

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
+	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import type { TOpResult } from './types';
 
 	interface Props {
@@ -16,14 +17,12 @@
 	let modalOpen = $state(false);
 	let note = $state('');
 	let saving = $state(false);
-	let error = $state<string | null>(null);
 	let inputEl = $state<HTMLTextAreaElement>();
 
 	$effect(() => {
 		modalOpen = isOpen;
 		if (isOpen) {
 			note = initialNote;
-			error = null;
 			setTimeout(() => inputEl?.focus(), 50);
 		}
 	});
@@ -38,15 +37,14 @@
 
 	async function save() {
 		if (!trimmed) {
-			error = 'Note cannot be empty.';
+			toast.error({ description: 'Note cannot be empty.' });
 			return;
 		}
 		saving = true;
-		error = null;
 		const res = await onSave(trimmed);
 		saving = false;
 		if (res.ok) close();
-		else error = res.error;
+		else toast.error({ description: res.error });
 	}
 
 	async function clear() {
@@ -55,11 +53,10 @@
 			return;
 		}
 		saving = true;
-		error = null;
 		const res = await onClear();
 		saving = false;
 		if (res.ok) close();
-		else error = res.error;
+		else toast.error({ description: res.error });
 	}
 </script>
 
@@ -84,7 +81,6 @@
 
 		<div class="flex items-center justify-between text-xs text-muted-foreground">
 			<span>{trimmed.length}/500</span>
-			{#if error}<span class="text-error">{error}</span>{/if}
 		</div>
 
 		<div class="flex justify-between gap-2">

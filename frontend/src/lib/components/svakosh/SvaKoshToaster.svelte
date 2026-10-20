@@ -27,7 +27,7 @@
 	{@const list = toastStore.items.filter((t) => t.position === position)}
 	{#if list.length}
 		<div
-			class="pointer-events-none fixed z-[200] flex flex-col gap-2 {POSITION_CLASS[position]}"
+			class="pointer-events-none fixed z-[1200] flex flex-col gap-2 {POSITION_CLASS[position]}"
 		>
 			{#each list as item (item.id)}
 				<div

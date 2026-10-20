@@ -1,9 +1,10 @@
-import type { SubmitFunction } from '@sveltejs/kit';
+import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
 import { REQUEST_TIMEOUT_MS } from './const';
 
 export function safeSubmit(
 	setBusy: (busy: boolean) => void,
-	onSuccess?: () => void
+	onSuccess?: () => void,
+	onResult?: (result: ActionResult) => void
 ): SubmitFunction {
 	return () => {
 		setBusy(true);
@@ -18,6 +19,7 @@ export function safeSubmit(
 			await update();
 			setBusy(false);
 			if (result.type === 'success') onSuccess?.();
+			onResult?.(result);
 		};
 	};
 }

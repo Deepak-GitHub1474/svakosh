@@ -4,14 +4,15 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
 	import PasskeyIcon from '$lib/components/svg-provider/material/PasskeyIcon.svelte';
+	import { toast } from '$lib/components/svakosh/toast.svelte';
+	import { toastAuthResult } from '../_lib/helper';
 
 	type Props = {
 		redirectTo?: string;
 		action?: string;
-		error?: string;
 	};
 
-	let { redirectTo = '', action = '?/passkeyAuth', error = $bindable('') }: Props = $props();
+	let { redirectTo = '', action = '?/passkeyAuth' }: Props = $props();
 
 	let formRef: HTMLFormElement | null = $state(null);
 	let challengeId = $state('');
@@ -23,7 +24,6 @@
 
 	async function onClick() {
 		if (loading) return;
-		error = '';
 		loading = true;
 		try {
 			const beginRes = await fetch('/api/passkey/auth/begin', {
@@ -46,13 +46,14 @@
 		} catch (e) {
 			loading = false;
 			if (e instanceof Error && (e.name === 'NotAllowedError' || e.name === 'AbortError')) return;
-			error = e instanceof Error && e.message ? e.message : 'Passkey sign-in failed. Try again.';
+			toast.error({ description: e instanceof Error && e.message ? e.message : 'Passkey sign-in failed. Try again.' });
 		}
 	}
 
-	const onPasskeySubmit: SubmitFunction = () => async ({ update }) => {
+	const onPasskeySubmit: SubmitFunction = () => async ({ update, result }) => {
 		await update();
 		loading = false;
+		toastAuthResult(result);
 	};
 </script>
 

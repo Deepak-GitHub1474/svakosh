@@ -31,7 +31,6 @@ export type TIdentifierForm = {
     inputId: string;
     ctaLabel: string;
     redirectTo: string;
-    message?: string;
     autocomplete?: HTMLInputElement['autocomplete'];
 };
 
@@ -43,7 +42,5 @@ export	type TOtpVerifyingForm = {
 		redirectTo: string;
 		ctaLabel: string;
 		changeLabel: string;
-		message?: string;
-		error?: TOtpErrorData;
 		onChange: () => void;
 	};

@@ -2,9 +2,9 @@
 	import { enhance } from '$app/forms';
 	import { cn, safeSubmit } from '$lib/utils';
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
-	import OtpFeedback from './OtpFeedback.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import type { TOtpVerifyingForm } from '../_lib/types';
+	import { toastAuthResult } from '../_lib/helper';
 	import ArrowForward from '$lib/components/svg-provider/material/ArrowForward.svelte';
 
 	const RESEND_SECONDS = 30;
@@ -17,8 +17,6 @@
 		redirectTo,
 		ctaLabel,
 		changeLabel,
-		message,
-		error,
 		onChange
 	}: TOtpVerifyingForm = $props();
 
@@ -51,7 +49,7 @@
 	class="space-y-4"
 	method="POST"
 	action={verifyAction}
-	use:enhance={safeSubmit((b) => (submitting = b))}
+	use:enhance={safeSubmit((b) => (submitting = b), undefined, toastAuthResult)}
 >
 	<div>
 		<label for="otp-input" class="mb-1.5 block text-sm tracking-wide text-muted-foreground">
@@ -85,10 +83,6 @@
 		</div>
 	</div>
 
-	{#if message || error}
-		<OtpFeedback {message} {error} />
-	{/if}
-
 	<input type="hidden" name="identifier" value={identifier} />
 	<input type="hidden" name="otp" value={otp} />
 	<input type="hidden" name="redirect" value={redirectTo} />
@@ -117,7 +111,8 @@
 			action={resendAction}
 			use:enhance={safeSubmit(
 				(b) => (resending = b),
-				() => resendKey++
+				() => resendKey++,
+				toastAuthResult
 			)}
 			class="inline"
 		>

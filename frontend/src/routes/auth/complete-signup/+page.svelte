@@ -78,7 +78,6 @@
 							inputId="add-identifier"
 							ctaLabel="Send OTP"
 							{redirectTo}
-							message={form?.message}
 						/>
 					{:else}
 						<OtpVerifyForm
@@ -88,8 +87,6 @@
 							{redirectTo}
 							ctaLabel="Verify & finish"
 							changeLabel={`Use different ${pendingChannel}`}
-							message={form?.message}
-							error={form?.error}
 							onChange={changeIdentifier}
 						/>
 					{/if}

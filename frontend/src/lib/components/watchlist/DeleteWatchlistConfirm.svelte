@@ -1,5 +1,6 @@
 <script lang="ts">
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
+	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import type { TOpResult } from './types';
 
 	interface Props {
@@ -23,11 +24,9 @@
 	}: Props = $props();
 
 	let isLoading = $state(false);
-	let error = $state<string | null>(null);
 
 	$effect(() => {
 		if (isOpen) {
-			error = null;
 			isLoading = false;
 		}
 	});
@@ -39,11 +38,10 @@
 
 	async function handleConfirm() {
 		isLoading = true;
-		error = null;
 		const res = await onConfirm();
 		isLoading = false;
 		if (res.ok) onClose();
-		else error = res.error;
+		else toast.error({ description: res.error });
 	}
 </script>
 
@@ -51,10 +49,6 @@
 	<SvaKoshModal isOpen={true} onClose={close} position="center" {title}>
 		<div class="flex flex-col gap-4 p-4">
 			<p class="text-xs text-muted-foreground">{description}</p>
-
-			{#if error}
-				<span class="text-xs text-error">{error}</span>
-			{/if}
 
 			<div class="flex justify-end gap-2">
 				<button

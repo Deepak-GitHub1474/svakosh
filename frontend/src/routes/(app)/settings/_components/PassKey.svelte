@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
@@ -21,7 +22,6 @@
 	let { passkeys = [] }: { passkeys?: Passkey[] } = $props();
 
 	let loading = $state(false);
-	let error = $state('');
 	let confirmOpen = $state(false);
 	let confirmTitle = $state('');
 	let confirmMessage = $state('');
@@ -29,12 +29,11 @@
 
 	async function run(action: () => Promise<PasskeyResult>) {
 		if (loading) return;
-		error = '';
 		loading = true;
 		try {
 			const result = await action();
 			if (result.ok) await invalidateAll();
-			else if (result.message) error = result.message;
+			else if (result.message) toast.error({ description: result.message });
 		} finally {
 			loading = false;
 		}
@@ -73,12 +72,6 @@
 			class="shrink-0"
 		/>
 	</div>
-
-	{#if error}
-		<div class="mx-4 mt-4 rounded-md border border-bearish-muted bg-bearish-subtle px-3 py-2.5 text-sm text-bearish">
-			{error}
-		</div>
-	{/if}
 
 	{#if passkeys.length}
 		<div class="mt-4 overflow-x-auto px-4">
