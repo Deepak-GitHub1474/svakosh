@@ -1,6 +1,6 @@
 import { redirect, type Cookies, type ServerLoad } from '@sveltejs/kit';
 import { isMobileAuthEnabled, resolveBackendConfig } from '$lib/config';
-import { ACCESS_COOKIE } from '$lib/auth/cookies';
+import { ACCESS_COOKIE, clearAllAuthCookies } from '$lib/auth/cookies';
 import { accessCookieHeader, tryRefreshTokens } from '$lib/server/auth-refresh';
 import type { TWatchlistItem } from '$lib/components/watchlist/types';
 
@@ -30,6 +30,7 @@ export const load: ServerLoad = async ({ cookies, url, fetch }) => {
 	}
 
 	if (meRes.status === 401) {
+		clearAllAuthCookies(cookies);
 		throw redirect(303, signinUrl);
 	}
 
