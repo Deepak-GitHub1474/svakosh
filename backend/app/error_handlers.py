@@ -62,8 +62,9 @@ def register_exception_handlers(app: FastAPI) -> None:
         if isinstance(detail, str):
             content = err_response(detail, data=None)
         else:
+            message = detail.get("message") if isinstance(detail, dict) else None
             content = err_response(
-                msg,
+                message or msg,
                 data=detail,
             )
         return JSONResponse(status_code=exc.status_code, content=content)
