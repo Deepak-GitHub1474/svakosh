@@ -1,4 +1,4 @@
-const CDN_BASE = 'https://datastore.cirrus.trade/images/symbol';
+const CDN_BASE = '/symbols';
 
 const INDEX_PREFIXES = [
 	'MIDCPNIFTY',
