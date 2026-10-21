@@ -2,24 +2,32 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import * as echarts from 'echarts';
-	import { INDEX_OPTIONS, METRICS, SECTORS, TOP_MOVERS_LIMIT } from './const';
+	import { DEFAULT_INTRADAY_INTERVAL, INDEX_OPTIONS, INTRADAY_INTERVALS, METRICS, SECTORS, TOP_MOVERS_LIMIT } from './const';
 	import { getIntradayOptions, getBreadthOptions, getSectorOptions, getSentiment, intradayPoints } from './helper';
 	import { changeOf, marketFeed } from '$lib/market/feed.svelte';
 	import { breadthOf, moversOf } from '$lib/market/analytics';
-	import { getIntraday, getMarketOverview } from '$lib/market/service';
+	import { getBars, getIntraday, getMarketOverview } from '$lib/market/service';
 	import type { TCandle, TStockItem } from '$lib/market/types';
 	import { formatNumber } from '$lib/utils/helper';
+	import { inSession, istMinutes, SESSION_END_MINUTES } from '$lib/market/time';
 	import SvaKoshCard from '$lib/components/svakosh/SvaKoshCard.svelte';
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
+	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
+	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
 	import Monitoring from '$lib/components/svg-provider/material/Monitoring.svelte';
 
 	let isSelectorOpen = $state(false);
 	let selectedIndex = $state(INDEX_OPTIONS[0].value);
 	let stocks = $state<TStockItem[]>([]);
 	let candles = $state<TCandle[]>([]);
+	let interval = $state(DEFAULT_INTRADAY_INTERVAL);
+	let intradayLoading = $state(true);
+
+	const INTERVAL_KEY = 'svakosh:intraday-interval';
 
 	const selectedToken = $derived(INDEX_OPTIONS.find((o) => o.value === selectedIndex)?.token ?? INDEX_OPTIONS[0].token);
-	const intraday = $derived(intradayPoints(candles, marketFeed.quotes[selectedToken]?.ltp));
+	const minutes = $derived(Number(interval));
+	const intraday = $derived(intradayPoints(candles, minutes, marketFeed.quotes[selectedToken]?.ltp));
 	const breadth = $derived(breadthOf(stocks, marketFeed.quotes));
 	const advances = $derived(breadth.advances);
 	const declines = $derived(breadth.declines);
@@ -37,22 +45,81 @@
 	let active = true;
 	const sentimentClasses = { bullish: 'text-bullish', bearish: 'text-bearish', muted: 'text-muted-foreground' };
 
-	let intradayToken = '';
+	let intradayLoad = 0;
+	let intradayTimer: ReturnType<typeof setTimeout> | undefined;
 
-	async function loadIntraday(token: string) {
-		intradayToken = token;
-		const res = await getIntraday(token);
-		if (token !== intradayToken) return;
-		candles = res.ok ? res.data : [];
+	async function todayBars(token: string): Promise<TCandle[]> {
+		const [exchange, , name] = token.split(':');
+		const res = await getBars(`${exchange}.${name}`, token, minutes);
+		const bars = res.ok ? (res.data[token] ?? []) : [];
+		return bars.map(([ts, open, high, low, close, volume]) => ({ ts, open, high, low, close, volume }));
+	}
+
+	async function loadIntraday(token: string, switching = false) {
+		const load = ++intradayLoad;
+		const step = minutes * 60_000;
+		clearTimeout(intradayTimer);
+		intradayLoading = switching || candles.length === 0;
+		const today = await todayBars(token);
+		if (load !== intradayLoad || !active) return;
+		if (inSession(Date.now()) || today.length > 1) {
+			candles = today;
+		} else {
+			const res = await getIntraday(token, minutes);
+			if (load !== intradayLoad || !active) return;
+			candles = res.ok ? res.data : [];
+		}
+		intradayLoading = false;
+		if (istMinutes(Date.now()) < SESSION_END_MINUTES) {
+			intradayTimer = setTimeout(() => loadIntraday(token), step - (Date.now() % step) + 5_000);
+		}
+	}
+
+	function rememberInterval(value: string) {
+		try {
+			localStorage.setItem(INTERVAL_KEY, value);
+		} catch {
+			return;
+		}
+	}
+
+	function savedInterval(): string | undefined {
+		try {
+			const saved = localStorage.getItem(INTERVAL_KEY);
+			return INTRADAY_INTERVALS.some((i) => i.value === saved) ? (saved ?? undefined) : undefined;
+		} catch {
+			return undefined;
+		}
+	}
+
+	function handleIntervalChange(value: string) {
+		if (value === interval) return;
+		interval = value;
+		rememberInterval(value);
+		loadIntraday(selectedToken, true);
 	}
 
 	function handleIndexChange(val: string) {
 		const opt = INDEX_OPTIONS.find((o) => o.value === val);
-		if (opt) loadIntraday(opt.token);
+		if (opt) loadIntraday(opt.token, true);
 	}
 
+	let intradayDraw: ReturnType<typeof setTimeout> | undefined;
+	let intradayDrawnAt = 0;
+	let drawnCandles: TCandle[] | undefined;
+
 	$effect(() => {
-		if (intradayChart) intradayChart.setOption(getIntradayOptions(intraday, selectedIndex));
+		const chart = intradayChart;
+		const source = candles;
+		if (!chart || (intradayLoading && source.length)) return;
+		const options = getIntradayOptions(intraday, selectedIndex, minutes, marketFeed.quotes[selectedToken]?.prev_close);
+		const wait = source === drawnCandles ? Math.max(0, 1000 - (Date.now() - intradayDrawnAt)) : 0;
+		clearTimeout(intradayDraw);
+		intradayDraw = setTimeout(() => {
+			intradayDrawnAt = Date.now();
+			drawnCandles = source;
+			chart.setOption(options);
+		}, wait);
 	});
 
 	$effect(() => {
@@ -80,6 +147,7 @@
 			if (el) resizeObserver.observe(el);
 		});
 
+		interval = savedInterval() ?? interval;
 		loadIntraday(selectedToken);
 		stopIndices = marketFeed.subscribe([...METRICS, ...SECTORS].map((item) => item.sk_token));
 		const res = await getMarketOverview();
@@ -91,6 +159,8 @@
 
 	onDestroy(() => {
 		active = false;
+		clearTimeout(intradayTimer);
+		clearTimeout(intradayDraw);
 		if (resizeObserver) resizeObserver.disconnect();
 		stopIndices?.();
 		stopStocks?.();
@@ -106,7 +176,7 @@
 		<p class="text-muted-foreground text-sm">Indian Stock Market Overview & Real-time Analytics</p>
 	</header>
 
-	<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
+	<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
 		{#each METRICS as item, i (item.sk_token)}
 			{@const quote = marketFeed.quotes[item.sk_token]}
 			{@const metric = { label: item.label, value: quote?.ltp ?? 0, ...changeOf(quote) }}
@@ -114,9 +184,9 @@
 				<SvaKoshCard class="relative overflow-hidden group hover:border-primary/40 transition-all duration-500">
 					<div class="flex flex-col gap-1">
 						<span class="text-xs text-muted-foreground uppercase tracking-widest">{metric.label}</span>
-						<div class="flex items-baseline gap-2 mt-1">
-							<span class="text-xl tracking-tight">{formatNumber(metric.value)}</span>
-							<span class="text-xs {sentimentClasses[getSentiment(metric.change_pct)]}">
+						<div class="flex flex-col gap-0.5 mt-1 xl:flex-row xl:items-baseline xl:gap-2 xl:whitespace-nowrap">
+							<span class="text-lg tracking-tight sm:text-xl">{formatNumber(metric.value)}</span>
+							<span class="text-[0.6875rem] sm:text-xs {sentimentClasses[getSentiment(metric.change_pct)]}">
 								{metric.change > 0 ? '+' : ''}{formatNumber(metric.change)} ({metric.change_pct}%)
 							</span>
 						</div>
@@ -131,22 +201,33 @@
 
 	<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 		<div class="lg:col-span-2" in:fly={{ y: 20, delay: 400 }}>
-			<SvaKoshCard class="flex flex-col h-[25rem]">
-				<div class="flex items-center justify-between mb-6">
+			<SvaKoshCard class="flex flex-col lg:h-[25rem]">
+				<div class="mb-3 flex flex-wrap items-center justify-between gap-3">
 					<div class="flex items-center gap-3">
 						<div class="w-1 h-5 bg-primary rounded-full"></div>
 						<h3 class="text-lg tracking-tight whitespace-nowrap">Market Intraday</h3>
 					</div>
-					<SvaKoshSelector
-						class="w-40"
-						options={INDEX_OPTIONS} 
-						bind:value={selectedIndex} 
-						bind:isOpen={isSelectorOpen}
-						onSelect={handleIndexChange}
-						placeholder="Select Index"
-					/>
+					<div class="order-3 flex basis-full justify-end lg:order-2 lg:ml-auto lg:basis-auto">
+						<SvaKoshTabs tabs={INTRADAY_INTERVALS} activeTab={interval} onTabChange={handleIntervalChange} />
+					</div>
+					<div class="order-2 lg:order-3">
+						<SvaKoshSelector
+							class="w-40"
+							placement="bottom"
+							options={INDEX_OPTIONS}
+							bind:value={selectedIndex}
+							bind:isOpen={isSelectorOpen}
+							onSelect={handleIndexChange}
+							placeholder="Select Index"
+						/>
+					</div>
 				</div>
-				<div bind:this={intradayChartEl} class="h-[18.75rem] w-full"></div>
+				<div class="relative h-[19.5rem] w-full">
+					<div bind:this={intradayChartEl} class="h-full w-full"></div>
+					{#if intradayLoading}
+						<SvaKoshLoader inline message="" />
+					{/if}
+				</div>
 			</SvaKoshCard>
 		</div>
 

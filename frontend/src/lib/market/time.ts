@@ -7,7 +7,7 @@ const IST_TIME = new Intl.DateTimeFormat('en-IN', {
 const IST_DATE = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' });
 
 export const SESSION_START_MINUTES = 9 * 60 + 15;
-export const SESSION_END_MINUTES = 15 * 60 + 30;
+export const SESSION_END_MINUTES = 15 * 60 + 40;
 
 export function istTime(ts: number): string {
 	return IST_TIME.format(ts);

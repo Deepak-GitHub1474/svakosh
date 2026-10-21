@@ -1,5 +1,5 @@
-import { GRADIENTS, CHART_CONFIGS, INTRADAY_INTERVAL_MS } from './const';
-import { inSession, istDate, istTime } from '$lib/market/time';
+import { GRADIENTS, CHART_CONFIGS } from './const';
+import { inSession, istDate, istTime, SESSION_END_MINUTES, SESSION_START_MINUTES } from '$lib/market/time';
 import type { TBreadth, TCandle } from '$lib/market/types';
 
 export function getSentiment(val: number) {
@@ -15,10 +15,21 @@ export const formatChartNumber = (val: number) => {
 	return val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-export function tooltipFormatter(params: any) {
+export const formatPrice = (val: number) =>
+	val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+type TTooltipItem = {
+	axisValue?: string;
+	name?: string;
+	seriesName?: string;
+	value: number;
+	color?: string | { colorStops?: { color: string }[] };
+};
+
+function tooltipHtml(params: unknown, format: (val: number) => string) {
 	if (!params) return '';
-	const isArray = Array.isArray(params);
-	const title = isArray ? params[0].axisValue : params.name;
+	const items = (Array.isArray(params) ? params : [params]) as TTooltipItem[];
+	const title = Array.isArray(params) ? items[0].axisValue : items[0].name;
 	const isTime = typeof title === 'string' && title.includes(':');
 
 	let html = `<div class="flex flex-col gap-2.5 min-w-[140px]">`;
@@ -39,54 +50,117 @@ export function tooltipFormatter(params: any) {
 			</div>`;
 	}
 	
-	const items = isArray ? params : [params];
-	items.forEach((p: any) => {
-		const color = typeof p.color === 'string' ? p.color : (p.color?.colorStops ? p.color.colorStops[0].color : '#fff');
+	items.forEach((p) => {
+		const color = typeof p.color === 'string' ? p.color : (p.color?.colorStops?.[0].color ?? '#fff');
 		html += `<div class="flex items-center justify-between gap-4">
 			<div class="flex items-center gap-2">
 				<span class="w-1.5 h-1.5 rounded-full" style="background-color: ${color}"></span>
 				<span class="text-[10px] text-slate-300 font-normal">${p.seriesName || p.name}</span>
 			</div>
-			<span class="text-[10px] text-white font-mono font-medium">${formatChartNumber(p.value)}</span>
+			<span class="text-[10px] text-white font-mono font-medium">${format(p.value)}</span>
 		</div>`;
 	});
 	html += '</div>';
 	return html;
 }
 
-export function getIntradayOptions(data: [string, number][], symbol: string) {
+export const tooltipFormatter = (params: unknown) => tooltipHtml(params, formatChartNumber);
+
+const clock = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+const toMinutes = (label: string) => {
+	const [h, m] = label.split(':').map(Number);
+	return h * 60 + m;
+};
+const TIME_TICKS = new Set(['09:15', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00']);
+
+function sessionLabels(minutes: number, until: number): string[] {
+	const count = Math.floor((until - SESSION_START_MINUTES) / minutes) + 1;
+	const labels = Array.from({ length: count }, (_, i) => clock(SESSION_START_MINUTES + i * minutes));
+	if (labels[labels.length - 1] !== clock(until)) labels.push(clock(until));
+	return labels;
+}
+
+function priceAxis(values: (number | null)[], prevClose?: number) {
+	const prices = values.filter((v): v is number => v !== null);
+	if (prevClose) prices.push(prevClose);
+	if (prices.length === 0) return {};
+	const lo = Math.min(...prices);
+	const hi = Math.max(...prices);
+	const raw = Math.max(hi - lo, 1) / 4;
+	const pow = 10 ** Math.floor(Math.log10(raw));
+	const interval = ([1, 2, 5, 10].find((m) => m * pow >= raw) ?? 10) * pow;
+	return { min: Math.floor(lo / interval) * interval, max: Math.ceil(hi / interval) * interval, interval };
+}
+
+export function getIntradayOptions(data: [string, number][], symbol: string, minutes: number, prevClose?: number) {
+	const lastAt = data.length ? toMinutes(data[data.length - 1][0]) : 0;
+	const until = inSession(Date.now()) || !data.length ? Math.max(SESSION_END_MINUTES, lastAt) : lastAt;
+	const labels = sessionLabels(minutes, until);
+	const byTime = new Map(data);
+	const end = data.length ? labels.indexOf(data[data.length - 1][0]) : -1;
+	const values = labels.slice(0, end + 1).map((t) => byTime.get(t) ?? null);
+	const first = data.length ? data[0][1] : undefined;
+	const last = data.length ? data[data.length - 1][1] : undefined;
+	const base = prevClose ?? first;
+	const up = base === undefined || last === undefined || last >= base;
+	const line = up ? 'rgba(0, 255, 136, 1)' : 'rgba(255, 61, 0, 1)';
+	const marks: object[] = [];
+	if (prevClose) {
+		marks.push({
+			yAxis: prevClose,
+			lineStyle: { color: 'rgba(148, 163, 184, 0.5)', type: 'dashed', width: 1 },
+			label: { position: 'insideStartTop', color: 'rgba(148, 163, 184, 0.9)', fontSize: 10, formatter: () => `Prev close ${formatPrice(prevClose)}` }
+		});
+	}
+	if (last !== undefined) {
+		marks.push({
+			yAxis: last,
+			lineStyle: { color: line.replace(', 1)', ', 0.35)'), type: 'dotted', width: 1 },
+			label: { position: 'insideEndTop', distance: 2, formatter: () => formatPrice(last), color: '#0b0d10', backgroundColor: line, padding: [3, 5], borderRadius: 3, fontSize: 10 }
+		});
+	}
 	return {
 		backgroundColor: 'transparent',
-		tooltip: { trigger: 'axis', ...CHART_CONFIGS.tooltip, formatter: tooltipFormatter },
-		grid: { top: 40, right: 20, bottom: 50, left: 65 },
-		xAxis: { 
-			type: 'category', 
+		animation: false,
+		tooltip: { trigger: 'axis', ...CHART_CONFIGS.tooltip, formatter: (params: unknown) => tooltipHtml(params, formatPrice) },
+		grid: { top: 22, right: 12, bottom: 42, left: 58 },
+		xAxis: {
+			type: 'category',
 			name: 'TIME',
 			nameLocation: 'middle',
-			nameGap: 35,
+			nameGap: 28,
 			nameTextStyle: { color: 'rgba(100, 116, 139, 1)', fontSize: 10 },
-			data: data.map(d => d[0]), 
-			axisLine: CHART_CONFIGS.axisLine, 
-			axisLabel: CHART_CONFIGS.axisLabel 
+			data: labels,
+			boundaryGap: false,
+			axisLine: CHART_CONFIGS.axisLine,
+			axisLabel: {
+				...CHART_CONFIGS.axisLabel,
+				interval: (i: number, label: string) => TIME_TICKS.has(label) || i === labels.length - 1,
+				hideOverlap: true
+			}
 		},
-		yAxis: { 
-			type: 'value', 
+		yAxis: {
+			type: 'value',
 			name: symbol.includes('NIFTY') ? 'PRICE' : 'POINTS',
 			nameLocation: 'end',
 			nameTextStyle: { color: 'rgba(100, 116, 139, 1)', fontSize: 10, padding: [0, 40, 0, 0] },
-			scale: true, 
-			splitNumber: 4,
-			splitLine: CHART_CONFIGS.splitLine, 
-			axisLabel: { ...CHART_CONFIGS.axisLabel, margin: 12 } 
+			scale: true,
+			...priceAxis(values, prevClose),
+			splitLine: CHART_CONFIGS.splitLine,
+			axisLabel: { ...CHART_CONFIGS.axisLabel, margin: 12 }
 		},
-		series: [{ 
+		series: [{
 			name: symbol,
-			data: data.map(d => d[1]), 
-			type: 'line', 
-			smooth: true, 
-			symbol: 'none', 
-			lineStyle: { width: 2, color: 'rgba(212, 175, 55, 1)' }, 
-			areaStyle: { color: GRADIENTS.intraday } 
+			data: values,
+			type: 'line',
+			smooth: 0.3,
+			smoothMonotone: 'x',
+			connectNulls: true,
+			sampling: 'lttb',
+			symbol: 'none',
+			lineStyle: { width: 2, color: line, cap: 'round', join: 'round' },
+			areaStyle: { color: up ? GRADIENTS.intradayBull : GRADIENTS.intradayBear },
+			markLine: marks.length ? { silent: true, symbol: 'none', data: marks } : undefined
 		}]
 	};
 }
@@ -126,13 +200,14 @@ export function getSectorOptions(sectors: { name: string; change: number }[]) {
 	};
 }
 
-export function intradayPoints(candles: TCandle[], ltp?: number): [string, number][] {
-	const points = candles.map((c) => [istTime(c.ts), c.close] as [string, number]);
-	if (!ltp || points.length === 0) return points;
+export function intradayPoints(candles: TCandle[], minutes: number, ltp?: number): [string, number][] {
+	const step = minutes * 60_000;
 	const now = Date.now();
+	const bucket = now - (now % step);
+	if (candles.length === 0) return ltp && inSession(now) ? [[istTime(bucket), ltp]] : [];
+	const points = candles.map((c) => [istTime(c.ts), c.close] as [string, number]);
 	const last = candles[candles.length - 1].ts;
-	if (istDate(now) !== istDate(last) || !inSession(now)) return points;
-	const bucket = now - (now % INTRADAY_INTERVAL_MS);
+	if (!ltp || istDate(now) !== istDate(last) || !inSession(now)) return points;
 	if (bucket <= last) points[points.length - 1] = [points[points.length - 1][0], ltp];
 	else points.push([istTime(bucket), ltp]);
 	return points;

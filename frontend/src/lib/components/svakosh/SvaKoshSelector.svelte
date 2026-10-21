@@ -18,6 +18,7 @@
 		isOpen = $bindable(false),
 		placeholder = 'Select option...',
 		searchable = false,
+		placement = 'auto',
 		class: className = '',
 		onSelect
 	} = $props<{
@@ -27,6 +28,7 @@
 		isOpen?: boolean;
 		placeholder?: string;
 		searchable?: boolean;
+		placement?: 'auto' | 'bottom';
 		class?: string;
 		onSelect?: (val: any) => void;
 	}>();
@@ -47,7 +49,8 @@
 		isOpen = !isOpen;
 		if (isOpen) {
 			searchQuery = '';
-			if (containerEl && typeof window !== 'undefined') {
+			dropUp = false;
+			if (placement === 'auto' && containerEl && typeof window !== 'undefined') {
 				const rect = containerEl.getBoundingClientRect();
 				const below = window.innerHeight - rect.bottom;
 				const needed = searchable ? 320 : 260;

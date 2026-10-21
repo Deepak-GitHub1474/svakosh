@@ -4,7 +4,7 @@ from fastapi import APIRouter, Query, WebSocket, status
 
 from app.api.endpoints.auth.controllers import redeem_ws_ticket
 from app.api.endpoints.market import controllers
-from app.api.endpoints.market.constants import WS_PROTOCOL
+from app.api.endpoints.market.constants import INTRADAY_INTERVAL, WS_PROTOCOL
 from app.api.endpoints.market.socket import stream_market
 from app.market_data import MarketData
 from app.responses import ok_response
@@ -26,8 +26,13 @@ async def search(claims: CurrentClaims, market: MarketData, q: str = Query(..., 
 
 
 @router.get("/intraday", status_code=status.HTTP_200_OK)
-async def intraday(claims: CurrentClaims, market: MarketData, token: str = Query(..., min_length=5, max_length=64)):
-    data = await controllers.intraday(market, token.strip())
+async def intraday(
+    claims: CurrentClaims,
+    market: MarketData,
+    token: str = Query(..., min_length=5, max_length=64),
+    interval: str = Query(INTRADAY_INTERVAL, pattern=r"^(1|3|5|15)m$"),
+):
+    data = await controllers.intraday(market, token.strip(), interval)
     return ok_response("Intraday candles fetched.", data=data)
 
 

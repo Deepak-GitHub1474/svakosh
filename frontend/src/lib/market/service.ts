@@ -3,8 +3,8 @@ import type { TBars, TCandle, TChainRef, TChainView, TMarketOverviewData } from 
 
 export const getMarketOverview = () => apiCall<TMarketOverviewData>('/api/market/overview', 'GET');
 
-export const getIntraday = (token: string) =>
-	apiCall<TCandle[]>(`/api/market/intraday?token=${encodeURIComponent(token)}`, 'GET');
+export const getIntraday = (token: string, minutes: number) =>
+	apiCall<TCandle[]>(`/api/market/intraday?token=${encodeURIComponent(token)}&interval=${minutes}m`, 'GET');
 
 export const getChains = () => apiCall<TChainRef[]>('/api/market/chains', 'GET');
 

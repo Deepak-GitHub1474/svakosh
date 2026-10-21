@@ -6,6 +6,7 @@ INDICES: tuple[tuple[str, str, str], ...] = (
     ("NSE:IDX:NIFTYNXT50", "NIFTYNXT50", "Nifty Next 50"),
     ("NSE:IDX:INDIAVIX", "INDIAVIX", "India VIX"),
     ("BSE:IDX:SENSEX", "SENSEX", "BSE Sensex"),
+    ("BSE:IDX:SENSEX50", "SENSEX50", "BSE Sensex 50"),
     ("BSE:IDX:BANKEX", "BANKEX", "BSE Bankex"),
 )
 
@@ -24,7 +25,7 @@ SUBJECT_UNSAFE_CHARS = frozenset(" .*>")
 MAX_TOKENS_PER_SOCKET = 1000
 SEND_QUEUE_LIMIT = 2000
 SEARCH_LIMIT = 30
-INTRADAY_INTERVAL = "15m"
+INTRADAY_INTERVAL = "3m"
 INTRADAY_LOOKBACK_DAYS = 6
 
 COMPANY_NAMES: dict[str, str] = {

@@ -10,7 +10,6 @@ from app.api.endpoints.market.constants import (
     EQUITY_PREFIX,
     FII_DII_DAYS,
     INDICES,
-    INTRADAY_INTERVAL,
     INTRADAY_LOOKBACK_DAYS,
     SEARCH_LIMIT,
     STALE_AFTER_SECONDS,
@@ -33,7 +32,7 @@ async def market_overview(market: MarketDataClient) -> dict[str, Any]:
     return {
         "status": {
             "nse_equity": session_status(now, live, time(9, 0), time(9, 15), time(15, 30)),
-            "nse_fo": session_status(now, live, None, time(9, 15), time(15, 30)),
+            "nse_fo": session_status(now, live, None, time(9, 15), time(15, 40)),
             "nse_currency": session_status(now, live, None, time(9, 0), time(17, 0)),
             "as_of": now.isoformat(),
         },
@@ -84,11 +83,11 @@ async def search_symbols(market: MarketDataClient, query: str) -> list[dict[str,
     return [symbol_of(i) for i in found]
 
 
-async def intraday(market: MarketDataClient, token: str) -> list[dict[str, Any]]:
+async def intraday(market: MarketDataClient, token: str, interval: str) -> list[dict[str, Any]]:
     now = datetime.now(IST)
     start = (now - timedelta(days=INTRADAY_LOOKBACK_DAYS)).strftime("%Y-%m-%d")
     try:
-        candles = await market.history(token, INTRADAY_INTERVAL, start, now.strftime("%Y-%m-%d %H:%M"))
+        candles = await market.history(token, interval, start, now.strftime("%Y-%m-%d %H:%M"))
     except MarketDataError as e:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)) from e
     if not candles:

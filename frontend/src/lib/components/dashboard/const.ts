@@ -21,9 +21,13 @@ export const GRADIENTS = {
 		{ offset: 0, color: 'rgba(255, 61, 0, 0.8)' },
 		{ offset: 1, color: 'rgba(255, 61, 0, 0.1)' }
 	]),
-	intraday: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-		{ offset: 0, color: 'rgba(212, 175, 55, 0.2)' },
-		{ offset: 1, color: 'rgba(212, 175, 55, 0)' }
+	intradayBull: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+		{ offset: 0, color: 'rgba(0, 255, 136, 0.16)' },
+		{ offset: 1, color: 'rgba(0, 255, 136, 0)' }
+	]),
+	intradayBear: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+		{ offset: 0, color: 'rgba(255, 61, 0, 0.16)' },
+		{ offset: 1, color: 'rgba(255, 61, 0, 0)' }
 	])
 };
 
@@ -46,8 +50,13 @@ export const CHART_CONFIGS = {
 
 export const INDEX_OPTIONS = [
 	{ label: 'NIFTY 50', value: 'NIFTY 50', token: 'NSE:IDX:NIFTY' },
+	{ label: 'SENSEX', value: 'SENSEX', token: 'BSE:IDX:SENSEX' },
 	{ label: 'BANK NIFTY', value: 'BANK NIFTY', token: 'NSE:IDX:BANKNIFTY' },
-	{ label: 'SENSEX', value: 'SENSEX', token: 'BSE:IDX:SENSEX' }
+	{ label: 'FIN NIFTY', value: 'FIN NIFTY', token: 'NSE:IDX:FINNIFTY' },
+	{ label: 'MIDCAP NIFTY', value: 'MIDCAP NIFTY', token: 'NSE:IDX:MIDCPNIFTY' },
+	{ label: 'NIFTY NEXT 50', value: 'NIFTY NEXT 50', token: 'NSE:IDX:NIFTYNXT50' },
+	{ label: 'BANKEX', value: 'BANKEX', token: 'BSE:IDX:BANKEX' },
+	{ label: 'SENSEX 50', value: 'SENSEX 50', token: 'BSE:IDX:SENSEX50' }
 ];
 
 export const METRICS = INDEX_OPTIONS.map(({ label, token }) => ({ label, sk_token: token }));
@@ -63,4 +72,10 @@ export const SECTORS = [
 ];
 
 export const TOP_MOVERS_LIMIT = 5;
-export const INTRADAY_INTERVAL_MS = 15 * 60 * 1000;
+export const INTRADAY_INTERVALS = [
+	{ label: '1m', value: '1' },
+	{ label: '3m', value: '3' },
+	{ label: '5m', value: '5' },
+	{ label: '15m', value: '15' }
+];
+export const DEFAULT_INTRADAY_INTERVAL = '3';

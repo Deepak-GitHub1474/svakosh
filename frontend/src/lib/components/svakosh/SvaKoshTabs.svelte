@@ -66,13 +66,13 @@
 		style:opacity={highlightStyle.opacity}
 	></div>
 
-	{#each tabs as tab}
+	{#each tabs as tab (tab.value)}
 		<button
 			type="button"
 			data-tab-value={tab.value}
 			onclick={() => onTabChange(tab.value)}
 			class={cn(
-				'relative z-10 px-4 py-2 rounded-full text-xs transition-colors duration-300 select-none font-semibold flex items-center gap-2',
+				'relative z-10 px-4 py-2 rounded-full text-xs transition-colors duration-300 select-none font-semibold flex items-center gap-2 outline-none',
 				activeTab === tab.value ? 'text-black' : 'text-muted-foreground hover:text-foreground'
 			)}
 		>
