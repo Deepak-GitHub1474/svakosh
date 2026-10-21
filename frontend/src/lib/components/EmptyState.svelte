@@ -37,9 +37,9 @@
 	{/if}
 
 	<div class="flex flex-col gap-1 w-full">
-		<p class="text-sm text-foreground">{title}</p>
+		<p class="text-lg text-foreground">{title}</p>
 		{#if description}
-			<p class="text-[0.625rem] text-muted-foreground break-words">{description}</p>
+			<p class="text-base text-muted-foreground break-words">{description}</p>
 		{/if}
 	</div>
 
@@ -49,7 +49,7 @@
 		<button
 			type="button"
 			onclick={onAction}
-			class="inline-flex items-center gap-1 px-3 py-1.5 rounded text-xs text-primary bg-primary-subtle border border-primary/20 hover:bg-primary-hover cursor-pointer transition-colors"
+			class="inline-flex items-center gap-1 px-4 py-2 rounded text-sm text-primary bg-primary-subtle border border-primary/20 hover:bg-primary-hover cursor-pointer transition-colors"
 		>
 			{#if actionIcon}
 				{@const ActionIcon = actionIcon}

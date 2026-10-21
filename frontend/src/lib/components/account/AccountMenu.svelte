@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import { slide } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 	import SvaKoshSwitch from '$lib/components/svakosh/SvaKoshSwitch.svelte';
@@ -7,6 +8,7 @@
 	import Logout from '$lib/components/svg-provider/material/Logout.svelte';
 	import Person from '$lib/components/svg-provider/material/Person.svelte';
 	import Settings from '$lib/components/svg-provider/material/Settings.svelte';
+	import SwapVert from '$lib/components/svg-provider/material/SwapVert.svelte';
 
 	interface Props {
 		onNavigate?: () => void;
@@ -37,6 +39,14 @@
 >
 	<Person class="icon-size" />
 	Profile
+</a>
+<a
+	href={resolve('/broker/accounts')}
+	onclick={() => onNavigate?.()}
+	class="{row} text-muted-foreground hover:bg-glass hover:text-foreground"
+>
+	<SwapVert class="icon-size" />
+	Broker accounts
 </a>
 <a
 	href="/settings"

@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     MONGODB_DB_NAME: str
     REDIS_URL: str
     NATS_URL: str = "nats://127.0.0.1:4222"
+    TRADE_HUB_NATS_URL: str = ""
+    TRADE_LOGIN_REDIRECT_URL: str = ""
     CORS_ORIGINS: str
 
     JWT_SECRET: str

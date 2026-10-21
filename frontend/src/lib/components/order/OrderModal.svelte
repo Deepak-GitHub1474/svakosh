@@ -9,6 +9,10 @@
 	import SvaKoshSwitch from '$lib/components/svakosh/SvaKoshSwitch.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { tradeAccounts } from '$lib/trade/accounts.svelte';
+	import { placeOrder } from '$lib/trade/service';
 	import type { TOrderTicket } from './types';
 
 	type TOrderType = TOrderTicket['orderType'];
@@ -58,6 +62,8 @@
 	let amount = $state(1);
 	let typingAmount = $state(false);
 	let priceText = $state('');
+	let orderKey = $state('');
+	let placing = $state(false);
 
 	$effect(() => {
 		if (!draft) return;
@@ -67,6 +73,8 @@
 		unit = 'Lots';
 		amount = draft.lots;
 		priceText = draft.price.toFixed(2);
+		orderKey = crypto.randomUUID();
+		if (!tradeAccounts.loaded) tradeAccounts.load();
 	});
 
 	const formatDecimal = (value: number) => (Number.isNaN(value) ? '—' : value.toFixed(2));
@@ -114,13 +122,57 @@
 		if (limitPrice > 0) priceText = limitPrice.toFixed(2);
 	}
 
-	function submit(event: SubmitEvent) {
+	async function submit(event: SubmitEvent) {
 		event.preventDefault();
-		if (!draft || !priceValid) return;
-		toast.success({
-			title: `${isSell ? 'Sold' : 'Bought'} ${quantity} ${title}`,
-			description: isLimit ? `Limit at ${formatDecimal(limitPrice)}` : 'At market'
+		if (!draft || !priceValid || placing) return;
+		if (!tradeAccounts.accountId) {
+			toast.error({
+				title: 'No broker account linked',
+				description: 'Link your broker account to place orders.',
+				action: { label: 'Link', onClick: () => goto(resolve('/broker/accounts')) }
+			});
+			return;
+		}
+		if (!tradeAccounts.selected?.logged_in) {
+			toast.error({
+				title: 'Log in to your broker',
+				description: 'Your broker session has ended. Log in to place orders.',
+				action: { label: 'Log in', onClick: () => goto(resolve('/broker/accounts')) }
+			});
+			return;
+		}
+		placing = true;
+		const res = await placeOrder({
+			account_id: tradeAccounts.accountId,
+			client_order_id: orderKey,
+			token: draft.token,
+			side: isSell ? 'SELL' : 'BUY',
+			product,
+			type: isLimit ? 'LIMIT' : 'MARKET',
+			quantity,
+			price: isLimit ? limitPrice : 0,
+			trigger_price: 0
 		});
+		placing = false;
+		const label = `${isSell ? 'Sell' : 'Buy'} ${quantity} ${title}`;
+		if (!res.ok) {
+			toast.error({ title: `${label} failed`, description: res.error });
+			return;
+		}
+		if (res.data.status === 'REJECTED' || res.data.status === 'FAILED') {
+			toast.error({ title: `${label} rejected`, description: res.data.message });
+		} else if (res.data.status === 'UNKNOWN') {
+			toast.warning({
+				title: `${label} sent`,
+				description: 'Broker did not confirm yet. Check Orders.'
+			});
+		} else {
+			toast.success({
+				title: `${label} placed`,
+				description: isLimit ? `Limit at ${formatDecimal(limitPrice)}` : 'At market',
+				action: { label: 'Orders', onClick: () => goto(resolve('/trade/orders')) }
+			});
+		}
 		isOpen = false;
 	}
 
@@ -277,8 +329,8 @@
 				<SvaKoshButton
 					type="submit"
 					variant={isSell ? 'bearish' : 'bullish'}
-					label={isSell ? 'Sell' : 'Buy'}
-					disabled={!priceValid}
+					label={placing ? 'Placing…' : isSell ? 'Sell' : 'Buy'}
+					disabled={!priceValid || placing}
 					class="min-w-[10rem] font-semibold [--terminal-fg:white] {isSell
 						? '[--terminal-bg-hover:var(--bearish-solid-hover)] [--terminal-bg:var(--bearish-solid)] [--terminal-border-hover:transparent] [--terminal-border:transparent]'
 						: '[--terminal-bg-hover:var(--bullish-solid-hover)] [--terminal-bg:var(--bullish-solid)] [--terminal-border-hover:transparent] [--terminal-border:transparent]'}"

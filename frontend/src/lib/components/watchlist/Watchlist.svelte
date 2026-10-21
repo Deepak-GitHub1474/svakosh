@@ -82,6 +82,7 @@
 	function openOrder(entry: TWatchlistEntry, transaction: 'BUY' | 'SELL') {
 		orderEntry = entry;
 		orderDraft = {
+			token: entry.sk_token,
 			transaction,
 			orderType: 'Market',
 			product: 'MIS',

@@ -1,13 +1,15 @@
 <script lang="ts">
+	import { cn } from '$lib/utils';
 	import { symbolImageUrl, symbolInitial } from './index';
 
 	interface Props {
 		name: string;
 		logoUrl?: string;
 		class?: string;
+		initialClass?: string;
 	}
 
-	let { name, logoUrl, class: className = '' }: Props = $props();
+	let { name, logoUrl, class: className = '', initialClass = '' }: Props = $props();
 
 	const fallbackUrl = $derived(symbolImageUrl(name));
 	const initial = $derived(symbolInitial(name));
@@ -29,7 +31,7 @@
 	aria-label={name}
 >
 	{#if failed || !src}
-		<span class="text-[0.625rem] text-primary uppercase">{initial}</span>
+		<span class={cn('text-[0.625rem] text-primary uppercase', initialClass)}>{initial}</span>
 	{:else}
 		<img
 			{src}

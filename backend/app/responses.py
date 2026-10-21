@@ -9,6 +9,35 @@ from fastapi.exceptions import RequestValidationError
 
 logger = logging.getLogger("svakosh.responses")
 
+SENSITIVE_KEYS = frozenset(
+    {
+        "otp",
+        "password",
+        "id_token",
+        "access_token",
+        "refresh_token",
+        "auth_token",
+        "feed_token",
+        "credential",
+        "credentials",
+        "mpin",
+        "totp_secret",
+        "api_key",
+        "pan_number",
+    }
+)
+
+
+def redact(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            k: "***" if str(k).lower() in SENSITIVE_KEYS else redact(v)
+            for k, v in value.items()
+        }
+    if isinstance(value, list):
+        return [redact(v) for v in value]
+    return value
+
 
 def ok_response(
     message: str,
@@ -40,21 +69,21 @@ async def extract_request_payload(request: Request, exc: BaseException | None = 
         b = getattr(exc, "body", None)
         if isinstance(b, (bytes, bytearray)) and b.strip():
             try:
-                return json.loads(b)
+                return redact(json.loads(b))
             except json.JSONDecodeError:
                 return None
         if isinstance(b, (dict, list)):
-            return b
+            return redact(b)
 
     q = dict(request.query_params)
     if q:
-        return q
+        return redact(q)
 
     try:
         raw = await request.body()
         if not raw:
             return None
-        return json.loads(raw)
+        return redact(json.loads(raw))
     except json.JSONDecodeError:
         return None
     except Exception as e:
