@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_TTL_MINUTES: int = 30
     REFRESH_TOKEN_TTL_DAYS: int = 7
     REFRESH_REUSE_GRACE_SECONDS: int = 30
+    REFRESH_REUSE_GRACE_LIMIT: int = 5
 
     OTP_HMAC_SECRET: str
     OTP_TTL_SECONDS: int = 300

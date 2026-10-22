@@ -71,6 +71,10 @@ def refresh_revoked_hash_key(rt_hash: str) -> str:
     return f"{NS}:RT_REVOKED_HASH:{rt_hash}"
 
 
+def refresh_grace_key(rt_hash: str) -> str:
+    return f"{NS}:RT_GRACE:{rt_hash}"
+
+
 def user_sessions_key(user_id: str) -> str:
     return f"{NS}:USER_SESSIONS:{user_id}"
 
@@ -477,8 +481,12 @@ async def rotate_refresh_token(
         if revoked:
             revoked_family, _, rotated_at = revoked.partition(":")
             if rotated_at.isdigit() and now_ts - int(rotated_at) <= s.REFRESH_REUSE_GRACE_SECONDS:
-                user_id = await redis.hget(family_meta_key(revoked_family), "user_id")
-                if user_id:
+                pipe = redis.pipeline(transaction=False)
+                pipe.hget(family_meta_key(revoked_family), "user_id")
+                pipe.incr(refresh_grace_key(rt_hash))
+                pipe.expire(refresh_grace_key(rt_hash), s.REFRESH_REUSE_GRACE_SECONDS)
+                user_id, replays, _ = await pipe.execute()
+                if user_id and replays <= s.REFRESH_REUSE_GRACE_LIMIT:
                     new_rt, _ = await issue_refresh_token(
                         redis, user_id, family_id=revoked_family, ip=ip, ua=ua
                     )
