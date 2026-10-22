@@ -5,7 +5,6 @@ import csv
 import io
 import logging
 import re
-import time
 from typing import Any
 
 import httpx
@@ -29,45 +28,48 @@ INDEX_NAMES = {
 class CompanyNames:
     def __init__(self) -> None:
         self.names: dict[str, str] = {}
-        self.next_load = 0.0
-        self.lock = asyncio.Lock()
+        self.task: asyncio.Task[None] | None = None
 
-    async def load(self) -> dict[str, str]:
-        if time.monotonic() < self.next_load:
-            return self.names
-        async with self.lock:
-            if time.monotonic() < self.next_load:
-                return self.names
-            try:
-                async with httpx.AsyncClient(
-                    timeout=FETCH_TIMEOUT_SECONDS, headers={"User-Agent": "Mozilla/5.0"}
-                ) as client:
-                    res = await client.get(NSE_EQUITY_URL)
-                    res.raise_for_status()
-                rows = csv.DictReader(io.StringIO(res.text))
-                self.names = {
-                    row["SYMBOL"].strip(): LEGAL_SUFFIX.sub(
-                        "", row["NAME OF COMPANY"].strip()
-                    )
-                    for row in rows
-                }
-                self.next_load = time.monotonic() + REFRESH_SECONDS
-            except (httpx.HTTPError, KeyError) as e:
-                logger.warning(
-                    "Company names: NSE list unavailable.\nReason: %s: %s",
-                    type(e).__name__,
-                    e,
+    def start(self) -> None:
+        self.task = asyncio.create_task(self.keep_fresh())
+
+    def stop(self) -> None:
+        if self.task is not None:
+            self.task.cancel()
+
+    async def keep_fresh(self) -> None:
+        while True:
+            loaded = await self.load()
+            await asyncio.sleep(REFRESH_SECONDS if loaded else RETRY_SECONDS)
+
+    async def load(self) -> bool:
+        try:
+            async with httpx.AsyncClient(
+                timeout=FETCH_TIMEOUT_SECONDS, headers={"User-Agent": "Mozilla/5.0"}
+            ) as client:
+                res = await client.get(NSE_EQUITY_URL)
+                res.raise_for_status()
+            rows = csv.DictReader(io.StringIO(res.text))
+            self.names = {
+                row["SYMBOL"].strip(): LEGAL_SUFFIX.sub(
+                    "", row["NAME OF COMPANY"].strip()
                 )
-                self.next_load = time.monotonic() + RETRY_SECONDS
-        return self.names
+                for row in rows
+            }
+            return True
+        except (httpx.HTTPError, KeyError) as e:
+            logger.warning(
+                "Company names: NSE list unavailable.\nReason: %s: %s",
+                type(e).__name__,
+                e,
+            )
+            return False
 
-    async def of(self, instrument: dict[str, Any]) -> str | None:
+    def of(self, instrument: dict[str, Any]) -> str | None:
         if instrument["token"] in COMPANY_NAMES:
             return COMPANY_NAMES[instrument["token"]]
         underlying = instrument["underlying"]
-        if underlying in INDEX_NAMES:
-            return INDEX_NAMES[underlying]
-        return (await self.load()).get(underlying)
+        return INDEX_NAMES.get(underlying) or self.names.get(underlying)
 
 
 company_names = CompanyNames()

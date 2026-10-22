@@ -92,7 +92,7 @@ async def instrument_names(market: MarketDataClient, tokens: list[str]) -> list[
     except MarketDataError as e:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)) from e
     return [
-        {**symbol_of(found[t]), "company_name": await company_names.of(found[t])}
+        {**symbol_of(found[t]), "company_name": company_names.of(found[t])}
         for t in wanted
         if t in found
     ]

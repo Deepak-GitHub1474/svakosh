@@ -244,7 +244,7 @@ async def _entries(
     return [
         {
             **symbol_of(found[t]),
-            "company_name": await company_names.of(found[t]),
+            "company_name": company_names.of(found[t]),
             "symbol_note": notes.get(t),
         }
         for t in tokens
