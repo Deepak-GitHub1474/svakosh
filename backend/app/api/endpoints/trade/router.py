@@ -92,6 +92,14 @@ async def holdings(
     return ok_response("Holdings fetched.", data=data)
 
 
+@router.get("/trades", status_code=status.HTTP_200_OK)
+async def trades(
+    claims: CurrentClaims, trade: TradeHub, account_id: str = AccountQuery
+):
+    data = await controllers.portfolio(trade, claims, "trades", account_id)
+    return ok_response("Trades fetched.", data=data)
+
+
 @router.get("/funds", status_code=status.HTTP_200_OK)
 async def funds(claims: CurrentClaims, trade: TradeHub, account_id: str = AccountQuery):
     data = await controllers.portfolio(trade, claims, "funds", account_id)

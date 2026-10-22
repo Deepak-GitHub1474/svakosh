@@ -2,7 +2,8 @@
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import ExitAllModal from '$lib/components/trade/ExitAllModal.svelte';
 	import AccountCell from '$lib/components/trade/AccountCell.svelte';
-	import ExitModal from '$lib/components/trade/ExitModal.svelte';
+	import PositionModal from '$lib/components/trade/PositionModal.svelte';
+	import RowActions from '$lib/components/trade/RowActions.svelte';
 	import StatStrip from '$lib/components/trade/StatStrip.svelte';
 	import TradeTable from '$lib/components/trade/TradeTable.svelte';
 	import { marketFeed } from '$lib/market/feed.svelte';
@@ -55,9 +56,9 @@
 		if (selected.some((k) => !keys.has(k))) selected = selected.filter((k) => keys.has(k));
 	});
 
-	function target(h: TRow): TExitTarget {
+	function target(h: TRow, mode: TExitTarget['mode'] = 'exit'): TExitTarget {
 		return {
-			mode: 'exit',
+			mode,
 			account_id: h.account.id,
 			token: h.token ?? '',
 			symbol: h.symbol,
@@ -68,13 +69,13 @@
 		};
 	}
 
-	function openExit(h: TRow) {
-		exitTarget = target(h);
+	function openExit(h: TRow, mode: TExitTarget['mode']) {
+		exitTarget = target(h, mode);
 		exitOpen = true;
 	}
 
 	function openBulk() {
-		bulk = picked.map(target);
+		bulk = picked.map((h) => target(h));
 		bulkOpen = true;
 	}
 
@@ -178,11 +179,7 @@
 				<td class="{TABLE.td} text-right {tone(dayGain)}">{signed(dayGain)}</td>
 				<td class="{TABLE.td} text-right">
 					{#if h.token}
-						<button
-							type="button"
-							class="text-bearish/80 hover:text-bearish transition-colors"
-							onclick={() => openExit(h)}>Exit</button
-						>
+						<RowActions onAction={(mode) => openExit(h, mode)} />
 					{/if}
 				</td>
 			</tr>
@@ -200,5 +197,5 @@
 	/>
 </div>
 
-<ExitModal bind:isOpen={exitOpen} target={exitTarget} onDone={done} />
+<PositionModal bind:isOpen={exitOpen} target={exitTarget} onDone={done} />
 <ExitAllModal bind:isOpen={bulkOpen} targets={bulk} noun="holding" onDone={done} />

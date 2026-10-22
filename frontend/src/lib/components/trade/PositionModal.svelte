@@ -16,6 +16,13 @@
 		{ label: 'Market', value: 'MARKET' },
 		{ label: 'Limit', value: 'LIMIT' }
 	];
+	const TITLES: Record<TExitTarget['mode'], string> = {
+		exit: 'Exit',
+		reduce: 'Reduce',
+		add: 'Add to',
+		stoploss: 'Stop-loss',
+		target: 'Target'
+	};
 
 	let {
 		isOpen = $bindable(false),
@@ -26,35 +33,44 @@
 	let quantity = $state('');
 	let kind = $state<TKind>('MARKET');
 	let price = $state('');
-	let trigger = $state('');
+	let level = $state('');
 	let orderKey = $state('');
 	let placing = $state(false);
 
 	$effect(() => {
 		if (!target) return;
-		quantity = String(Math.abs(target.quantity));
+		quantity = target.mode === 'exit' ? String(Math.abs(target.quantity)) : '';
 		kind = 'MARKET';
 		price = target.ltp ? target.ltp.toFixed(2) : '';
-		trigger = '';
+		level = '';
 		orderKey = crypto.randomUUID();
 	});
 
-	const stoploss = $derived(target?.mode === 'stoploss');
-	const side = $derived(exitSide(target?.quantity ?? 0));
+	const mode = $derived(target?.mode ?? 'exit');
+	const held = $derived(Math.abs(target?.quantity ?? 0));
+	const side = $derived(
+		mode === 'add'
+			? (target?.quantity ?? 0) > 0
+				? 'BUY'
+				: 'SELL'
+			: exitSide(target?.quantity ?? 0)
+	);
+	const priced = $derived(mode === 'stoploss' || mode === 'target');
 	const qty = $derived(Math.floor(Number(quantity)));
-	const qtyValid = $derived(qty >= 1 && qty <= Math.abs(target?.quantity ?? 0));
-	const triggerValue = $derived(Number(trigger));
-	const triggerError = $derived.by(() => {
-		if (!stoploss || !trigger) return '';
-		if (!(triggerValue > 0)) return 'Enter a trigger price.';
-		if (!target?.ltp) return '';
-		if (side === 'SELL' && triggerValue >= target.ltp) return 'Trigger must be below LTP.';
-		if (side === 'BUY' && triggerValue <= target.ltp) return 'Trigger must be above LTP.';
+	const qtyValid = $derived(qty >= 1 && (mode === 'add' || qty <= held));
+	const levelValue = $derived(Number(level));
+	const levelError = $derived.by(() => {
+		if (!priced || !level) return '';
+		if (!(levelValue > 0)) return 'Enter a price.';
+		const ltp = target?.ltp;
+		if (!ltp) return '';
+		const below = (mode === 'stoploss') === (side === 'SELL');
+		if (below && levelValue >= ltp) return 'Must be below LTP.';
+		if (!below && levelValue <= ltp) return 'Must be above LTP.';
 		return '';
 	});
 	const valid = $derived(
-		qtyValid &&
-			(stoploss ? triggerValue > 0 && !triggerError : kind === 'MARKET' || Number(price) > 0)
+		qtyValid && (priced ? levelValue > 0 && !levelError : kind === 'MARKET' || Number(price) > 0)
 	);
 
 	async function submit(event: SubmitEvent) {
@@ -68,12 +84,12 @@
 				token: target.token,
 				side,
 				product: target.product,
-				type: stoploss ? 'SL-M' : kind,
+				type: mode === 'stoploss' ? 'SL-M' : mode === 'target' ? 'LIMIT' : kind,
 				quantity: qty,
-				price: !stoploss && kind === 'LIMIT' ? Number(price) : 0,
-				trigger_price: stoploss ? triggerValue : 0
+				price: mode === 'target' ? levelValue : !priced && kind === 'LIMIT' ? Number(price) : 0,
+				trigger_price: mode === 'stoploss' ? levelValue : 0
 			},
-			`${stoploss ? 'Stop-loss' : 'Exit'} ${qty} ${target.symbol}`
+			`${TITLES[mode]} ${qty} ${target.symbol}`
 		);
 		placing = false;
 		if (!ok) return;
@@ -85,40 +101,45 @@
 <SvaKoshModal bind:isOpen width="22rem" class="overflow-hidden">
 	{#if target}
 		<ModalHeader
-			title={`${stoploss ? 'Stop-loss' : 'Exit'} ${target.symbol}`}
+			title={`${TITLES[mode]} ${target.symbol}`}
 			subtitle={`${side} · ${target.product} · LTP ${target.ltp ? formatNumber(target.ltp) : '—'}`}
 			onClose={() => (isOpen = false)}
 		/>
 		<form class="flex flex-col gap-4 p-4" onsubmit={submit} novalidate>
 			<div>
-				<SvaKoshLabel for="exit-qty">Quantity</SvaKoshLabel>
+				<SvaKoshLabel for="position-qty">Quantity</SvaKoshLabel>
 				<SvaKoshInput
-					id="exit-qty"
+					id="position-qty"
 					bind:value={quantity}
 					type="number"
 					inputmode="numeric"
 					min="1"
-					max={String(Math.abs(target.quantity))}
+					max={mode === 'add' ? undefined : String(held)}
 					step="1"
-					class={qtyValid ? '' : 'border-bearish-muted'}
+					placeholder={mode === 'add' ? 'Quantity to add' : `Up to ${held}`}
+					class={quantity && !qtyValid ? 'border-bearish-muted' : ''}
 				/>
-				<p class="text-muted-foreground mt-1 text-xs">Open {Math.abs(target.quantity)}</p>
+				<p class="text-muted-foreground mt-1 text-xs">Open {held}</p>
 			</div>
-			{#if stoploss}
+			{#if priced}
 				<div>
-					<SvaKoshLabel for="exit-trigger">Trigger price</SvaKoshLabel>
+					<SvaKoshLabel for="position-level">
+						{mode === 'stoploss' ? 'Trigger price' : 'Target price'}
+					</SvaKoshLabel>
 					<SvaKoshInput
-						id="exit-trigger"
-						placeholder={side === 'SELL' ? 'Below LTP' : 'Above LTP'}
-						bind:value={trigger}
+						id="position-level"
+						bind:value={level}
 						type="number"
 						inputmode="decimal"
 						min="0"
 						step="0.05"
-						class={triggerError ? 'border-bearish-muted' : ''}
+						class={levelError ? 'border-bearish-muted' : ''}
 					/>
-					<p class="mt-1 text-xs {triggerError ? 'text-bearish' : 'text-muted-foreground'}">
-						{triggerError || 'Exits at market once the trigger is hit.'}
+					<p class="mt-1 text-xs {levelError ? 'text-bearish' : 'text-muted-foreground'}">
+						{levelError ||
+							(mode === 'stoploss'
+								? 'Exits at market once the trigger is hit.'
+								: 'Exits at this price or better.')}
 					</p>
 				</div>
 			{:else}
@@ -133,9 +154,9 @@
 				</div>
 				{#if kind === 'LIMIT'}
 					<div>
-						<SvaKoshLabel for="exit-price">Limit price</SvaKoshLabel>
+						<SvaKoshLabel for="position-price">Limit price</SvaKoshLabel>
 						<SvaKoshInput
-							id="exit-price"
+							id="position-price"
 							bind:value={price}
 							type="number"
 							inputmode="decimal"
@@ -150,8 +171,8 @@
 				variant={side === 'SELL' ? 'bearish' : 'bullish'}
 				label={placing
 					? 'Placing…'
-					: stoploss
-						? 'Place stop-loss'
+					: priced
+						? `Place ${TITLES[mode].toLowerCase()}`
 						: `${side === 'SELL' ? 'Sell' : 'Buy'} ${qty || ''}`}
 				disabled={!valid || placing}
 			/>

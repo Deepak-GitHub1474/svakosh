@@ -2,7 +2,8 @@
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import ExitAllModal from '$lib/components/trade/ExitAllModal.svelte';
 	import AccountCell from '$lib/components/trade/AccountCell.svelte';
-	import ExitModal from '$lib/components/trade/ExitModal.svelte';
+	import PositionModal from '$lib/components/trade/PositionModal.svelte';
+	import RowActions from '$lib/components/trade/RowActions.svelte';
 	import StatStrip from '$lib/components/trade/StatStrip.svelte';
 	import TradeTable from '$lib/components/trade/TradeTable.svelte';
 	import { marketFeed } from '$lib/market/feed.svelte';
@@ -167,18 +168,7 @@
 				</td>
 				<td class="{TABLE.td} text-right">
 					{#if canExit(p)}
-						<div class="flex justify-end gap-4">
-							<button
-								type="button"
-								class="text-muted-foreground hover:text-foreground transition-colors"
-								onclick={() => openExit(p, 'stoploss')}>Stop-loss</button
-							>
-							<button
-								type="button"
-								class="text-bearish/80 hover:text-bearish transition-colors"
-								onclick={() => openExit(p, 'exit')}>Exit</button
-							>
-						</div>
+						<RowActions onAction={(mode) => openExit(p, mode)} />
 					{/if}
 				</td>
 			</tr>
@@ -196,5 +186,5 @@
 	/>
 </div>
 
-<ExitModal bind:isOpen={exitOpen} target={exitTarget} onDone={done} />
+<PositionModal bind:isOpen={exitOpen} target={exitTarget} onDone={done} />
 <ExitAllModal bind:isOpen={bulkOpen} targets={bulk} onDone={done} />

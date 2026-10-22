@@ -49,6 +49,19 @@ export type THolding = {
 	pnl: number;
 };
 
+export type TTrade = {
+	trade_id: string;
+	order_id: string;
+	token?: string;
+	exchange: string;
+	symbol: string;
+	side: TSide;
+	product: TProduct;
+	quantity: number;
+	price: number;
+	time: string;
+};
+
 export type TFunds = {
 	available: number;
 	used: number;
@@ -66,7 +79,7 @@ export type TFunds = {
 export type TMargin = { required: number };
 
 export type TExitTarget = {
-	mode: 'exit' | 'stoploss';
+	mode: 'exit' | 'reduce' | 'add' | 'stoploss' | 'target';
 	account_id: string;
 	token: string;
 	symbol: string;

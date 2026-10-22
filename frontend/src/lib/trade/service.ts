@@ -11,6 +11,7 @@ import type {
 	TPlaceOrder,
 	TPosition,
 	TTicket,
+	TTrade,
 	TUpdateAccount
 } from './types';
 
@@ -55,6 +56,9 @@ export const getFundsRows = async (accountId: string): Promise<TResult<TFunds[]>
 	const res = await getFunds(accountId);
 	return res.ok ? { ok: true, data: [res.data] } : res;
 };
+
+export const getTrades = (accountId: string) =>
+	apiCall<TTrade[]>(`/api/trade/trades${query({ account_id: accountId })}`, 'GET');
 
 export const getOrders = (accountId: string) =>
 	apiCall<TBrokerOrder[]>(`/api/trade/orders${query({ account_id: accountId })}`, 'GET');

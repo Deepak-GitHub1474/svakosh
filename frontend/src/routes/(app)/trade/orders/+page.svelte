@@ -12,12 +12,19 @@
 	import { OPEN_STATUSES, ORDERS_VIEW_KEY, STATUS_TONE, TABLE } from '$lib/trade/const';
 	import { instrumentOf, timeOf } from '$lib/trade/format';
 	import { tradeResource, type TAccountRow } from '$lib/trade/resource.svelte';
-	import { cancelOrder, getOrderHistory, getOrders, modifyOrder } from '$lib/trade/service';
-	import type { TBrokerOrder, TOrderRecord } from '$lib/trade/types';
+	import {
+		cancelOrder,
+		getOrderHistory,
+		getOrders,
+		getTrades,
+		modifyOrder
+	} from '$lib/trade/service';
+	import type { TBrokerOrder, TOrderRecord, TTrade } from '$lib/trade/types';
 	import { formatNumber } from '$lib/utils';
 
 	const VIEWS = [
 		{ label: 'Today', value: 'today' },
+		{ label: 'Trades', value: 'trades' },
 		{ label: 'History', value: 'history' }
 	];
 
@@ -33,6 +40,7 @@
 
 	const book = tradeResource<TBrokerOrder>(getOrders, 5_000);
 	const history = tradeResource<TOrderRecord>((id) => getOrderHistory(id, 100), 30_000);
+	const trades = tradeResource<TTrade>(getTrades, 10_000);
 
 	const rows = $derived([...book.data].sort((a, b) => b.updated_at.localeCompare(a.updated_at)));
 	const needsPrice = $derived(editing?.type === 'LIMIT' || editing?.type === 'SL');
@@ -169,6 +177,40 @@
 							</div>
 						{/if}
 					</td>
+				</tr>
+			{/each}
+		{/snippet}
+	</TradeTable>
+{:else if view === 'trades'}
+	<TradeTable
+		empty={!trades.data.length}
+		loading={trades.loading}
+		error={trades.error}
+		emptyTitle="No trades today"
+		emptyDescription="Filled orders show here with their fill price."
+		onRetry={trades.reload}
+	>
+		{#snippet head()}
+			<th class={TABLE.th}>Time</th>
+			<th class={TABLE.th}>Account</th>
+			<th class={TABLE.th}>Instrument</th>
+			<th class={TABLE.th}>Side</th>
+			<th class={TABLE.th}>Product</th>
+			<th class="{TABLE.th} text-right">Qty</th>
+			<th class="{TABLE.th} text-right">Price</th>
+			<th class="{TABLE.th} text-right">Value</th>
+		{/snippet}
+		{#snippet body()}
+			{#each trades.data as t (`${t.account.id}:${t.trade_id}:${t.order_id}`)}
+				<tr class={TABLE.row}>
+					<td class="{TABLE.td} text-muted-foreground">{t.time}</td>
+					<AccountCell account={t.account} />
+					<td class={TABLE.td}>{t.symbol}</td>
+					<td class="{TABLE.td} {t.side === 'BUY' ? 'text-bullish' : 'text-bearish'}">{t.side}</td>
+					<td class="{TABLE.td} text-muted-foreground">{t.product}</td>
+					<td class="{TABLE.td} text-right">{t.quantity}</td>
+					<td class="{TABLE.td} text-right">{formatNumber(t.price)}</td>
+					<td class="{TABLE.td} text-right">{formatNumber(t.price * t.quantity)}</td>
 				</tr>
 			{/each}
 		{/snippet}

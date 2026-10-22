@@ -62,13 +62,13 @@
 <div 
 	bind:this={containerRef}
 	class={cn(
-		'relative flex bg-[#1c1f24]/80 p-1 rounded-full border border-border-subtle backdrop-blur-md h-fit items-center overflow-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]',
+		'relative flex bg-surface/80 p-1 rounded-full border border-border-subtle backdrop-blur-md h-fit items-center overflow-hidden shadow-tab-track',
 		className
 	)}
 >
 	<div 
 		class={cn(
-			'absolute top-1 bottom-1 bg-gradient-to-b from-[#f0d06b] via-primary to-[#b89530] rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),0_2px_10px_rgba(212,175,55,0.4)]',
+			'absolute top-1 bottom-1 bg-gradient-to-b from-primary-light via-primary to-primary-dark rounded-full shadow-tab-pill',
 			animate && 'transition-all duration-300 ease-out'
 		)}
 		style:width={highlightStyle.width}
