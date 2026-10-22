@@ -3,7 +3,6 @@
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
-	import { tradeAccounts } from '$lib/trade/accounts.svelte';
 	import { exitSide } from '$lib/trade/position';
 	import { sendOrder } from '$lib/trade/send';
 	import type { TExitTarget } from '$lib/trade/types';
@@ -11,8 +10,14 @@
 	let {
 		isOpen = $bindable(false),
 		targets,
+		noun = 'position',
 		onDone
-	}: { isOpen: boolean; targets: TExitTarget[]; onDone?: () => void } = $props();
+	}: {
+		isOpen: boolean;
+		targets: TExitTarget[];
+		noun?: string;
+		onDone?: () => void;
+	} = $props();
 
 	let placing = $state(false);
 
@@ -24,7 +29,7 @@
 			const quantity = Math.abs(t.quantity);
 			const ok = await sendOrder(
 				{
-					account_id: tradeAccounts.accountId,
+					account_id: t.account_id,
 					client_order_id: crypto.randomUUID(),
 					token: t.token,
 					side: exitSide(t.quantity),
@@ -48,13 +53,13 @@
 
 <SvaKoshModal bind:isOpen width="24rem" class="overflow-hidden">
 	<ModalHeader
-		title={`Exit ${targets.length} ${targets.length === 1 ? 'position' : 'positions'}`}
+		title={`Exit ${targets.length} ${targets.length === 1 ? noun : `${noun}s`}`}
 		subtitle="Market orders for the full open quantity"
 		onClose={() => (isOpen = false)}
 	/>
 	<div class="flex flex-col gap-4 p-4">
 		<ul class="divide-glass-border max-h-64 divide-y overflow-y-auto text-sm">
-			{#each targets as t (`${t.token}:${t.product}`)}
+			{#each targets as t (`${t.account_id}:${t.token}:${t.product}`)}
 				<li class="flex items-center justify-between gap-3 py-2">
 					<span class="truncate">
 						{t.symbol}

@@ -5,6 +5,8 @@
 	import CopyField from '$lib/components/trade/CopyField.svelte';
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
 	import SymbolImage from '$lib/components/symbol-image/SymbolImage.svelte';
+	import Delete from '$lib/components/svg-provider/material/Delete.svelte';
+	import Edit from '$lib/components/svg-provider/material/Edit.svelte';
 	import ExpandLess from '$lib/components/svg-provider/material/ExpandLess.svelte';
 	import { slide } from 'svelte/transition';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -12,17 +14,37 @@
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
 	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
-	import SvaKoshSwitch from '$lib/components/svakosh/SvaKoshSwitch.svelte';
+	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import { tradeAccounts } from '$lib/trade/accounts.svelte';
 	import { page } from '$app/state';
 	import { BROKERS, LIVE_BROKERS, brokerOf } from '$lib/trade/brokers';
-	import { CALLBACK_PATH, TRADE_STATIC_IP, EMPTY_STATE } from '$lib/trade/const';
+	import {
+		BROKER_VIEW_KEY,
+		CALLBACK_PATH,
+		EMPTY_STATE,
+		TABLE,
+		TRADE_STATIC_IP
+	} from '$lib/trade/const';
 	import { timeOf } from '$lib/trade/format';
 	import { linkAccount, unlinkAccount, updateAccount } from '$lib/trade/service';
 	import type { TBrokerAccount } from '$lib/trade/types';
 
 	type TMode = 'add' | 'edit' | 'remove';
+	type TView = 'cards' | 'table';
+
+	const VIEWS: { label: string; value: TView; svgPath: string }[] = [
+		{
+			label: 'Cards',
+			value: 'cards',
+			svgPath: 'M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z'
+		},
+		{ label: 'Table', value: 'table', svgPath: 'M3 4h18v4H3V4zm0 6h18v4H3v-4zm0 6h18v4H3v-4z' }
+	];
+	const ICON_BUTTON =
+		'bg-glass inline-flex size-9 items-center justify-center rounded-lg transition-colors';
+	const SOFT_BUTTON =
+		'[--terminal-bg-hover:color-mix(in_srgb,var(--primary)_22%,transparent)] [--terminal-bg:color-mix(in_srgb,var(--primary)_14%,transparent)] [--terminal-border-hover:transparent] [--terminal-border:transparent] [--terminal-fg:var(--primary)]';
 
 	const blank = () => Object.fromEntries(BROKERS.flatMap((b) => b.fields).map((f) => [f.key, '']));
 
@@ -33,26 +55,25 @@
 	let setupOpen = $state(false);
 	let tag = $state('');
 	let creds = $state<Record<string, string>>(blank());
-	let changeLogin = $state(false);
 	let busy = $state(false);
 	let loggingIn = $state('');
+	let view = $state<TView>('cards');
 
 	const brokerName = (value: string) => brokerOf(value)?.label ?? value;
 	const fields = $derived(
 		(brokerOf(broker)?.fields ?? []).filter((f) => mode === 'add' || f.key !== 'client_id')
 	);
-	const needsLogin = $derived(mode === 'add' || changeLogin);
+	const keyChanged = $derived(fields.some((f) => (creds[f.key] ?? '').trim()));
 	const guide = $derived(brokerOf(broker)?.guide);
 	const label = 'text-foreground/80 mb-2 ml-0 text-sm normal-case tracking-normal';
 	const redirectUrl = $derived(`${page.url.origin}${CALLBACK_PATH}`);
-	const ready = $derived(!needsLogin || fields.every((f) => (creds[f.key] ?? '').trim()));
+	const ready = $derived(mode !== 'add' || fields.every((f) => (creds[f.key] ?? '').trim()));
 	const titles: Record<TMode, string> = {
 		add: 'Link broker account',
-		edit: 'Edit broker account',
+		edit: 'Update broker account',
 		remove: 'Remove broker account'
 	};
 	const subtitles: Partial<Record<TMode, string>> = {
-		edit: 'Change the tag or update the API key.',
 		remove: 'Saved details are deleted. Orders at your broker stay.'
 	};
 
@@ -62,7 +83,6 @@
 		broker = account?.broker ?? LIVE_BROKERS[0].value;
 		tag = account?.account_tag ?? '';
 		creds = blank();
-		changeLogin = false;
 		setupOpen = false;
 		modalOpen = true;
 	}
@@ -78,7 +98,7 @@
 		if (mode === 'edit' && target) {
 			return updateAccount(target.id, {
 				account_tag: tag.trim(),
-				...(changeLogin ? { credentials: credentials() } : {})
+				...(keyChanged ? { credentials: credentials() } : {})
 			});
 		}
 		return target ? unlinkAccount(target.id) : null;
@@ -114,8 +134,23 @@
 		await tradeAccounts.load();
 	}
 
+	function setView(next: TView) {
+		view = next;
+		try {
+			localStorage.setItem(BROKER_VIEW_KEY, next);
+		} catch {
+			return;
+		}
+	}
+
 	onMount(() => {
 		tradeAccounts.load();
+		try {
+			const saved = localStorage.getItem(BROKER_VIEW_KEY);
+			if (saved && VIEWS.some((v) => v.value === saved)) view = saved as TView;
+		} catch {
+			return;
+		}
 	});
 </script>
 
@@ -124,11 +159,27 @@
 </svelte:head>
 
 <div class="text-foreground py-2">
-	<header class="mb-5">
-		<h1 class="text-primary mb-1 text-2xl tracking-tight">Broker accounts</h1>
-		<p class="text-muted-foreground text-sm">
-			Link the broker accounts you trade with, then log in on your broker's page each day.
-		</p>
+	<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+		<div>
+			<h1 class="text-primary mb-1 text-2xl tracking-tight">Broker accounts</h1>
+			<p class="text-muted-foreground text-sm">Log in on your broker's page once a day.</p>
+		</div>
+		<div class="flex w-full items-stretch gap-3 sm:w-auto">
+			{#if tradeAccounts.list.length}
+				<SvaKoshTabs
+					tabs={VIEWS}
+					activeTab={view}
+					onTabChange={setView}
+					class="flex-1 sm:flex-none [&>button]:flex-1 [&>button]:justify-center"
+				/>
+			{/if}
+			<SvaKoshButton
+				variant="solid"
+				label="Link account"
+				class="min-h-0 flex-1 px-5 py-0 text-xs sm:flex-none"
+				onclick={() => open('add')}
+			/>
+		</div>
 	</header>
 
 	{#if !tradeAccounts.loaded}
@@ -146,90 +197,130 @@
 			class={EMPTY_STATE}
 			title="No broker account linked"
 			description="Link your Angel One account to start trading from Svakosh."
-		>
-			<SvaKoshButton
-				variant="solid"
-				label="Link account"
-				class="px-6 py-3 text-sm"
-				onclick={() => open('add')}
-			/>
-		</EmptyState>
-	{:else}
-		<div class="mb-4">
-			<SvaKoshButton
-				variant="solid"
-				label="Link account"
-				class="px-6 py-3 text-sm"
-				onclick={() => open('add')}
-			/>
+		/>
+	{:else if view === 'table'}
+		<div class="border-glass-border overflow-x-auto rounded-xl border">
+			<table class={TABLE.table}>
+				<thead>
+					<tr class={TABLE.head}>
+						<th class={TABLE.th}>Account</th>
+						<th class={TABLE.th}>Broker</th>
+						<th class={TABLE.th}>Session</th>
+						<th class={TABLE.th}>Linked</th>
+						<th class="{TABLE.th} text-right">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each tradeAccounts.list as account (account.id)}
+						<tr class={TABLE.row}>
+							<td class={TABLE.td}>
+								<div class="flex items-center gap-2.5">
+									<SymbolImage
+										name={brokerOf(account.broker)?.logo ?? account.broker}
+										class="h-7 w-7 shrink-0"
+										initialClass="text-xs"
+									/>
+									<div>
+										{account.account_tag || account.client_id}
+										{#if account.account_tag}
+											<span class="text-muted-foreground block text-xs">{account.client_id}</span>
+										{/if}
+									</div>
+								</div>
+							</td>
+							<td class="{TABLE.td} text-muted-foreground">{brokerName(account.broker)}</td>
+							<td class={TABLE.td}>{@render session(account)}</td>
+							<td class="{TABLE.td} text-muted-foreground">{timeOf(account.created_at)}</td>
+							<td class={TABLE.td}>
+								<div class="flex items-center justify-end gap-2">
+									{@render iconActions(account)}
+									{@render loginButton(account)}
+								</div>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
 		</div>
-		<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+	{:else}
+		<div
+			class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))] gap-3 lg:grid-cols-[repeat(auto-fill,24rem)]"
+		>
 			{#each tradeAccounts.list as account (account.id)}
-				{@const active = account.id === tradeAccounts.accountId}
-				<div class="glass-panel rounded-xl p-4 {active ? 'border-primary/40' : ''}">
-					<div class="flex items-start justify-between gap-3">
-						<div class="flex min-w-0 items-center gap-3">
+				<div class="glass-panel rounded-xl p-4">
+					<div class="flex items-stretch justify-between gap-3">
+						<div class="flex min-w-0 items-start gap-3">
 							<SymbolImage
 								name={brokerOf(account.broker)?.logo ?? account.broker}
-								class="h-9 w-9 shrink-0"
+								class="size-11.5 shrink-0"
 								initialClass="text-base"
 							/>
 							<div class="min-w-0">
-								<p class="text-foreground truncate text-sm">
+								<p class="text-foreground truncate text-base font-medium">
 									{account.account_tag || account.client_id}
 								</p>
-								<p class="text-muted-foreground mt-0.5 text-xs">
-									{brokerName(account.broker)} · {account.client_id}
+								<p class="text-muted-foreground mt-1.5 text-xs">
+									{account.client_id}
 								</p>
 							</div>
 						</div>
-						{#if active}
-							<span class="text-primary shrink-0 text-xs tracking-widest uppercase">Active</span>
-						{:else}
-							<button
-								type="button"
-								class="text-muted-foreground hover:text-primary shrink-0 text-xs tracking-widest uppercase transition-colors"
-								onclick={() => tradeAccounts.select(account.id)}>Use</button
-							>
-						{/if}
-					</div>
-					<div class="mt-3 flex items-center justify-between gap-3">
-						<span class="text-xs {account.logged_in ? 'text-bullish' : 'text-muted-foreground'}">
-							{account.logged_in ? 'Logged in today' : 'Login required'}
-						</span>
-						<SvaKoshButton
-							variant={account.logged_in ? 'secondary' : 'primary'}
-							label={loggingIn === account.id
-								? 'Opening…'
-								: account.logged_in
-									? 'Log in again'
-									: 'Log in'}
-							disabled={loggingIn === account.id}
-							onclick={() => login(account)}
-						/>
+						<div class="flex shrink-0 flex-col items-end justify-between">
+							{@render session(account)}
+							<span class="text-muted-foreground text-xs">Linked {timeOf(account.created_at)}</span>
+						</div>
 					</div>
 					<div
-						class="border-border-subtle mt-3 flex items-center justify-between gap-3 border-t pt-3 text-xs"
+						class="border-border-subtle mt-3 flex items-center justify-between gap-3 border-t pt-3"
 					>
-						<span class="text-muted-foreground">Linked {timeOf(account.created_at)}</span>
-						<div class="flex gap-4">
-							<button
-								type="button"
-								class="text-muted-foreground hover:text-foreground transition-colors"
-								onclick={() => open('edit', account)}>Edit</button
-							>
-							<button
-								type="button"
-								class="text-bearish/80 hover:text-bearish transition-colors"
-								onclick={() => open('remove', account)}>Remove</button
-							>
-						</div>
+						<div class="flex gap-2">{@render iconActions(account)}</div>
+						{@render loginButton(account)}
 					</div>
 				</div>
 			{/each}
 		</div>
 	{/if}
 </div>
+
+{#snippet session(account: TBrokerAccount)}
+	<span
+		class="shrink-0 rounded px-2 py-1 text-xs font-semibold {account.logged_in
+			? 'bg-bullish-subtle text-bullish'
+			: 'bg-bearish-subtle text-bearish'}"
+	>
+		{account.logged_in ? 'Active' : 'Expired'}
+	</span>
+{/snippet}
+
+{#snippet loginButton(account: TBrokerAccount)}
+	<SvaKoshButton
+		variant="solid"
+		label={loggingIn === account.id ? 'Opening…' : account.logged_in ? 'Re-login' : 'Login'}
+		class="px-4 py-1.5 text-xs {account.logged_in ? SOFT_BUTTON : ''}"
+		disabled={loggingIn === account.id}
+		onclick={() => login(account)}
+	/>
+{/snippet}
+
+{#snippet iconActions(account: TBrokerAccount)}
+	<button
+		type="button"
+		aria-label="Edit {account.account_tag || account.client_id}"
+		title="Edit"
+		class="{ICON_BUTTON} text-muted-foreground hover:text-foreground"
+		onclick={() => open('edit', account)}
+	>
+		<Edit class="size-4.5" />
+	</button>
+	<button
+		type="button"
+		aria-label="Remove {account.account_tag || account.client_id}"
+		title="Remove"
+		class="{ICON_BUTTON} text-bearish/80 hover:text-bearish"
+		onclick={() => open('remove', account)}
+	>
+		<Delete class="size-4.5" />
+	</button>
+{/snippet}
 
 <SvaKoshModal bind:isOpen={modalOpen} width="34rem" class="overflow-hidden">
 	<ModalHeader
@@ -301,31 +392,28 @@
 				</div>
 			{/if}
 
-			{#if mode === 'edit'}
-				<div class="text-foreground flex items-center justify-between gap-3 text-sm">
-					Update API key
-					<SvaKoshSwitch bind:checked={changeLogin} size="sm" label="Update API key" />
-				</div>
-			{/if}
-
 			<div class="grid gap-4 sm:grid-cols-2">
-				{#if needsLogin}
-					{#each fields as field (field.key)}
-						<div class={field.key === 'client_id' ? 'order-1' : 'order-3 sm:col-span-2'}>
-							<SvaKoshLabel for={`cred-${field.key}`} class={label}>{field.label}</SvaKoshLabel>
-							<SvaKoshInput
-								id={`cred-${field.key}`}
-								bind:value={creds[field.key]}
-								placeholder={field.placeholder}
-								type={field.secret ? 'password' : 'text'}
-								autocomplete="off"
-								spellcheck="false"
-								class="text-sm"
-							/>
-						</div>
-					{/each}
-				{/if}
-				<div class="order-2">
+				{#each fields as field (field.key)}
+					<div
+						class={field.key === 'client_id'
+							? 'order-1'
+							: mode === 'edit'
+								? 'order-2'
+								: 'order-3 sm:col-span-2'}
+					>
+						<SvaKoshLabel for={`cred-${field.key}`} class={label}>{field.label}</SvaKoshLabel>
+						<SvaKoshInput
+							id={`cred-${field.key}`}
+							bind:value={creds[field.key]}
+							placeholder={mode === 'edit' ? 'Leave empty to keep it' : field.placeholder}
+							type={field.secret ? 'password' : 'text'}
+							autocomplete="off"
+							spellcheck="false"
+							class="text-sm"
+						/>
+					</div>
+				{/each}
+				<div class={mode === 'edit' ? 'order-1' : 'order-2'}>
 					<SvaKoshLabel for="account-tag" class={label}>Account tag (optional)</SvaKoshLabel>
 					<SvaKoshInput
 						id="account-tag"
@@ -337,37 +425,35 @@
 				</div>
 			</div>
 
-			{#if needsLogin}
-				{#if guide}
-					<section class="border-border-subtle bg-surface-elevated rounded-xl border">
-						<button
-							type="button"
-							aria-expanded={setupOpen}
-							onclick={() => (setupOpen = !setupOpen)}
-							class="text-foreground flex w-full items-center justify-between gap-3 px-4 py-3 text-sm"
-						>
-							How to set up your {brokerName(broker)} app
-							<ExpandLess
-								class="icon-size text-primary transition-transform {setupOpen ? '' : 'rotate-180'}"
-							/>
-						</button>
-						{#if setupOpen}
-							<div class="flex flex-col gap-3 px-4 pb-4" transition:slide={{ duration: 200 }}>
-								<ol class="text-muted-foreground flex list-decimal flex-col gap-1.5 pl-5 text-sm">
-									{#each guide.steps as step (step)}<li>{step}</li>{/each}
-								</ol>
-								<CopyField label="Redirect URL" value={redirectUrl} />
-								<CopyField label="Primary Static IP" value={TRADE_STATIC_IP} />
-								<a
-									href={guide.portal}
-									target="_blank"
-									rel="external noopener noreferrer"
-									class="text-primary self-start text-sm hover:underline">Open SmartAPI apps ↗</a
-								>
-							</div>
-						{/if}
-					</section>
-				{/if}
+			{#if guide}
+				<section class="border-border-subtle bg-surface-elevated rounded-xl border">
+					<button
+						type="button"
+						aria-expanded={setupOpen}
+						onclick={() => (setupOpen = !setupOpen)}
+						class="text-foreground flex w-full items-center justify-between gap-3 px-4 py-3 text-sm"
+					>
+						How to set up your {brokerName(broker)} app
+						<ExpandLess
+							class="icon-size text-primary transition-transform {setupOpen ? '' : 'rotate-180'}"
+						/>
+					</button>
+					{#if setupOpen}
+						<div class="flex flex-col gap-3 px-4 pb-4" transition:slide={{ duration: 200 }}>
+							<ol class="text-muted-foreground flex list-decimal flex-col gap-1.5 pl-5 text-sm">
+								{#each guide.steps as step (step)}<li>{step}</li>{/each}
+							</ol>
+							<CopyField label="Redirect URL" value={redirectUrl} />
+							<CopyField label="Primary Static IP" value={TRADE_STATIC_IP} />
+							<a
+								href={guide.portal}
+								target="_blank"
+								rel="external noopener noreferrer"
+								class="text-primary self-start text-sm hover:underline">Open SmartAPI apps ↗</a
+							>
+						</div>
+					{/if}
+				</section>
 			{/if}
 
 			<SvaKoshButton

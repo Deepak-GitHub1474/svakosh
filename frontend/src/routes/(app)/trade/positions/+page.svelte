@@ -1,20 +1,22 @@
 <script lang="ts">
-	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
-	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
 	import ExitAllModal from '$lib/components/trade/ExitAllModal.svelte';
+	import AccountCell from '$lib/components/trade/AccountCell.svelte';
 	import ExitModal from '$lib/components/trade/ExitModal.svelte';
 	import StatStrip from '$lib/components/trade/StatStrip.svelte';
+	import TradeTable from '$lib/components/trade/TradeTable.svelte';
 	import { marketFeed } from '$lib/market/feed.svelte';
-	import { TABLE, EMPTY_STATE } from '$lib/trade/const';
-	import { signed, tone } from '$lib/trade/format';
+	import { TABLE } from '$lib/trade/const';
+	import { compactSigned, signed, tone } from '$lib/trade/format';
 	import { isExpired, positionPnl } from '$lib/trade/position';
-	import { tradeResource } from '$lib/trade/resource.svelte';
+	import { tradeResource, type TAccountRow } from '$lib/trade/resource.svelte';
 	import { getPositions } from '$lib/trade/service';
 	import type { TExitTarget, TPosition } from '$lib/trade/types';
 	import { formatNumber } from '$lib/utils';
 
-	const positions = tradeResource<TPosition[]>(getPositions, []);
+	type TRow = TAccountRow<TPosition>;
+
+	const positions = tradeResource<TPosition>(getPositions);
 
 	let selected = $state<string[]>([]);
 	let exitTarget = $state<TExitTarget | null>(null);
@@ -22,7 +24,8 @@
 	let bulk = $state<TExitTarget[]>([]);
 	let bulkOpen = $state(false);
 
-	const keyOf = (p: TPosition) => `${p.token ?? `${p.exchange}:${p.symbol}`}:${p.product}`;
+	const keyOf = (p: TRow) =>
+		`${p.account.id}:${p.token ?? `${p.exchange}:${p.symbol}`}:${p.product}`;
 	const ltpOf = (p: TPosition) => (p.token ? marketFeed.quotes[p.token]?.ltp : undefined);
 	const canExit = (p: TPosition) => !!p.token && p.quantity !== 0 && !isExpired(p.token);
 
@@ -39,6 +42,7 @@
 	const overnight = $derived(rows.filter((p) => p.quantity !== 0 && p.overnight_quantity).length);
 	const picked = $derived(exitable.filter((p) => selected.includes(keyOf(p))));
 	const allPicked = $derived(!!exitable.length && picked.length === exitable.length);
+	const partial = $derived(picked.length > 0 && !allPicked);
 
 	$effect(() => {
 		if (!tokens) return;
@@ -50,9 +54,10 @@
 		if (selected.some((k) => !keys.has(k))) selected = selected.filter((k) => keys.has(k));
 	});
 
-	function target(p: TPosition, mode: TExitTarget['mode']): TExitTarget {
+	function target(p: TRow, mode: TExitTarget['mode']): TExitTarget {
 		return {
 			mode,
+			account_id: p.account.id,
 			token: p.token ?? '',
 			symbol: p.symbol,
 			exchange: p.exchange,
@@ -62,17 +67,17 @@
 		};
 	}
 
-	function openExit(p: TPosition, mode: TExitTarget['mode']) {
+	function openExit(p: TRow, mode: TExitTarget['mode']) {
 		exitTarget = target(p, mode);
 		exitOpen = true;
 	}
 
 	function openBulk() {
-		bulk = (picked.length ? picked : exitable).map((p) => target(p, 'exit'));
+		bulk = picked.map((p) => target(p, 'exit'));
 		bulkOpen = true;
 	}
 
-	function toggle(p: TPosition) {
+	function toggle(p: TRow) {
 		const key = keyOf(p);
 		selected = selected.includes(key) ? selected.filter((k) => k !== key) : [...selected, key];
 	}
@@ -87,119 +92,109 @@
 	}
 </script>
 
-{#if positions.loading && !positions.data.length}
-	<div class="relative h-40"><SvaKoshLoader inline message="" /></div>
-{:else if positions.error && !positions.data.length}
-	<EmptyState
-		class={EMPTY_STATE}
-		title="Could not load positions"
-		description={positions.error}
-		actionLabel="Retry"
-		onAction={positions.reload}
-	/>
-{:else if !positions.data.length}
-	<EmptyState
-		class={EMPTY_STATE}
-		title="No positions today"
-		description="Positions from today's trades and carried overnight ones will show here."
-	/>
-{:else}
-	<div class="mb-4 flex flex-wrap items-end justify-between gap-3">
-		<StatStrip
-			class="mb-0"
-			stats={[
-				{ label: 'Total P&L', value: signed(total), tone: tone(total) },
-				{ label: 'Open', value: String(open) },
-				{ label: 'Overnight', value: String(overnight) }
-			]}
-		/>
-		{#if exitable.length}
-			<SvaKoshButton
-				variant="bearish"
-				label={picked.length ? `Exit selected (${picked.length})` : 'Exit all'}
-				class="px-5 py-2.5 text-sm"
-				onclick={openBulk}
+<StatStrip
+	class="mb-4 shrink-0"
+	stats={[
+		{ label: 'Total P&L', value: signed(total), compact: compactSigned(total), tone: tone(total) },
+		{ label: 'Open', value: String(open) },
+		{ label: 'Overnight', value: String(overnight) }
+	]}
+/>
+
+<TradeTable
+	empty={!rows.length}
+	loading={positions.loading}
+	error={positions.error}
+	emptyTitle="No positions"
+	emptyDescription="Today's trades and positions carried overnight show here. Place an order from the Watchlist."
+	onRetry={positions.reload}
+>
+	{#snippet head()}
+		<th class="{TABLE.th} w-10">
+			<input
+				type="checkbox"
+				aria-label="Select all open positions"
+				class={TABLE.check}
+				checked={allPicked}
+				disabled={!exitable.length}
+				onchange={toggleAll}
+				{@attach (node) => {
+					node.indeterminate = partial;
+				}}
 			/>
-		{/if}
-	</div>
-	<div class={TABLE.wrap}>
-		<table class={TABLE.table}>
-			<thead>
-				<tr class={TABLE.head}>
-					<th class="{TABLE.th} w-10">
+		</th>
+		<th class={TABLE.th}>Account</th>
+		<th class={TABLE.th}>Instrument</th>
+		<th class={TABLE.th}>Product</th>
+		<th class="{TABLE.th} text-right">Qty</th>
+		<th class="{TABLE.th} text-right">Avg</th>
+		<th class="{TABLE.th} text-right">LTP</th>
+		<th class="{TABLE.th} text-right">P&L</th>
+		<th class="{TABLE.th} text-right">Actions</th>
+	{/snippet}
+	{#snippet body()}
+		{#each rows as p, i (keyOf(p))}
+			{@const pnl = pnls[i]}
+			{@const ltp = ltpOf(p)}
+			{@const expired = isExpired(p.token)}
+			<tr class="{TABLE.row} {p.quantity ? '' : 'text-muted-foreground'}">
+				<td class={TABLE.td}>
+					{#if canExit(p)}
 						<input
 							type="checkbox"
-							aria-label="Select all open positions"
-							class="accent-primary size-4 cursor-pointer align-middle disabled:cursor-default"
-							checked={allPicked}
-							disabled={!exitable.length}
-							onchange={toggleAll}
+							aria-label="Select {p.symbol}"
+							class={TABLE.check}
+							checked={selected.includes(keyOf(p))}
+							onchange={() => toggle(p)}
 						/>
-					</th>
-					<th class={TABLE.th}>Instrument</th>
-					<th class={TABLE.th}>Product</th>
-					<th class="{TABLE.th} text-right">Qty</th>
-					<th class="{TABLE.th} text-right">Avg</th>
-					<th class="{TABLE.th} text-right">LTP</th>
-					<th class="{TABLE.th} text-right">P&L</th>
-					<th class={TABLE.th}></th>
-				</tr>
-			</thead>
-			<tbody class={TABLE.body}>
-				{#each rows as p, i (keyOf(p))}
-					{@const pnl = pnls[i]}
-					{@const ltp = ltpOf(p)}
-					{@const expired = isExpired(p.token)}
-					<tr class="{TABLE.row} {p.quantity ? '' : 'text-muted-foreground'}">
-						<td class={TABLE.td}>
-							{#if canExit(p)}
-								<input
-									type="checkbox"
-									aria-label="Select {p.symbol}"
-									class="accent-primary size-4 cursor-pointer align-middle"
-									checked={selected.includes(keyOf(p))}
-									onchange={() => toggle(p)}
-								/>
-							{/if}
-						</td>
-						<td class={TABLE.td}>
-							{p.symbol}
-							<span class="text-muted-foreground ml-1 text-xs">{p.exchange}</span>
-							{#if expired}
-								<span class="text-muted-foreground ml-2 text-xs uppercase">Expired</span>
-							{:else if p.quantity && p.overnight_quantity}
-								<span class="text-primary ml-2 text-xs uppercase">Overnight</span>
-							{/if}
-						</td>
-						<td class="{TABLE.td} text-muted-foreground">{p.product}</td>
-						<td class="{TABLE.td} text-right {tone(p.quantity)}">{p.quantity}</td>
-						<td class="{TABLE.td} text-right">{formatNumber(p.average_price)}</td>
-						<td class="{TABLE.td} text-right">{ltp ? formatNumber(ltp) : '—'}</td>
-						<td class="{TABLE.td} text-right {pnl === null ? '' : tone(pnl)}">
-							{pnl === null ? '—' : signed(pnl)}
-						</td>
-						<td class="{TABLE.td} text-right">
-							{#if canExit(p)}
-								<div class="flex justify-end gap-4">
-									<button
-										type="button"
-										class="text-muted-foreground hover:text-foreground transition-colors"
-										onclick={() => openExit(p, 'stoploss')}>Stop-loss</button
-									>
-									<button
-										type="button"
-										class="text-bearish/80 hover:text-bearish transition-colors"
-										onclick={() => openExit(p, 'exit')}>Exit</button
-									>
-								</div>
-							{/if}
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</div>
-{/if}
+					{/if}
+				</td>
+				<AccountCell account={p.account} />
+				<td class={TABLE.td}>
+					{p.symbol}
+					{#if expired}
+						<span class="text-muted-foreground ml-2 text-xs uppercase">Expired</span>
+					{:else if p.quantity && p.overnight_quantity}
+						<span class="text-primary ml-2 text-xs uppercase">Overnight</span>
+					{/if}
+				</td>
+				<td class="{TABLE.td} text-muted-foreground">{p.product}</td>
+				<td class="{TABLE.td} text-right {tone(p.quantity)}">{p.quantity}</td>
+				<td class="{TABLE.td} text-right">{formatNumber(p.average_price)}</td>
+				<td class="{TABLE.td} text-right">{ltp ? formatNumber(ltp) : '—'}</td>
+				<td class="{TABLE.td} text-right {pnl === null ? '' : tone(pnl)}">
+					{pnl === null ? '—' : signed(pnl)}
+				</td>
+				<td class="{TABLE.td} text-right">
+					{#if canExit(p)}
+						<div class="flex justify-end gap-4">
+							<button
+								type="button"
+								class="text-muted-foreground hover:text-foreground transition-colors"
+								onclick={() => openExit(p, 'stoploss')}>Stop-loss</button
+							>
+							<button
+								type="button"
+								class="text-bearish/80 hover:text-bearish transition-colors"
+								onclick={() => openExit(p, 'exit')}>Exit</button
+							>
+						</div>
+					{/if}
+				</td>
+			</tr>
+		{/each}
+	{/snippet}
+</TradeTable>
+
+<div class="mt-4 flex shrink-0 justify-end">
+	<SvaKoshButton
+		variant="solid"
+		label={`Square off (${picked.length})`}
+		class="min-w-44 justify-center px-6 py-2.5 text-sm tabular-nums"
+		disabled={!picked.length}
+		onclick={openBulk}
+	/>
+</div>
 
 <ExitModal bind:isOpen={exitOpen} target={exitTarget} onDone={done} />
 <ExitAllModal bind:isOpen={bulkOpen} targets={bulk} onDone={done} />

@@ -1,4 +1,4 @@
-import { apiCall } from '$lib/api';
+import { apiCall, type TResult } from '$lib/api';
 import type {
 	TBrokerAccount,
 	TBrokerOrder,
@@ -50,6 +50,11 @@ export const getHoldings = (accountId: string) =>
 
 export const getFunds = (accountId: string) =>
 	apiCall<TFunds>(`/api/trade/funds${query({ account_id: accountId })}`, 'GET');
+
+export const getFundsRows = async (accountId: string): Promise<TResult<TFunds[]>> => {
+	const res = await getFunds(accountId);
+	return res.ok ? { ok: true, data: [res.data] } : res;
+};
 
 export const getOrders = (accountId: string) =>
 	apiCall<TBrokerOrder[]>(`/api/trade/orders${query({ account_id: accountId })}`, 'GET');

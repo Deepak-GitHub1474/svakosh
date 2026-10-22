@@ -5,7 +5,6 @@
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
-	import { tradeAccounts } from '$lib/trade/accounts.svelte';
 	import { exitSide } from '$lib/trade/position';
 	import { sendOrder } from '$lib/trade/send';
 	import type { TExitTarget } from '$lib/trade/types';
@@ -64,7 +63,7 @@
 		placing = true;
 		const ok = await sendOrder(
 			{
-				account_id: tradeAccounts.accountId,
+				account_id: target.account_id,
 				client_order_id: orderKey,
 				token: target.token,
 				side,

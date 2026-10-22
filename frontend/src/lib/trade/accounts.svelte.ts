@@ -15,7 +15,11 @@ class TradeAccounts {
 	loaded = $state(false);
 	error = $state('');
 	selectedId = $state('');
-	selected = $derived(this.list.find((a) => a.id === this.selectedId) ?? this.list[0]);
+	selected = $derived(
+		this.list.find((a) => a.id === this.selectedId && a.logged_in) ??
+			this.list.find((a) => a.logged_in) ??
+			this.list[0]
+	);
 	accountId = $derived(this.selected?.id ?? '');
 
 	async load() {

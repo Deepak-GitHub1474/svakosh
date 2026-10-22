@@ -67,6 +67,7 @@ export type TMargin = { required: number };
 
 export type TExitTarget = {
 	mode: 'exit' | 'stoploss';
+	account_id: string;
 	token: string;
 	symbol: string;
 	exchange: string;

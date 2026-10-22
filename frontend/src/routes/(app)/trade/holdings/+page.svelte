@@ -1,21 +1,29 @@
 <script lang="ts">
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
+	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
+	import ExitAllModal from '$lib/components/trade/ExitAllModal.svelte';
+	import AccountCell from '$lib/components/trade/AccountCell.svelte';
 	import ExitModal from '$lib/components/trade/ExitModal.svelte';
 	import StatStrip from '$lib/components/trade/StatStrip.svelte';
+	import TradeTable from '$lib/components/trade/TradeTable.svelte';
 	import { marketFeed } from '$lib/market/feed.svelte';
-	import { TABLE, EMPTY_STATE } from '$lib/trade/const';
-	import { percent, signed, tone } from '$lib/trade/format';
-	import { tradeResource } from '$lib/trade/resource.svelte';
+	import { TABLE } from '$lib/trade/const';
+	import { compact, compactSigned, percent, signed, tone } from '$lib/trade/format';
+	import { tradeResource, type TAccountRow } from '$lib/trade/resource.svelte';
 	import { getHoldings } from '$lib/trade/service';
 	import type { TExitTarget, THolding } from '$lib/trade/types';
 	import { formatNumber } from '$lib/utils';
 
-	const holdings = tradeResource<THolding[]>(getHoldings, [], 30_000);
+	type TRow = TAccountRow<THolding>;
 
+	const holdings = tradeResource<THolding>(getHoldings, 30_000);
+
+	let selected = $state<string[]>([]);
 	let exitTarget = $state<TExitTarget | null>(null);
 	let exitOpen = $state(false);
+	let bulk = $state<TExitTarget[]>([]);
+	let bulkOpen = $state(false);
 
+	const keyOf = (h: TRow) => `${h.account.id}:${h.isin || h.symbol}`;
 	const quantity = (h: THolding) => h.quantity + h.t1_quantity;
 	const ltpOf = (h: THolding) => (h.token && marketFeed.quotes[h.token]?.ltp) || h.last_price;
 	const prevOf = (h: THolding) =>
@@ -32,15 +40,25 @@
 	const day = $derived(
 		holdings.data.reduce((sum, h) => sum + (ltpOf(h) - prevOf(h)) * quantity(h), 0)
 	);
+	const exitable = $derived(holdings.data.filter((h) => h.token && quantity(h) > 0));
+	const picked = $derived(exitable.filter((h) => selected.includes(keyOf(h))));
+	const allPicked = $derived(!!exitable.length && picked.length === exitable.length);
+	const partial = $derived(picked.length > 0 && !allPicked);
 
 	$effect(() => {
 		if (!tokens) return;
 		return marketFeed.subscribe(tokens.split(','));
 	});
 
-	function openExit(h: THolding) {
-		exitTarget = {
+	$effect(() => {
+		const keys = new Set(exitable.map(keyOf));
+		if (selected.some((k) => !keys.has(k))) selected = selected.filter((k) => keys.has(k));
+	});
+
+	function target(h: TRow): TExitTarget {
+		return {
 			mode: 'exit',
+			account_id: h.account.id,
 			token: h.token ?? '',
 			symbol: h.symbol,
 			exchange: h.exchange,
@@ -48,94 +66,139 @@
 			quantity: quantity(h),
 			ltp: ltpOf(h)
 		};
+	}
+
+	function openExit(h: TRow) {
+		exitTarget = target(h);
 		exitOpen = true;
+	}
+
+	function openBulk() {
+		bulk = picked.map(target);
+		bulkOpen = true;
+	}
+
+	function toggle(h: TRow) {
+		const key = keyOf(h);
+		selected = selected.includes(key) ? selected.filter((k) => k !== key) : [...selected, key];
+	}
+
+	function toggleAll() {
+		selected = allPicked ? [] : exitable.map(keyOf);
+	}
+
+	function done() {
+		selected = [];
+		holdings.reload();
 	}
 </script>
 
-{#if holdings.loading && !holdings.data.length}
-	<div class="relative h-40"><SvaKoshLoader inline message="" /></div>
-{:else if holdings.error && !holdings.data.length}
-	<EmptyState
-		class={EMPTY_STATE}
-		title="Could not load holdings"
-		description={holdings.error}
-		actionLabel="Retry"
-		onAction={holdings.reload}
-	/>
-{:else if !holdings.data.length}
-	<EmptyState
-		class={EMPTY_STATE}
-		title="No holdings"
-		description="Shares in your demat account will show here."
-	/>
-{:else}
-	<StatStrip
-		stats={[
-			{ label: 'Invested', value: formatNumber(invested) },
-			{ label: 'Current', value: formatNumber(current) },
-			{
-				label: 'Total P&L',
-				value: `${signed(pnl)} (${percent(pnl, invested).toFixed(2)}%)`,
-				tone: tone(pnl)
-			},
-			{ label: "Day's P&L", value: signed(day), tone: tone(day) }
-		]}
-	/>
-	<div class={TABLE.wrap}>
-		<table class={TABLE.table}>
-			<thead>
-				<tr class={TABLE.head}>
-					<th class={TABLE.th}>Instrument</th>
-					<th class="{TABLE.th} text-right">Qty</th>
-					<th class="{TABLE.th} text-right">Avg</th>
-					<th class="{TABLE.th} text-right">LTP</th>
-					<th class="{TABLE.th} text-right">Current</th>
-					<th class="{TABLE.th} text-right">P&L</th>
-					<th class="{TABLE.th} text-right">Day</th>
-					<th class={TABLE.th}></th>
-				</tr>
-			</thead>
-			<tbody class={TABLE.body}>
-				{#each holdings.data as h (h.isin || h.symbol)}
-					{@const ltp = ltpOf(h)}
-					{@const value = ltp * quantity(h)}
-					{@const gain = value - h.average_price * quantity(h)}
-					{@const dayGain = (ltp - prevOf(h)) * quantity(h)}
-					<tr class={TABLE.row}>
-						<td class={TABLE.td}>
-							{h.symbol}
-							<span class="text-muted-foreground ml-1 text-xs">{h.exchange}</span>
-						</td>
-						<td class="{TABLE.td} text-right">
-							{quantity(h)}
-							{#if h.t1_quantity}<span class="text-muted-foreground ml-1 text-xs"
-									>T1 {h.t1_quantity}</span
-								>{/if}
-						</td>
-						<td class="{TABLE.td} text-right">{formatNumber(h.average_price)}</td>
-						<td class="{TABLE.td} text-right">{formatNumber(ltp)}</td>
-						<td class="{TABLE.td} text-right">{formatNumber(value)}</td>
-						<td class="{TABLE.td} text-right {tone(gain)}">
-							{signed(gain)}
-							<span class="ml-1 text-xs opacity-70"
-								>{percent(gain, h.average_price * quantity(h)).toFixed(2)}%</span
-							>
-						</td>
-						<td class="{TABLE.td} text-right {tone(dayGain)}">{signed(dayGain)}</td>
-						<td class="{TABLE.td} text-right">
-							{#if h.token}
-								<button
-									type="button"
-									class="text-bearish/80 hover:text-bearish transition-colors"
-									onclick={() => openExit(h)}>Exit</button
-								>
-							{/if}
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</div>
-{/if}
+<StatStrip
+	class="mb-4 shrink-0"
+	stats={[
+		{ label: 'Invested', value: formatNumber(invested), compact: compact(invested) },
+		{ label: 'Current', value: formatNumber(current), compact: compact(current) },
+		{
+			label: 'Total P&L',
+			value: `${signed(pnl)} (${percent(pnl, invested).toFixed(2)}%)`,
+			compact: `${compactSigned(pnl)} (${percent(pnl, invested).toFixed(1)}%)`,
+			tone: tone(pnl)
+		},
+		{ label: "Day's P&L", value: signed(day), compact: compactSigned(day), tone: tone(day) }
+	]}
+/>
 
-<ExitModal bind:isOpen={exitOpen} target={exitTarget} onDone={holdings.reload} />
+<TradeTable
+	empty={!holdings.data.length}
+	loading={holdings.loading}
+	error={holdings.error}
+	emptyTitle="No holdings"
+	emptyDescription="Shares in your demat account show here."
+	onRetry={holdings.reload}
+>
+	{#snippet head()}
+		<th class="{TABLE.th} w-10">
+			<input
+				type="checkbox"
+				aria-label="Select all holdings"
+				class={TABLE.check}
+				checked={allPicked}
+				disabled={!exitable.length}
+				onchange={toggleAll}
+				{@attach (node) => {
+					node.indeterminate = partial;
+				}}
+			/>
+		</th>
+		<th class={TABLE.th}>Account</th>
+		<th class={TABLE.th}>Instrument</th>
+		<th class="{TABLE.th} text-right">Qty</th>
+		<th class="{TABLE.th} text-right">Avg</th>
+		<th class="{TABLE.th} text-right">LTP</th>
+		<th class="{TABLE.th} text-right">Current</th>
+		<th class="{TABLE.th} text-right">P&L</th>
+		<th class="{TABLE.th} text-right">Day</th>
+		<th class="{TABLE.th} text-right">Actions</th>
+	{/snippet}
+	{#snippet body()}
+		{#each holdings.data as h (keyOf(h))}
+			{@const ltp = ltpOf(h)}
+			{@const value = ltp * quantity(h)}
+			{@const gain = value - h.average_price * quantity(h)}
+			{@const dayGain = (ltp - prevOf(h)) * quantity(h)}
+			<tr class={TABLE.row}>
+				<td class={TABLE.td}>
+					{#if h.token}
+						<input
+							type="checkbox"
+							aria-label="Select {h.symbol}"
+							class={TABLE.check}
+							checked={selected.includes(keyOf(h))}
+							onchange={() => toggle(h)}
+						/>
+					{/if}
+				</td>
+				<AccountCell account={h.account} />
+				<td class={TABLE.td}>{h.symbol}</td>
+				<td class="{TABLE.td} text-right">
+					{quantity(h)}
+					{#if h.t1_quantity}<span class="text-muted-foreground ml-1 text-xs"
+							>T1 {h.t1_quantity}</span
+						>{/if}
+				</td>
+				<td class="{TABLE.td} text-right">{formatNumber(h.average_price)}</td>
+				<td class="{TABLE.td} text-right">{formatNumber(ltp)}</td>
+				<td class="{TABLE.td} text-right">{formatNumber(value)}</td>
+				<td class="{TABLE.td} text-right {tone(gain)}">
+					{signed(gain)}
+					<span class="ml-1 text-xs opacity-70"
+						>{percent(gain, h.average_price * quantity(h)).toFixed(2)}%</span
+					>
+				</td>
+				<td class="{TABLE.td} text-right {tone(dayGain)}">{signed(dayGain)}</td>
+				<td class="{TABLE.td} text-right">
+					{#if h.token}
+						<button
+							type="button"
+							class="text-bearish/80 hover:text-bearish transition-colors"
+							onclick={() => openExit(h)}>Exit</button
+						>
+					{/if}
+				</td>
+			</tr>
+		{/each}
+	{/snippet}
+</TradeTable>
+
+<div class="mt-4 flex shrink-0 justify-end">
+	<SvaKoshButton
+		variant="solid"
+		label={`Square off (${picked.length})`}
+		class="min-w-44 justify-center px-6 py-2.5 text-sm tabular-nums"
+		disabled={!picked.length}
+		onclick={openBulk}
+	/>
+</div>
+
+<ExitModal bind:isOpen={exitOpen} target={exitTarget} onDone={done} />
+<ExitAllModal bind:isOpen={bulkOpen} targets={bulk} noun="holding" onDone={done} />

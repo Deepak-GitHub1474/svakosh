@@ -27,6 +27,7 @@
 
 	let containerRef: HTMLDivElement;
 	let highlightStyle = $state({ width: '0px', left: '0px', opacity: 0 });
+	let animate = $state(false);
 
 	function updateHighlight() {
 		if (!containerRef) return;
@@ -46,9 +47,15 @@
 	});
 
 	onMount(() => {
+		const observer = new ResizeObserver(updateHighlight);
+		observer.observe(containerRef);
+		containerRef.querySelectorAll('[data-tab-value]').forEach((tab) => observer.observe(tab));
 		updateHighlight();
-		window.addEventListener('resize', updateHighlight);
-		return () => window.removeEventListener('resize', updateHighlight);
+		const frame = requestAnimationFrame(() => (animate = true));
+		return () => {
+			cancelAnimationFrame(frame);
+			observer.disconnect();
+		};
 	});
 </script>
 
@@ -60,7 +67,10 @@
 	)}
 >
 	<div 
-		class="absolute top-1 bottom-1 bg-gradient-to-b from-[#f0d06b] via-primary to-[#b89530] rounded-full transition-all duration-300 ease-out shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),0_2px_10px_rgba(212,175,55,0.4)]"
+		class={cn(
+			'absolute top-1 bottom-1 bg-gradient-to-b from-[#f0d06b] via-primary to-[#b89530] rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),0_2px_10px_rgba(212,175,55,0.4)]',
+			animate && 'transition-all duration-300 ease-out'
+		)}
 		style:width={highlightStyle.width}
 		style:left={highlightStyle.left}
 		style:opacity={highlightStyle.opacity}

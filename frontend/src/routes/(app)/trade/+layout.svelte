@@ -7,28 +7,26 @@
 	import { BRAND } from '$lib/brand';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
-	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
-	import { accountLabel, tradeAccounts } from '$lib/trade/accounts.svelte';
+	import { tradeAccounts } from '$lib/trade/accounts.svelte';
 	import { TRADE_TABS, type TTradeRoute, EMPTY_STATE } from '$lib/trade/const';
 
 	let { children }: { children: Snippet } = $props();
 
-	let isSelectorOpen = $state(false);
 	let loggingIn = $state(false);
 
 	const active = $derived<TTradeRoute>(
 		TRADE_TABS.find((t) => page.url.pathname.startsWith(t.value))?.value ?? TRADE_TABS[0].value
 	);
-	const accountOptions = $derived(
-		tradeAccounts.list.map((a) => ({ label: accountLabel(a), value: a.id }))
+	const loggedOut = $derived(tradeAccounts.list.filter((a) => !a.logged_in));
+	const needsLogin = $derived(
+		!!tradeAccounts.list.length && loggedOut.length === tradeAccounts.list.length
 	);
-	const needsLogin = $derived(!!tradeAccounts.selected && !tradeAccounts.selected.logged_in);
 
 	async function login() {
-		if (!tradeAccounts.selected) return;
+		if (!loggedOut.length) return;
 		loggingIn = true;
-		const error = await tradeAccounts.login(tradeAccounts.selected.id);
+		const error = await tradeAccounts.login(loggedOut[0].id);
 		if (error) loggingIn = false;
 	}
 
@@ -43,34 +41,28 @@
 	<title>{title} | {BRAND.name}</title>
 </svelte:head>
 
-<div class="text-foreground py-2">
-	<header class="mb-4 flex flex-wrap items-end justify-between gap-3">
-		<div>
-			<h1 class="text-primary mb-1 text-2xl tracking-tight">Trade</h1>
-			<p class="text-muted-foreground text-sm">
-				Positions, holdings, orders and funds from your broker
-			</p>
-		</div>
-		{#if accountOptions.length}
-			<SvaKoshSelector
-				class="w-60"
-				placement="bottom"
-				options={accountOptions}
-				value={tradeAccounts.accountId}
-				bind:isOpen={isSelectorOpen}
-				onSelect={(id: string) => tradeAccounts.select(id)}
+<div class="text-foreground -mb-4 flex h-[calc(100dvh-4.25rem)] flex-col pt-2">
+	<header class="mb-5 flex shrink-0 flex-wrap items-center justify-between gap-3">
+		<div class="overflow-x-auto">
+			<SvaKoshTabs
+				tabs={TRADE_TABS}
+				activeTab={active}
+				onTabChange={(href: TTradeRoute) => goto(resolve(href))}
+				class="border-primary/20 bg-primary-subtle w-fit"
 			/>
+		</div>
+		{#if loggedOut.length && !needsLogin}
+			<p class="text-muted-foreground text-xs">
+				{loggedOut.map((a) => a.account_tag || a.client_id).join(', ')} not logged in today.
+				<button
+					type="button"
+					class="text-primary ml-1 hover:underline"
+					disabled={loggingIn}
+					onclick={login}>{loggingIn ? 'Opening…' : 'Log in'}</button
+				>
+			</p>
 		{/if}
 	</header>
-
-	<div class="mb-5 overflow-x-auto">
-		<SvaKoshTabs
-			tabs={TRADE_TABS}
-			activeTab={active}
-			onTabChange={(href: TTradeRoute) => goto(resolve(href))}
-			class="border-primary/20 bg-primary-subtle w-fit"
-		/>
-	</div>
 
 	{#if !tradeAccounts.loaded}
 		<div class="relative h-40"><SvaKoshLoader inline message="" /></div>
@@ -99,6 +91,6 @@
 			onAction={login}
 		/>
 	{:else}
-		{@render children()}
+		<div class="flex min-h-0 flex-1 flex-col">{@render children()}</div>
 	{/if}
 </div>

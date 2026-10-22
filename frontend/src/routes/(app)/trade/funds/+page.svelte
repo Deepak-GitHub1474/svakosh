@@ -1,87 +1,80 @@
 <script lang="ts">
-	import { EMPTY_STATE } from '$lib/trade/const';
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
+	import AccountCell from '$lib/components/trade/AccountCell.svelte';
 	import StatStrip from '$lib/components/trade/StatStrip.svelte';
-	import { signed, tone } from '$lib/trade/format';
+	import TradeTable from '$lib/components/trade/TradeTable.svelte';
+	import { TABLE } from '$lib/trade/const';
+	import { compact, signed, tone } from '$lib/trade/format';
 	import { tradeResource } from '$lib/trade/resource.svelte';
-	import { getFunds } from '$lib/trade/service';
+	import { getFundsRows } from '$lib/trade/service';
 	import type { TFunds } from '$lib/trade/types';
 	import { formatNumber } from '$lib/utils';
 
-	type TLine = { label: string; value: number; pnl?: boolean };
+	const COLUMNS: { label: string; key: keyof TFunds; pnl?: boolean }[] = [
+		{ label: 'Available', key: 'available' },
+		{ label: 'Used', key: 'used' },
+		{ label: 'Opening', key: 'opening_balance' },
+		{ label: 'Pay-in', key: 'pay_in' },
+		{ label: 'Pay-out', key: 'pay_out' },
+		{ label: 'Collateral', key: 'collateral' },
+		{ label: 'SPAN', key: 'span' },
+		{ label: 'Exposure', key: 'exposure' },
+		{ label: 'Premium', key: 'option_premium' },
+		{ label: 'Realised', key: 'realised_pnl', pnl: true },
+		{ label: 'Unrealised', key: 'unrealised_pnl', pnl: true }
+	];
 
-	const funds = tradeResource<TFunds | null>(getFunds, null, 30_000);
+	const funds = tradeResource<TFunds>(getFundsRows, 30_000);
 
-	const groups = $derived.by<{ title: string; lines: TLine[] }[]>(() => {
-		const f = funds.data;
-		if (!f) return [];
-		return [
-			{
-				title: 'Cash',
-				lines: [
-					{ label: 'Opening balance', value: f.opening_balance },
-					{ label: 'Pay-in today', value: f.pay_in },
-					{ label: 'Pay-out', value: f.pay_out },
-					{ label: 'Collateral', value: f.collateral }
-				]
-			},
-			{
-				title: 'Margin used',
-				lines: [
-					{ label: 'SPAN', value: f.span },
-					{ label: 'Exposure', value: f.exposure },
-					{ label: 'Option premium', value: f.option_premium },
-					{ label: 'Total used', value: f.used }
-				]
-			},
-			{
-				title: 'P&L',
-				lines: [
-					{ label: 'Realised', value: f.realised_pnl, pnl: true },
-					{ label: 'Unrealised', value: f.unrealised_pnl, pnl: true }
-				]
-			}
-		];
-	});
+	const sum = (key: keyof TFunds) => funds.data.reduce((total, f) => total + f[key], 0);
 </script>
 
-{#if funds.loading && !funds.data}
-	<div class="relative h-40"><SvaKoshLoader inline message="" /></div>
-{:else if funds.error && !funds.data}
-	<EmptyState
-		class={EMPTY_STATE}
-		title="Could not load funds"
-		description={funds.error}
-		actionLabel="Retry"
-		onAction={funds.reload}
-	/>
-{:else if funds.data}
-	<StatStrip
-		stats={[
-			{ label: 'Available', value: formatNumber(funds.data.available), tone: 'text-primary' },
-			{ label: 'Used', value: formatNumber(funds.data.used) },
-			{ label: 'Opening balance', value: formatNumber(funds.data.opening_balance) }
-		]}
-	/>
-	<div class="grid gap-3 md:grid-cols-3">
-		{#each groups as group (group.title)}
-			<section class="glass-panel rounded-xl px-4 py-3">
-				<h2 class="text-muted-foreground mb-2 text-xs tracking-widest uppercase">{group.title}</h2>
-				<dl class="divide-glass-border divide-y text-sm">
-					{#each group.lines as line (line.label)}
-						<div class="flex items-center justify-between gap-4 py-2">
-							<dt class="text-muted-foreground">{line.label}</dt>
-							<dd class="tabular-nums {line.pnl ? tone(line.value) : 'text-foreground'}">
-								{line.pnl ? signed(line.value) : formatNumber(line.value)}
-							</dd>
-						</div>
-					{/each}
-				</dl>
-			</section>
+<StatStrip
+	class="mb-4 shrink-0"
+	stats={[
+		{
+			label: 'Available',
+			value: formatNumber(sum('available')),
+			compact: compact(sum('available')),
+			tone: 'text-primary'
+		},
+		{ label: 'Used', value: formatNumber(sum('used')), compact: compact(sum('used')) },
+		{
+			label: 'Opening balance',
+			short: 'Opening',
+			value: formatNumber(sum('opening_balance')),
+			compact: compact(sum('opening_balance'))
+		}
+	]}
+/>
+
+<TradeTable
+	empty={!funds.data.length}
+	loading={funds.loading}
+	error={funds.error}
+	emptyTitle="No funds"
+	emptyDescription="Margin from your logged-in broker accounts shows here."
+	onRetry={funds.reload}
+>
+	{#snippet head()}
+		<th class={TABLE.th}>Account</th>
+		{#each COLUMNS as column (column.key)}
+			<th class="{TABLE.th} text-right">{column.label}</th>
 		{/each}
-	</div>
-	<p class="text-muted-foreground mt-4 text-xs">
-		Margin as reported by your broker. Add or withdraw funds in your broker app.
-	</p>
-{/if}
+	{/snippet}
+	{#snippet body()}
+		{#each funds.data as f (f.account.id)}
+			<tr class={TABLE.row}>
+				<AccountCell account={f.account} />
+				{#each COLUMNS as column (column.key)}
+					<td class="{TABLE.td} text-right {column.pnl ? tone(f[column.key]) : ''}">
+						{column.pnl ? signed(f[column.key]) : formatNumber(f[column.key])}
+					</td>
+				{/each}
+			</tr>
+		{/each}
+	{/snippet}
+</TradeTable>
+
+<p class="text-muted-foreground mt-3 shrink-0 text-xs">
+	Margin as reported by your broker. Add or withdraw funds in your broker app.
+</p>
