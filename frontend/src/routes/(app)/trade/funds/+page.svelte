@@ -74,7 +74,3 @@
 		{/each}
 	{/snippet}
 </TradeTable>
-
-<p class="text-muted-foreground mt-3 shrink-0 text-xs">
-	Margin as reported by your broker. Add or withdraw funds in your broker app.
-</p>
