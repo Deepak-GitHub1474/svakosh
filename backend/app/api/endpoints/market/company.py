@@ -17,6 +17,7 @@ NSE_EQUITY_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
 REFRESH_SECONDS = 86400.0
 RETRY_SECONDS = 600.0
 FETCH_TIMEOUT_SECONDS = 10.0
+MAX_LIST_BYTES = 2 * 1024 * 1024
 LEGAL_SUFFIX = re.compile(r"\s+(Limited|Ltd\.?)$", re.IGNORECASE)
 INDEX_NAMES = {
     token.split(":")[2]: name
@@ -44,12 +45,19 @@ class CompanyNames:
 
     async def load(self) -> bool:
         try:
-            async with httpx.AsyncClient(
-                timeout=FETCH_TIMEOUT_SECONDS, headers={"User-Agent": "Mozilla/5.0"}
-            ) as client:
-                res = await client.get(NSE_EQUITY_URL)
+            body = bytearray()
+            async with (
+                httpx.AsyncClient(
+                    timeout=FETCH_TIMEOUT_SECONDS, headers={"User-Agent": "Mozilla/5.0"}
+                ) as client,
+                client.stream("GET", NSE_EQUITY_URL) as res,
+            ):
                 res.raise_for_status()
-            rows = csv.DictReader(io.StringIO(res.text))
+                async for chunk in res.aiter_bytes():
+                    body.extend(chunk)
+                    if len(body) > MAX_LIST_BYTES:
+                        raise ValueError(f"NSE list is over {MAX_LIST_BYTES} bytes")
+            rows = csv.DictReader(io.StringIO(body.decode("utf-8", "replace")))
             self.names = {
                 row["SYMBOL"].strip(): LEGAL_SUFFIX.sub(
                     "", row["NAME OF COMPANY"].strip()
@@ -57,7 +65,7 @@ class CompanyNames:
                 for row in rows
             }
             return True
-        except (httpx.HTTPError, KeyError) as e:
+        except (httpx.HTTPError, KeyError, ValueError) as e:
             logger.warning(
                 "Company names: NSE list unavailable.\nReason: %s: %s",
                 type(e).__name__,

@@ -50,6 +50,7 @@
 
 	let view = $state('today');
 	let filter = $state<TFilter>('all');
+	let side = $state<'all' | 'BUY' | 'SELL'>('all');
 	let expanded = $state('');
 	let editing = $state<TBookRow | null>(null);
 	let modifyOpen = $state(false);
@@ -65,12 +66,24 @@
 	const trades = tradeResource<TTrade>(getTrades);
 
 	const allRows = $derived([...book.data].sort((a, b) => b.updated_at.localeCompare(a.updated_at)));
-	const matches = (o: TBookRow, f: TFilter) => f === 'all' || FILTER_STATUSES[f].includes(o.status);
-	const rows = $derived(allRows.filter((o) => matches(o, filter)));
-	const filters = $derived(
-		(Object.keys(FILTER_LABELS) as TFilter[]).map((f) => ({
-			label: `${FILTER_LABELS[f]} (${allRows.filter((o) => matches(o, f)).length})`,
+	const matches = (status: TOrderStatus, f: TFilter) =>
+		f === 'all' || FILTER_STATUSES[f].includes(status);
+	const rows = $derived(allRows.filter((o) => matches(o.status, filter)));
+	const historyRows = $derived(history.data.filter((o) => matches(o.status, filter)));
+	const tradeRows = $derived(trades.data.filter((t) => side === 'all' || t.side === side));
+	const statusTabs = $derived.by(() => {
+		const list = view === 'history' ? history.data : allRows;
+		return (Object.keys(FILTER_LABELS) as TFilter[]).map((f) => ({
+			label: `${FILTER_LABELS[f]} (${list.filter((o) => matches(o.status, f)).length})`,
 			value: f
+		}));
+	});
+	const sideTabs = $derived(
+		(['all', 'BUY', 'SELL'] as const).map((v) => ({
+			label: `${v === 'all' ? 'All' : v === 'BUY' ? 'Buy' : 'Sell'} (${
+				v === 'all' ? trades.data.length : trades.data.filter((t) => t.side === v).length
+			})`,
+			value: v
 		}))
 	);
 	const tokens = $derived(
@@ -197,9 +210,16 @@
 
 <div class="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-3">
 	<SvaKoshTabs tabs={VIEWS} activeTab={view} onTabChange={setView} class="w-fit" />
-	{#if view === 'today'}
+	{#if view === 'trades'}
 		<SvaKoshTabs
-			tabs={filters}
+			tabs={sideTabs}
+			activeTab={side}
+			onTabChange={(next: 'all' | 'BUY' | 'SELL') => (side = next)}
+			class="w-fit max-w-full overflow-x-auto"
+		/>
+	{:else}
+		<SvaKoshTabs
+			tabs={statusTabs}
 			activeTab={filter}
 			onTabChange={(next: TFilter) => (filter = next)}
 			class="w-fit max-w-full overflow-x-auto"
@@ -265,7 +285,7 @@
 	</TradeTable>
 {:else if view === 'trades'}
 	<TradeTable
-		empty={!trades.data.length}
+		empty={!tradeRows.length}
 		loading={trades.loading}
 		error={trades.error}
 		emptyTitle="No trades today"
@@ -283,7 +303,7 @@
 			<th class="{TABLE.th} text-right">Value</th>
 		{/snippet}
 		{#snippet body()}
-			{#each trades.data as t (`${t.account.id}:${t.trade_id}:${t.order_id}`)}
+			{#each tradeRows as t (`${t.account.id}:${t.trade_id}:${t.order_id}`)}
 				<tr class={TABLE.row}>
 					<td class="{TABLE.td} text-muted-foreground">{t.time}</td>
 					<AccountCell account={t.account} />
@@ -299,7 +319,7 @@
 	</TradeTable>
 {:else}
 	<TradeTable
-		empty={!history.data.length}
+		empty={!historyRows.length}
 		loading={history.loading}
 		error={history.error}
 		emptyTitle="No order history"
@@ -317,7 +337,7 @@
 			<th class="{TABLE.th} min-w-72">Status</th>
 		{/snippet}
 		{#snippet body()}
-			{#each history.data as o (o.id)}
+			{#each historyRows as o (o.id)}
 				<tr class={TABLE.row}>
 					<td class="{TABLE.td} text-muted-foreground">{timeOf(o.created_at)}</td>
 					<AccountCell account={o.account} />
