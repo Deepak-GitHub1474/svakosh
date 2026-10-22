@@ -175,7 +175,7 @@
 			{#if expanded === key}
 				<p
 					transition:slide={{ duration: 150 }}
-					class="text-muted-foreground mt-1 max-h-24 w-64 overflow-y-auto text-xs whitespace-normal"
+					class="text-muted-foreground mt-1 max-h-28 w-64 overflow-y-auto text-sm whitespace-normal"
 				>
 					{o.message}
 				</p>
@@ -226,7 +226,7 @@
 			<th class={TABLE.th}>Type</th>
 			<th class="{TABLE.th} text-right">Qty</th>
 			<th class="{TABLE.th} text-right">Price</th>
-			<th class={TABLE.th}>Status</th>
+			<th class="{TABLE.th} min-w-72">Status</th>
 			<th class="{TABLE.th} text-right">Actions</th>
 		{/snippet}
 		{#snippet body()}
@@ -314,7 +314,7 @@
 			<th class={TABLE.th}>Type</th>
 			<th class="{TABLE.th} text-right">Qty</th>
 			<th class="{TABLE.th} text-right">Price</th>
-			<th class={TABLE.th}>Status</th>
+			<th class="{TABLE.th} min-w-72">Status</th>
 		{/snippet}
 		{#snippet body()}
 			{#each history.data as o (o.id)}
