@@ -12,6 +12,9 @@
 
 	type TKind = 'MARKET' | 'LIMIT';
 
+	const TICK = 0.05;
+	const SL_BUFFER = 0.005;
+
 	const KINDS: { label: string; value: TKind }[] = [
 		{ label: 'Market', value: 'MARKET' },
 		{ label: 'Limit', value: 'LIMIT' }
@@ -34,6 +37,8 @@
 	let kind = $state<TKind>('MARKET');
 	let price = $state('');
 	let level = $state('');
+	let limit = $state('');
+	let limitEdited = $state(false);
 	let orderKey = $state('');
 	let placing = $state(false);
 
@@ -43,6 +48,8 @@
 		kind = 'MARKET';
 		price = target.ltp ? target.ltp.toFixed(2) : '';
 		level = '';
+		limit = '';
+		limitEdited = false;
 		orderKey = crypto.randomUUID();
 	});
 
@@ -69,9 +76,25 @@
 		if (!below && levelValue <= ltp) return 'Must be above LTP.';
 		return '';
 	});
+	const limitValue = $derived(Number(limit));
+	const limitError = $derived.by(() => {
+		if (mode !== 'stoploss' || !limit || !(levelValue > 0)) return '';
+		if (!(limitValue > 0)) return 'Enter a limit price.';
+		if (side === 'SELL' && limitValue > levelValue) return 'Limit must be at or below the trigger.';
+		if (side === 'BUY' && limitValue < levelValue) return 'Limit must be at or above the trigger.';
+		return '';
+	});
 	const valid = $derived(
-		qtyValid && (priced ? levelValue > 0 && !levelError : kind === 'MARKET' || Number(price) > 0)
+		qtyValid &&
+			(priced ? levelValue > 0 && !levelError : kind === 'MARKET' || Number(price) > 0) &&
+			(mode !== 'stoploss' || (limitValue > 0 && !limitError))
 	);
+
+	$effect(() => {
+		if (mode !== 'stoploss' || limitEdited || !(levelValue > 0)) return;
+		const buffer = Math.max(TICK, Math.round((levelValue * SL_BUFFER) / TICK) * TICK);
+		limit = (side === 'SELL' ? levelValue - buffer : levelValue + buffer).toFixed(2);
+	});
 
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
@@ -84,9 +107,16 @@
 				token: target.token,
 				side,
 				product: target.product,
-				type: mode === 'stoploss' ? 'SL-M' : mode === 'target' ? 'LIMIT' : kind,
+				type: mode === 'stoploss' ? 'SL' : mode === 'target' ? 'LIMIT' : kind,
 				quantity: qty,
-				price: mode === 'target' ? levelValue : !priced && kind === 'LIMIT' ? Number(price) : 0,
+				price:
+					mode === 'stoploss'
+						? limitValue
+						: mode === 'target'
+							? levelValue
+							: kind === 'LIMIT'
+								? Number(price)
+								: 0,
 				trigger_price: mode === 'stoploss' ? levelValue : 0
 			},
 			`${TITLES[mode]} ${qty} ${target.symbol}`
@@ -138,10 +168,28 @@
 					<p class="mt-1 text-xs {levelError ? 'text-bearish' : 'text-muted-foreground'}">
 						{levelError ||
 							(mode === 'stoploss'
-								? 'Exits at market once the trigger is hit.'
+								? 'Sends the limit order once the trigger is hit.'
 								: 'Exits at this price or better.')}
 					</p>
 				</div>
+				{#if mode === 'stoploss'}
+					<div>
+						<SvaKoshLabel for="position-limit">Limit price</SvaKoshLabel>
+						<SvaKoshInput
+							id="position-limit"
+							bind:value={limit}
+							oninput={() => (limitEdited = true)}
+							type="number"
+							inputmode="decimal"
+							min="0"
+							step="0.05"
+							class={limitError ? 'border-bearish-muted' : ''}
+						/>
+						{#if limitError}
+							<p class="text-bearish mt-1 text-xs">{limitError}</p>
+						{/if}
+					</div>
+				{/if}
 			{:else}
 				<div>
 					<SvaKoshLabel>Order type</SvaKoshLabel>
