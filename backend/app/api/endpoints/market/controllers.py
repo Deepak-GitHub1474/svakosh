@@ -5,6 +5,7 @@ from typing import Any
 
 from fastapi import HTTPException, status
 
+from app.api.endpoints.market.company import company_names
 from app.api.endpoints.market.constants import (
     COMPANY_NAMES,
     EQUITY_PREFIX,
@@ -91,7 +92,9 @@ async def instrument_names(market: MarketDataClient, tokens: list[str]) -> list[
     except MarketDataError as e:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)) from e
     return [
-        {**symbol_of(found[t]), "company_name": COMPANY_NAMES.get(t)} for t in wanted if t in found
+        {**symbol_of(found[t]), "company_name": await company_names.of(found[t])}
+        for t in wanted
+        if t in found
     ]
 
 

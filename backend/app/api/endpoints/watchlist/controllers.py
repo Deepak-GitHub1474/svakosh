@@ -8,6 +8,8 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import DuplicateKeyError
 
 from app.api.endpoints.auth.utils import AccessClaims
+from app.api.endpoints.market.company import company_names
+from app.api.endpoints.market.utils import symbol_of
 from app.api.endpoints.watchlist.constants import (
     COL_WATCHLIST,
     COL_WATCHLIST_NOTES,
@@ -17,8 +19,6 @@ from app.api.endpoints.watchlist.constants import (
     PRE_DEFINED_TOKENS,
     PRE_DEFINED_WATCHLIST,
 )
-from app.api.endpoints.market.constants import COMPANY_NAMES
-from app.api.endpoints.market.utils import symbol_of
 from app.api.endpoints.watchlist.utils import is_predefined, predefined_count
 from app.market_data import MarketDataClient, MarketDataError
 from app.utils.utils import now_utc
@@ -244,7 +244,7 @@ async def _entries(
     return [
         {
             **symbol_of(found[t]),
-            "company_name": COMPANY_NAMES.get(t),
+            "company_name": await company_names.of(found[t]),
             "symbol_note": notes.get(t),
         }
         for t in tokens

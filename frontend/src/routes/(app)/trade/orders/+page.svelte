@@ -9,6 +9,7 @@
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
 	import AccountCell from '$lib/components/trade/AccountCell.svelte';
 	import InstrumentCell from '$lib/components/trade/InstrumentCell.svelte';
+	import ExpandLess from '$lib/components/svg-provider/material/ExpandLess.svelte';
 	import TradeTable from '$lib/components/trade/TradeTable.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import { OPEN_STATUSES, ORDERS_VIEW_KEY, STATUS_TONE, TABLE } from '$lib/trade/const';
@@ -160,31 +161,29 @@
 
 {#snippet status(o: { status: TOrderStatus; message?: string }, key: string)}
 	<td class="{TABLE.td} {STATUS_TONE[o.status]}">
-		{o.status.replace('_', ' ')}
 		{#if o.message}
 			<button
 				type="button"
 				aria-expanded={expanded === key}
-				class="text-muted-foreground hover:text-foreground block max-w-56 truncate text-left text-xs transition-colors"
-				onclick={() => toggle(key)}>{o.message}</button
+				aria-label="{expanded === key ? 'Hide' : 'Show'} reason"
+				class="inline-flex items-center gap-1"
+				onclick={() => toggle(key)}
 			>
-		{/if}
-	</td>
-{/snippet}
-
-{#snippet message(o: { message?: string }, key: string, span: number)}
-	{#if o.message && expanded === key}
-		<tr>
-			<td colspan={span} class="border-glass-border border-b px-4 pb-3">
+				{o.status.replace('_', ' ')}
+				<ExpandLess class="size-4 transition-transform {expanded === key ? '' : 'rotate-180'}" />
+			</button>
+			{#if expanded === key}
 				<p
 					transition:slide={{ duration: 150 }}
-					class="text-muted-foreground sticky left-4 max-h-24 max-w-[calc(100vw-3rem)] overflow-y-auto text-xs whitespace-normal lg:max-w-3xl"
+					class="text-muted-foreground mt-1 max-h-24 w-64 overflow-y-auto text-xs whitespace-normal"
 				>
 					{o.message}
 				</p>
-			</td>
-		</tr>
-	{/if}
+			{/if}
+		{:else}
+			{o.status.replace('_', ' ')}
+		{/if}
+	</td>
 {/snippet}
 
 {#snippet priceCell(value: number, trigger: number)}
@@ -261,7 +260,6 @@
 						{/if}
 					</td>
 				</tr>
-				{@render message(o, key, 9)}
 			{/each}
 		{/snippet}
 	</TradeTable>
@@ -330,7 +328,6 @@
 					{@render priceCell(o.average_price || o.price, o.trigger_price)}
 					{@render status(o, o.id)}
 				</tr>
-				{@render message(o, o.id, 8)}
 			{/each}
 		{/snippet}
 	</TradeTable>
