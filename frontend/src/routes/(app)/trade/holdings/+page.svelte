@@ -1,6 +1,7 @@
 <script lang="ts">
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import ExitAllModal from '$lib/components/trade/ExitAllModal.svelte';
+	import InstrumentCell from '$lib/components/trade/InstrumentCell.svelte';
 	import AccountCell from '$lib/components/trade/AccountCell.svelte';
 	import PositionModal from '$lib/components/trade/PositionModal.svelte';
 	import RowActions from '$lib/components/trade/RowActions.svelte';
@@ -9,6 +10,7 @@
 	import { marketFeed } from '$lib/market/feed.svelte';
 	import { TABLE } from '$lib/trade/const';
 	import { compact, compactSigned, percent, signed, tone } from '$lib/trade/format';
+	import { instrumentNames } from '$lib/trade/names.svelte';
 	import { tradeResource, type TAccountRow } from '$lib/trade/resource.svelte';
 	import { getHoldings } from '$lib/trade/service';
 	import type { TExitTarget, THolding } from '$lib/trade/types';
@@ -48,6 +50,7 @@
 
 	$effect(() => {
 		if (!tokens) return;
+		instrumentNames.want(tokens.split(','));
 		return marketFeed.subscribe(tokens.split(','));
 	});
 
@@ -160,7 +163,7 @@
 					{/if}
 				</td>
 				<AccountCell account={h.account} />
-				<td class={TABLE.td}>{h.symbol}</td>
+				<InstrumentCell token={h.token} symbol={h.symbol} />
 				<td class="{TABLE.td} text-right">
 					{quantity(h)}
 					{#if h.t1_quantity}<span class="text-muted-foreground ml-1 text-xs"

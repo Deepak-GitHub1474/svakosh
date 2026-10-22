@@ -10,11 +10,12 @@ from app.api.endpoints.market.constants import (
     EQUITY_PREFIX,
     FII_DII_DAYS,
     INDICES,
+    INSTRUMENT_NAMES_MAX,
     INTRADAY_LOOKBACK_DAYS,
     SEARCH_LIMIT,
     STALE_AFTER_SECONDS,
 )
-from app.api.endpoints.market.utils import IST, session_status, symbol_of
+from app.api.endpoints.market.utils import IST, is_feed_token, session_status, symbol_of
 from app.market_data import MarketDataClient, MarketDataError
 
 
@@ -81,6 +82,17 @@ async def search_symbols(market: MarketDataClient, query: str) -> list[dict[str,
     except MarketDataError as e:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)) from e
     return [symbol_of(i) for i in found]
+
+
+async def instrument_names(market: MarketDataClient, tokens: list[str]) -> list[dict[str, Any]]:
+    wanted = [t for t in dict.fromkeys(tokens) if is_feed_token(t)][:INSTRUMENT_NAMES_MAX]
+    try:
+        found = await market.instruments(wanted)
+    except MarketDataError as e:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)) from e
+    return [
+        {**symbol_of(found[t]), "company_name": COMPANY_NAMES.get(t)} for t in wanted if t in found
+    ]
 
 
 async def intraday(market: MarketDataClient, token: str, interval: str) -> list[dict[str, Any]]:

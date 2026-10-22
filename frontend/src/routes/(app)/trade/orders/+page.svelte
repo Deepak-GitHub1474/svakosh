@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { slide } from 'svelte/transition';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
 	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
@@ -7,10 +8,12 @@
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
 	import AccountCell from '$lib/components/trade/AccountCell.svelte';
+	import InstrumentCell from '$lib/components/trade/InstrumentCell.svelte';
 	import TradeTable from '$lib/components/trade/TradeTable.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import { OPEN_STATUSES, ORDERS_VIEW_KEY, STATUS_TONE, TABLE } from '$lib/trade/const';
 	import { instrumentOf, timeOf } from '$lib/trade/format';
+	import { instrumentNames } from '$lib/trade/names.svelte';
 	import { tradeResource, type TAccountRow } from '$lib/trade/resource.svelte';
 	import {
 		cancelOrder,
@@ -19,7 +22,7 @@
 		getTrades,
 		modifyOrder
 	} from '$lib/trade/service';
-	import type { TBrokerOrder, TOrderRecord, TTrade } from '$lib/trade/types';
+	import type { TBrokerOrder, TOrderRecord, TOrderStatus, TTrade } from '$lib/trade/types';
 	import { formatNumber } from '$lib/utils';
 
 	const VIEWS = [
@@ -28,7 +31,25 @@
 		{ label: 'History', value: 'history' }
 	];
 
+	type TFilter = 'all' | 'open' | 'executed' | 'cancelled' | 'rejected';
+
+	const FILTER_STATUSES: Record<Exclude<TFilter, 'all'>, TOrderStatus[]> = {
+		open: ['OPEN', 'TRIGGER_PENDING', 'PENDING', 'UNKNOWN'],
+		executed: ['COMPLETE'],
+		cancelled: ['CANCELLED'],
+		rejected: ['REJECTED', 'FAILED']
+	};
+	const FILTER_LABELS: Record<TFilter, string> = {
+		all: 'All',
+		open: 'Open',
+		executed: 'Executed',
+		cancelled: 'Cancelled',
+		rejected: 'Rejected'
+	};
+
 	let view = $state('today');
+	let filter = $state<TFilter>('all');
+	let expanded = $state('');
 	let editing = $state<TBookRow | null>(null);
 	let modifyOpen = $state(false);
 	let quantity = $state('');
@@ -42,7 +63,30 @@
 	const history = tradeResource<TOrderRecord>((id) => getOrderHistory(id, 100));
 	const trades = tradeResource<TTrade>(getTrades);
 
-	const rows = $derived([...book.data].sort((a, b) => b.updated_at.localeCompare(a.updated_at)));
+	const allRows = $derived([...book.data].sort((a, b) => b.updated_at.localeCompare(a.updated_at)));
+	const matches = (o: TBookRow, f: TFilter) => f === 'all' || FILTER_STATUSES[f].includes(o.status);
+	const rows = $derived(allRows.filter((o) => matches(o, filter)));
+	const filters = $derived(
+		(Object.keys(FILTER_LABELS) as TFilter[]).map((f) => ({
+			label: `${FILTER_LABELS[f]} (${allRows.filter((o) => matches(o, f)).length})`,
+			value: f
+		}))
+	);
+	const tokens = $derived(
+		[
+			...book.data.map((o) => o.token),
+			...trades.data.map((t) => t.token),
+			...history.data.map((o) => o.token)
+		]
+			.filter((t): t is string => !!t)
+			.join(',')
+	);
+
+	$effect(() => {
+		if (tokens) instrumentNames.want(tokens.split(','));
+	});
+
+	const toggle = (key: string) => (expanded = expanded === key ? '' : key);
 	const needsPrice = $derived(editing?.type === 'LIMIT' || editing?.type === 'SL');
 	const needsTrigger = $derived(editing?.type === 'SL' || editing?.type === 'SL-M');
 	const isOpen = (o: TBookRow) => OPEN_STATUSES.includes(o.status);
@@ -114,8 +158,54 @@
 	}
 </script>
 
-<div class="mb-4 shrink-0">
+{#snippet status(o: { status: TOrderStatus; message?: string }, key: string)}
+	<td class="{TABLE.td} {STATUS_TONE[o.status]}">
+		{o.status.replace('_', ' ')}
+		{#if o.message}
+			<button
+				type="button"
+				aria-expanded={expanded === key}
+				class="text-muted-foreground hover:text-foreground block max-w-56 truncate text-left text-xs transition-colors"
+				onclick={() => toggle(key)}>{o.message}</button
+			>
+		{/if}
+	</td>
+{/snippet}
+
+{#snippet message(o: { message?: string }, key: string, span: number)}
+	{#if o.message && expanded === key}
+		<tr>
+			<td colspan={span} class="border-glass-border border-b px-4 pb-3">
+				<p
+					transition:slide={{ duration: 150 }}
+					class="text-muted-foreground sticky left-4 max-h-24 max-w-[calc(100vw-3rem)] overflow-y-auto text-xs whitespace-normal lg:max-w-3xl"
+				>
+					{o.message}
+				</p>
+			</td>
+		</tr>
+	{/if}
+{/snippet}
+
+{#snippet priceCell(value: number, trigger: number)}
+	<td class="{TABLE.td} text-right">
+		{formatNumber(value)}
+		{#if trigger}
+			<span class="text-muted-foreground block text-xs">trg {formatNumber(trigger)}</span>
+		{/if}
+	</td>
+{/snippet}
+
+<div class="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-3">
 	<SvaKoshTabs tabs={VIEWS} activeTab={view} onTabChange={setView} class="w-fit" />
+	{#if view === 'today'}
+		<SvaKoshTabs
+			tabs={filters}
+			activeTab={filter}
+			onTabChange={(next: TFilter) => (filter = next)}
+			class="w-fit max-w-full overflow-x-auto"
+		/>
+	{/if}
 </div>
 
 {#if view === 'today'}
@@ -123,7 +213,9 @@
 		empty={!rows.length}
 		loading={book.loading}
 		error={book.error}
-		emptyTitle="No orders today"
+		emptyTitle={filter === 'all'
+			? 'No orders today'
+			: `No ${FILTER_LABELS[filter].toLowerCase()} orders`}
 		emptyDescription="Orders you place show here with live status."
 		onRetry={book.reload}
 	>
@@ -140,25 +232,16 @@
 		{/snippet}
 		{#snippet body()}
 			{#each rows as o (`${o.account.id}:${o.order_id}`)}
+				{@const key = `${o.account.id}:${o.order_id}`}
 				<tr class={TABLE.row}>
 					<td class="{TABLE.td} text-muted-foreground">{timeOf(o.updated_at)}</td>
 					<AccountCell account={o.account} />
-					<td class={TABLE.td}>{o.symbol}</td>
+					<InstrumentCell token={o.token} symbol={o.symbol} />
 					<td class="{TABLE.td} {o.side === 'BUY' ? 'text-bullish' : 'text-bearish'}">{o.side}</td>
 					<td class="{TABLE.td} text-muted-foreground">{o.type} · {o.product}</td>
 					<td class="{TABLE.td} text-right">{o.filled_quantity}/{o.quantity}</td>
-					<td class="{TABLE.td} text-right">
-						{formatNumber(o.average_price || o.price)}
-						{#if o.trigger_price}<span class="text-muted-foreground ml-1 text-xs"
-								>trg {formatNumber(o.trigger_price)}</span
-							>{/if}
-					</td>
-					<td class="{TABLE.td} {STATUS_TONE[o.status]}" title={o.message ?? ''}>
-						{o.status.replace('_', ' ')}
-						{#if o.message}<p class="text-muted-foreground max-w-56 truncate text-xs">
-								{o.message}
-							</p>{/if}
-					</td>
+					{@render priceCell(o.average_price || o.price, o.trigger_price)}
+					{@render status(o, key)}
 					<td class="{TABLE.td} text-right">
 						{#if isOpen(o)}
 							<div class="flex justify-end gap-4">
@@ -178,6 +261,7 @@
 						{/if}
 					</td>
 				</tr>
+				{@render message(o, key, 9)}
 			{/each}
 		{/snippet}
 	</TradeTable>
@@ -205,7 +289,7 @@
 				<tr class={TABLE.row}>
 					<td class="{TABLE.td} text-muted-foreground">{t.time}</td>
 					<AccountCell account={t.account} />
-					<td class={TABLE.td}>{t.symbol}</td>
+					<InstrumentCell token={t.token} symbol={t.symbol} />
 					<td class="{TABLE.td} {t.side === 'BUY' ? 'text-bullish' : 'text-bearish'}">{t.side}</td>
 					<td class="{TABLE.td} text-muted-foreground">{t.product}</td>
 					<td class="{TABLE.td} text-right">{t.quantity}</td>
@@ -239,18 +323,14 @@
 				<tr class={TABLE.row}>
 					<td class="{TABLE.td} text-muted-foreground">{timeOf(o.created_at)}</td>
 					<AccountCell account={o.account} />
-					<td class={TABLE.td}>{instrumentOf(o.token)}</td>
+					<InstrumentCell token={o.token} symbol={instrumentOf(o.token)} />
 					<td class="{TABLE.td} {o.side === 'BUY' ? 'text-bullish' : 'text-bearish'}">{o.side}</td>
 					<td class="{TABLE.td} text-muted-foreground">{o.type} · {o.product}</td>
 					<td class="{TABLE.td} text-right">{o.filled_quantity}/{o.quantity}</td>
-					<td class="{TABLE.td} text-right">{formatNumber(o.average_price || o.price)}</td>
-					<td class="{TABLE.td} {STATUS_TONE[o.status]}" title={o.message ?? ''}>
-						{o.status.replace('_', ' ')}
-						{#if o.message}<p class="text-muted-foreground max-w-56 truncate text-xs">
-								{o.message}
-							</p>{/if}
-					</td>
+					{@render priceCell(o.average_price || o.price, o.trigger_price)}
+					{@render status(o, o.id)}
 				</tr>
+				{@render message(o, o.id, 8)}
 			{/each}
 		{/snippet}
 	</TradeTable>

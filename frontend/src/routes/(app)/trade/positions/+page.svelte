@@ -1,6 +1,7 @@
 <script lang="ts">
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import ExitAllModal from '$lib/components/trade/ExitAllModal.svelte';
+	import InstrumentCell from '$lib/components/trade/InstrumentCell.svelte';
 	import AccountCell from '$lib/components/trade/AccountCell.svelte';
 	import PositionModal from '$lib/components/trade/PositionModal.svelte';
 	import RowActions from '$lib/components/trade/RowActions.svelte';
@@ -9,6 +10,7 @@
 	import { marketFeed } from '$lib/market/feed.svelte';
 	import { TABLE } from '$lib/trade/const';
 	import { compactSigned, signed, tone } from '$lib/trade/format';
+	import { instrumentNames } from '$lib/trade/names.svelte';
 	import { isExpired, positionPnl } from '$lib/trade/position';
 	import { tradeResource, type TAccountRow } from '$lib/trade/resource.svelte';
 	import { getPositions } from '$lib/trade/service';
@@ -46,6 +48,7 @@
 
 	$effect(() => {
 		if (!tokens) return;
+		instrumentNames.want(tokens.split(','));
 		return marketFeed.subscribe(tokens.split(','));
 	});
 
@@ -149,14 +152,13 @@
 					{/if}
 				</td>
 				<AccountCell account={p.account} />
-				<td class={TABLE.td}>
-					{p.symbol}
+				<InstrumentCell token={p.token} symbol={p.symbol}>
 					{#if expired}
 						<span class="text-muted-foreground ml-2 text-xs uppercase">Expired</span>
 					{:else if p.quantity && p.overnight_quantity}
 						<span class="text-primary ml-2 text-xs uppercase">Overnight</span>
 					{/if}
-				</td>
+				</InstrumentCell>
 				<td class="{TABLE.td} text-muted-foreground">{p.product}</td>
 				<td class="{TABLE.td} text-right {tone(p.quantity)}">{p.quantity}</td>
 				<td class="{TABLE.td} text-right">{formatNumber(p.average_price)}</td>

@@ -25,6 +25,14 @@ async def search(claims: CurrentClaims, market: MarketData, q: str = Query(..., 
     return ok_response("Symbols found.", data=data)
 
 
+@router.get("/instruments", status_code=status.HTTP_200_OK)
+async def instruments(
+    claims: CurrentClaims, market: MarketData, tokens: str = Query(..., min_length=5, max_length=8000)
+):
+    data = await controllers.instrument_names(market, tokens.split(","))
+    return ok_response("Instruments found.", data=data)
+
+
 @router.get("/intraday", status_code=status.HTTP_200_OK)
 async def intraday(
     claims: CurrentClaims,
