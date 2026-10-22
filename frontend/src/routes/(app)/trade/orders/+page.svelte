@@ -12,7 +12,15 @@
 	import ExpandLess from '$lib/components/svg-provider/material/ExpandLess.svelte';
 	import TradeTable from '$lib/components/trade/TradeTable.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
-	import { OPEN_STATUSES, ORDERS_VIEW_KEY, STATUS_TONE, TABLE } from '$lib/trade/const';
+	import {
+		OPEN_STATUSES,
+		ORDERS_FILTER_KEY,
+		ORDERS_VIEW_KEY,
+		STATUS_TONE,
+		TABLE,
+		TRADES_SIDE_KEY
+	} from '$lib/trade/const';
+	import { recall, remember } from '$lib/trade/storage';
 	import { instrumentOf, timeOf } from '$lib/trade/format';
 	import { instrumentNames } from '$lib/trade/names.svelte';
 	import { tradeResource, type TAccountRow } from '$lib/trade/resource.svelte';
@@ -33,6 +41,9 @@
 	];
 
 	type TFilter = 'all' | 'open' | 'executed' | 'cancelled' | 'rejected';
+	type TSideFilter = 'all' | 'BUY' | 'SELL';
+
+	const SIDES: TSideFilter[] = ['all', 'BUY', 'SELL'];
 
 	const FILTER_STATUSES: Record<Exclude<TFilter, 'all'>, TOrderStatus[]> = {
 		open: ['OPEN', 'TRIGGER_PENDING', 'PENDING', 'UNKNOWN'],
@@ -50,7 +61,7 @@
 
 	let view = $state('today');
 	let filter = $state<TFilter>('all');
-	let side = $state<'all' | 'BUY' | 'SELL'>('all');
+	let side = $state<TSideFilter>('all');
 	let expanded = $state('');
 	let editing = $state<TBookRow | null>(null);
 	let modifyOpen = $state(false);
@@ -79,7 +90,7 @@
 		}));
 	});
 	const sideTabs = $derived(
-		(['all', 'BUY', 'SELL'] as const).map((v) => ({
+		SIDES.map((v) => ({
 			label: `${v === 'all' ? 'All' : v === 'BUY' ? 'Buy' : 'Sell'} (${
 				v === 'all' ? trades.data.length : trades.data.filter((t) => t.side === v).length
 			})`,
@@ -107,20 +118,27 @@
 
 	function setView(next: string) {
 		view = next;
-		try {
-			localStorage.setItem(ORDERS_VIEW_KEY, next);
-		} catch {
-			return;
-		}
+		remember(ORDERS_VIEW_KEY, next);
+	}
+
+	function setFilter(next: TFilter) {
+		filter = next;
+		remember(ORDERS_FILTER_KEY, next);
+	}
+
+	function setSide(next: TSideFilter) {
+		side = next;
+		remember(TRADES_SIDE_KEY, next);
 	}
 
 	onMount(() => {
-		try {
-			const saved = localStorage.getItem(ORDERS_VIEW_KEY);
-			if (saved && VIEWS.some((v) => v.value === saved)) view = saved;
-		} catch {
-			return;
-		}
+		view =
+			recall(
+				ORDERS_VIEW_KEY,
+				VIEWS.map((v) => v.value)
+			) ?? view;
+		filter = recall(ORDERS_FILTER_KEY, Object.keys(FILTER_LABELS) as TFilter[]) ?? filter;
+		side = recall(TRADES_SIDE_KEY, SIDES) ?? side;
 	});
 
 	function startModify(order: TBookRow) {
@@ -214,14 +232,14 @@
 		<SvaKoshTabs
 			tabs={sideTabs}
 			activeTab={side}
-			onTabChange={(next: 'all' | 'BUY' | 'SELL') => (side = next)}
+			onTabChange={setSide}
 			class="w-fit max-w-full overflow-x-auto"
 		/>
 	{:else}
 		<SvaKoshTabs
 			tabs={statusTabs}
 			activeTab={filter}
-			onTabChange={(next: TFilter) => (filter = next)}
+			onTabChange={setFilter}
 			class="w-fit max-w-full overflow-x-auto"
 		/>
 	{/if}
