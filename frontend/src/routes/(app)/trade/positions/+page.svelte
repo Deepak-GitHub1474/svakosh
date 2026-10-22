@@ -40,7 +40,6 @@
 	const total = $derived(pnls.reduce<number>((sum, v) => sum + (v ?? 0), 0));
 	const exitable = $derived(rows.filter(canExit));
 	const open = $derived(rows.filter((p) => p.quantity !== 0).length);
-	const overnight = $derived(rows.filter((p) => p.quantity !== 0 && p.overnight_quantity).length);
 	const picked = $derived(exitable.filter((p) => selected.includes(keyOf(p))));
 	const allPicked = $derived(!!exitable.length && picked.length === exitable.length);
 	const partial = $derived(picked.length > 0 && !allPicked);
@@ -97,8 +96,7 @@
 	class="mb-4 shrink-0"
 	stats={[
 		{ label: 'Total P&L', value: signed(total), compact: compactSigned(total), tone: tone(total) },
-		{ label: 'Open', value: String(open) },
-		{ label: 'Overnight', value: String(overnight) }
+		{ label: 'Open', value: String(open) }
 	]}
 />
 
