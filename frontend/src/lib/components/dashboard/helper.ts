@@ -28,7 +28,10 @@ type TTooltipItem = {
 
 function tooltipHtml(params: unknown, format: (val: number) => string) {
 	if (!params) return '';
-	const items = (Array.isArray(params) ? params : [params]) as TTooltipItem[];
+	const items = ((Array.isArray(params) ? params : [params]) as TTooltipItem[]).filter((p) =>
+		Number.isFinite(p.value)
+	);
+	if (!items.length) return '';
 	const title = Array.isArray(params) ? items[0].axisValue : items[0].name;
 	const isTime = typeof title === 'string' && title.includes(':');
 

@@ -71,6 +71,10 @@ def refresh_revoked_hash_key(rt_hash: str) -> str:
     return f"{NS}:RT_REVOKED_HASH:{rt_hash}"
 
 
+def refresh_grace_key(rt_hash: str) -> str:
+    return f"{NS}:RT_GRACE:{rt_hash}"
+
+
 def user_sessions_key(user_id: str) -> str:
     return f"{NS}:USER_SESSIONS:{user_id}"
 
@@ -470,10 +474,23 @@ async def rotate_refresh_token(
     rt_hash = hash_refresh_token(presented_rt)
     rt_key = refresh_token_key(rt_hash)
     record = await redis.hgetall(rt_key)
+    now_ts = int(datetime.now(timezone.utc).timestamp())
 
     if not record:
-        revoked_family = await redis.get(refresh_revoked_hash_key(rt_hash))
-        if revoked_family:
+        revoked = await redis.get(refresh_revoked_hash_key(rt_hash))
+        if revoked:
+            revoked_family, _, rotated_at = revoked.partition(":")
+            if rotated_at.isdigit() and now_ts - int(rotated_at) <= s.REFRESH_REUSE_GRACE_SECONDS:
+                pipe = redis.pipeline(transaction=False)
+                pipe.hget(family_meta_key(revoked_family), "user_id")
+                pipe.incr(refresh_grace_key(rt_hash))
+                pipe.expire(refresh_grace_key(rt_hash), s.REFRESH_REUSE_GRACE_SECONDS)
+                user_id, replays, _ = await pipe.execute()
+                if user_id and replays <= s.REFRESH_REUSE_GRACE_LIMIT:
+                    new_rt, _ = await issue_refresh_token(
+                        redis, user_id, family_id=revoked_family, ip=ip, ua=ua
+                    )
+                    return new_rt, revoked_family, user_id
             await revoke_family(redis, revoked_family)
             raise TokenReusedError("Refresh token reuse detected. Session revoked.")
         raise TokenInvalidError("Refresh token unknown or expired.")
@@ -483,7 +500,6 @@ async def rotate_refresh_token(
 
     new_rt = secrets.token_urlsafe(32)
     new_hash = hash_refresh_token(new_rt)
-    now_ts = int(datetime.now(timezone.utc).timestamp())
     ttl_seconds = s.REFRESH_TOKEN_TTL_DAYS * 86400
     new_key = refresh_token_key(new_hash)
     fam_key = refresh_family_key(family_id)
@@ -492,7 +508,7 @@ async def rotate_refresh_token(
     pipe = redis.pipeline(transaction=False)
     pipe.delete(rt_key)
     pipe.srem(fam_key, rt_hash)
-    pipe.set(refresh_revoked_hash_key(rt_hash), family_id, ex=ttl_seconds)
+    pipe.set(refresh_revoked_hash_key(rt_hash), f"{family_id}:{now_ts}", ex=ttl_seconds)
     pipe.hset(new_key, mapping={
         "user_id": user_id,
         "family_id": family_id,
