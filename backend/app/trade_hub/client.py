@@ -114,7 +114,7 @@ class TradeHubClient:
         self, user_id: str, on_update: Callable[[dict[str, Any]], None]
     ) -> None:
         if self.nc is None or not self.connected:
-            raise unavailable("Trading is not available right now.")
+            return
 
         async def forward(msg: Msg) -> None:
             on_update(json.loads(msg.data))
