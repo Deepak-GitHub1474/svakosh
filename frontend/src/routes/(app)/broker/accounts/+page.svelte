@@ -176,7 +176,7 @@
 			<SvaKoshButton
 				variant="solid"
 				label="Link account"
-				class="min-h-0 flex-1 px-5 py-0 text-xs sm:flex-none"
+				class="min-h-0 flex-1 px-5 py-3 text-xs sm:flex-none"
 				onclick={() => open('add')}
 			/>
 		</div>
