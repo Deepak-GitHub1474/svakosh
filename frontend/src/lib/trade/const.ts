@@ -34,7 +34,7 @@ export const REFRESH_MS = 60_000;
 export const LIVE_RELOAD_MS = 300;
 
 export const TABLE = {
-	wrap: 'hide-scrollbar min-h-56 flex-1 overflow-auto rounded-xl border border-glass-border',
+	wrap: 'min-h-56 flex-1 overflow-auto rounded-xl border border-glass-border [&::-webkit-scrollbar]:w-0',
 	table: 'w-full text-left border-separate border-spacing-0 whitespace-nowrap',
 	thead: 'sticky top-0 z-10',
 	head: 'bg-surface-elevated text-foreground/70 text-sm uppercase tracking-wide',
