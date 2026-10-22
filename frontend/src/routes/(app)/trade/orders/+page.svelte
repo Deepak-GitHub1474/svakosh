@@ -263,7 +263,7 @@
 			<th class="{TABLE.th} text-right">Qty</th>
 			<th class="{TABLE.th} text-right">Price</th>
 			<th class={TABLE.th}>Status</th>
-			<th class="{TABLE.th} text-right">Actions</th>
+			<th class="{TABLE.th} w-px text-right">Actions</th>
 		{/snippet}
 		{#snippet body()}
 			{#each rows as o (`${o.account.id}:${o.order_id}`)}

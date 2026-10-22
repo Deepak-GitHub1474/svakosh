@@ -142,7 +142,7 @@
 		<th class="{TABLE.th} text-right">Current</th>
 		<th class="{TABLE.th} text-right">P&L</th>
 		<th class="{TABLE.th} text-right">Day</th>
-		<th class="{TABLE.th} text-right">Actions</th>
+		<th class="{TABLE.th} w-px text-right">Actions</th>
 	{/snippet}
 	{#snippet body()}
 		{#each holdings.data as h (keyOf(h))}

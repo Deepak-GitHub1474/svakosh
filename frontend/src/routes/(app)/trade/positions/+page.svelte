@@ -132,7 +132,7 @@
 		<th class="{TABLE.th} text-right">Avg</th>
 		<th class="{TABLE.th} text-right">LTP</th>
 		<th class="{TABLE.th} text-right">P&L</th>
-		<th class="{TABLE.th} text-right">Actions</th>
+		<th class="{TABLE.th} w-px text-right">Actions</th>
 	{/snippet}
 	{#snippet body()}
 		{#each rows as p, i (keyOf(p))}

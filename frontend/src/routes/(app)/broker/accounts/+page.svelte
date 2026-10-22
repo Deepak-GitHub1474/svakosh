@@ -199,7 +199,7 @@
 			description="Link your Angel One account to start trading from Svakosh."
 		/>
 	{:else if view === 'table'}
-		<div class="border-glass-border overflow-x-auto rounded-xl border">
+		<div class="border-glass-border hide-scrollbar overflow-x-auto rounded-xl border">
 			<table class={TABLE.table}>
 				<thead>
 					<tr class={TABLE.head}>
@@ -207,7 +207,7 @@
 						<th class={TABLE.th}>Broker</th>
 						<th class={TABLE.th}>Session</th>
 						<th class={TABLE.th}>Linked</th>
-						<th class="{TABLE.th} text-right">Actions</th>
+						<th class="{TABLE.th} w-px text-right">Actions</th>
 					</tr>
 				</thead>
 				<tbody>
