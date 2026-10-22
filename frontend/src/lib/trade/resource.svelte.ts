@@ -1,7 +1,8 @@
 import { untrack } from 'svelte';
 import type { TResult } from '$lib/api';
 import { tradeAccounts } from './accounts.svelte';
-import { REFRESH_MS } from './const';
+import { LIVE_RELOAD_MS, REFRESH_MS } from './const';
+import { orderUpdates } from './live.svelte';
 import type { TBrokerAccount } from './types';
 
 export type TAccountRow<T> = T & { account: TBrokerAccount };
@@ -56,6 +57,16 @@ export function tradeResource<T>(
 			clearInterval(timer);
 			request++;
 		};
+	});
+
+	let seen = orderUpdates.version;
+
+	$effect(() => {
+		const version = orderUpdates.version;
+		if (version === seen) return;
+		seen = version;
+		const timer = setTimeout(() => untrack(load), LIVE_RELOAD_MS);
+		return () => clearTimeout(timer);
 	});
 
 	return {

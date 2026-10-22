@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import Callable
 from typing import Any
 
 from fastapi import WebSocket, WebSocketDisconnect
@@ -14,6 +15,7 @@ from app.api.endpoints.market.constants import (
 )
 from app.api.endpoints.market.utils import is_feed_token
 from app.market_data import MarketDataClient
+from app.trade_hub import TradeHubClient
 
 
 class SlowClientError(Exception):
@@ -24,10 +26,25 @@ def pick(quote: dict[str, Any], fields: set[str]) -> dict[str, Any]:
     return {k: quote[k] for k in fields if k in quote}
 
 
-async def stream_market(ws: WebSocket, market: MarketDataClient) -> None:
+async def stream_market(
+    ws: WebSocket, market: MarketDataClient, trade: TradeHubClient, user_id: str
+) -> None:
     tokens: dict[str, set[str]] = {}
     outbox: asyncio.Queue[str] = asyncio.Queue(maxsize=SEND_QUEUE_LIMIT)
     too_slow = asyncio.Event()
+    orders: list[asyncio.Task[None]] = []
+
+    def on_order(update: dict[str, Any]) -> None:
+        try:
+            outbox.put_nowait(json.dumps({"type": "order", "data": update}))
+        except asyncio.QueueFull:
+            too_slow.set()
+
+    def follow(on: bool) -> None:
+        if on and not orders:
+            orders.append(asyncio.create_task(trade.follow_orders(user_id, on_order)))
+        elif not on and orders:
+            orders.pop().cancel()
 
     def on_tick(tick: dict[str, Any]) -> None:
         fields = tokens.get(tick["token"])
@@ -44,21 +61,29 @@ async def stream_market(ws: WebSocket, market: MarketDataClient) -> None:
     market.listeners.add(on_tick)
     try:
         async with asyncio.TaskGroup() as group:
-            group.create_task(receive(ws, market, tokens, outbox))
+            group.create_task(receive(ws, market, tokens, outbox, follow))
             group.create_task(send(ws, outbox, too_slow))
     except* (WebSocketDisconnect, SlowClientError):
         pass
     finally:
+        follow(False)
         market.listeners.discard(on_tick)
         market.unwant(tokens)
 
 
 async def receive(
-    ws: WebSocket, market: MarketDataClient, tokens: dict[str, set[str]], outbox: asyncio.Queue[str],
+    ws: WebSocket,
+    market: MarketDataClient,
+    tokens: dict[str, set[str]],
+    outbox: asyncio.Queue[str],
+    follow: Callable[[bool], None],
 ) -> None:
     while True:
         message: dict[str, Any] = await ws.receive_json()
         event, requested, fields = message.get("event"), message.get("tokens"), message.get("fields")
+        if event == "orders":
+            follow(message.get("on") is True)
+            continue
         if event not in ("subscribe", "unsubscribe") or not isinstance(requested, list):
             await outbox.put(json.dumps({"type": "error", "message": "Send {event: subscribe|unsubscribe, tokens: [...], fields?: [...]}."}))
             continue

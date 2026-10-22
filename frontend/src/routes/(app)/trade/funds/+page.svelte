@@ -23,7 +23,7 @@
 		{ label: 'Unrealised', key: 'unrealised_pnl', pnl: true }
 	];
 
-	const funds = tradeResource<TFunds>(getFundsRows, 30_000);
+	const funds = tradeResource<TFunds>(getFundsRows);
 
 	const sum = (key: keyof TFunds) => funds.data.reduce((total, f) => total + f[key], 0);
 </script>

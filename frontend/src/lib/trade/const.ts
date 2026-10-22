@@ -28,7 +28,8 @@ export const STATUS_TONE: Record<TOrderStatus, string> = {
 export const ACCOUNT_KEY = 'svakosh:trade-account';
 export const ORDERS_VIEW_KEY = 'svakosh:orders-view';
 export const BROKER_VIEW_KEY = 'svakosh:broker-accounts-view';
-export const REFRESH_MS = 10_000;
+export const REFRESH_MS = 60_000;
+export const LIVE_RELOAD_MS = 300;
 
 export const TABLE = {
 	wrap: 'min-h-56 flex-1 overflow-auto rounded-xl border border-glass-border',

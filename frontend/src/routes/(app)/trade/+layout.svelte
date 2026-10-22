@@ -9,6 +9,7 @@
 	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import { tradeAccounts } from '$lib/trade/accounts.svelte';
+	import { orderUpdates } from '$lib/trade/live.svelte';
 	import { TRADE_TABS, type TTradeRoute, EMPTY_STATE } from '$lib/trade/const';
 
 	let { children }: { children: Snippet } = $props();
@@ -34,6 +35,7 @@
 
 	onMount(() => {
 		tradeAccounts.load();
+		return orderUpdates.follow();
 	});
 </script>
 

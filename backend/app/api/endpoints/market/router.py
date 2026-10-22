@@ -81,4 +81,6 @@ async def market_socket(websocket: WebSocket):
         await websocket.close(code=4401)
         return
     await websocket.accept(subprotocol=WS_PROTOCOL)
-    await stream_market(websocket, websocket.app.state.market_data)
+    await stream_market(
+        websocket, websocket.app.state.market_data, websocket.app.state.trade_hub, user_id
+    )

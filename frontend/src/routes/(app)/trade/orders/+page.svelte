@@ -38,9 +38,9 @@
 
 	type TBookRow = TAccountRow<TBrokerOrder>;
 
-	const book = tradeResource<TBrokerOrder>(getOrders, 5_000);
-	const history = tradeResource<TOrderRecord>((id) => getOrderHistory(id, 100), 30_000);
-	const trades = tradeResource<TTrade>(getTrades, 10_000);
+	const book = tradeResource<TBrokerOrder>(getOrders);
+	const history = tradeResource<TOrderRecord>((id) => getOrderHistory(id, 100));
+	const trades = tradeResource<TTrade>(getTrades);
 
 	const rows = $derived([...book.data].sort((a, b) => b.updated_at.localeCompare(a.updated_at)));
 	const needsPrice = $derived(editing?.type === 'LIMIT' || editing?.type === 'SL');

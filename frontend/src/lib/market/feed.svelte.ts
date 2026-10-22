@@ -29,12 +29,14 @@ type TRow = { sk_token: string } & TQuote;
 type TServerMessage =
 	| { type: 'snapshot'; data: TRow[] }
 	| { type: 'tick'; data: TRow }
+	| { type: 'order'; data: unknown }
 	| { type: 'error'; message: string };
-type TClientMessage = {
+type TTokenMessage = {
 	event: 'subscribe' | 'unsubscribe';
 	tokens: string[];
 	fields: TQuoteField[];
 };
+type TClientMessage = TTokenMessage | { event: 'orders'; on: boolean };
 
 export const PRICE_FIELDS: TQuoteField[] = ['ltp', 'prev_close'];
 
@@ -65,8 +67,8 @@ async function fetchSocketTicket(): Promise<string | null> {
 
 type TFieldsByToken = Record<string, TQuoteField[]>;
 
-function grouped(event: TClientMessage['event'], changes: TFieldsByToken) {
-	const byFields: Record<string, TClientMessage> = {};
+function grouped(event: TTokenMessage['event'], changes: TFieldsByToken) {
+	const byFields: Record<string, TTokenMessage> = {};
 	for (const [token, fields] of Object.entries(changes)) {
 		const key = [...fields].sort().join(',');
 		byFields[key] ??= { event, tokens: [], fields };
@@ -88,6 +90,20 @@ class MarketFeed {
 	private closeTimer: ReturnType<typeof setTimeout> | undefined;
 	private released: TFieldsByToken = {};
 	private flushQueued = false;
+	private orderListeners = new Set<(update: unknown) => void>();
+
+	followOrders(listener: (update: unknown) => void): () => void {
+		clearTimeout(this.closeTimer);
+		this.orderListeners.add(listener);
+		if (this.orderListeners.size === 1) this.send({ event: 'orders', on: true });
+		this.connect();
+		return () => {
+			this.orderListeners.delete(listener);
+			if (this.orderListeners.size) return;
+			this.send({ event: 'orders', on: false });
+			if (!this.needed()) this.closeTimer = setTimeout(() => this.close(), IDLE_CLOSE_MS);
+		};
+	}
 
 	subscribe(tokens: string[], fields: TQuoteField[] = PRICE_FIELDS): () => void {
 		clearTimeout(this.closeTimer);
@@ -139,11 +155,11 @@ class MarketFeed {
 			}
 		}
 		grouped('unsubscribe', removed).forEach((message) => this.send(message));
-		if (!this.hasTokens()) this.closeTimer = setTimeout(() => this.close(), IDLE_CLOSE_MS);
+		if (!this.needed()) this.closeTimer = setTimeout(() => this.close(), IDLE_CLOSE_MS);
 	}
 
-	private hasTokens() {
-		return Object.keys(this.refs).length > 0;
+	private needed() {
+		return Object.keys(this.refs).length > 0 || this.orderListeners.size > 0;
 	}
 
 	private send(message: TClientMessage) {
@@ -151,11 +167,11 @@ class MarketFeed {
 	}
 
 	private async connect() {
-		if (this.socket || this.connecting || !this.hasTokens()) return;
+		if (this.socket || this.connecting || !this.needed()) return;
 		this.connecting = true;
 		const ticket = await fetchSocketTicket();
 		this.connecting = false;
-		if (!this.hasTokens()) return;
+		if (!this.needed()) return;
 		if (!ticket) return this.retry();
 
 		const socket = new WebSocket(`${resolveBackendConfig().wsUrl}/market/socket`, [
@@ -172,6 +188,7 @@ class MarketFeed {
 				all[token] = Object.keys(counts) as TQuoteField[];
 			}
 			grouped('subscribe', all).forEach((message) => this.send(message));
+			if (this.orderListeners.size) this.send({ event: 'orders', on: true });
 		};
 		socket.onmessage = (event) => this.receive(JSON.parse(event.data) as TServerMessage);
 		socket.onclose = () => {
@@ -184,6 +201,8 @@ class MarketFeed {
 	private receive(message: TServerMessage) {
 		if (message.type === 'tick') this.apply(message.data);
 		else if (message.type === 'snapshot') message.data.forEach((row) => this.apply(row));
+		else if (message.type === 'order')
+			this.orderListeners.forEach((listener) => listener(message.data));
 		else this.error = message.message;
 	}
 
@@ -196,13 +215,13 @@ class MarketFeed {
 
 	private retry() {
 		clearTimeout(this.retryTimer);
-		if (!this.hasTokens()) return;
+		if (!this.needed()) return;
 		this.retryTimer = setTimeout(() => this.connect(), this.retryMs);
 		this.retryMs = Math.min(this.retryMs * 2, RETRY_MAX_MS);
 	}
 
 	private close() {
-		if (this.hasTokens()) return;
+		if (this.needed()) return;
 		clearTimeout(this.retryTimer);
 		const socket = this.socket;
 		this.socket = null;

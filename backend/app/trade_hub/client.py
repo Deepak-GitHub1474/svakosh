@@ -3,17 +3,20 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from collections.abc import Callable
 from typing import Annotated, Any
 
 import nats
 from fastapi import Depends, HTTPException, Request, status
 from nats.aio.client import Client
+from nats.aio.msg import Msg
 from nats.errors import Error as NatsError
 
 logger = logging.getLogger("svakosh.trade_hub")
 
 REQUEST_TIMEOUT_SECONDS = 35.0
 RETRY_SECONDS = 10.0
+LEASE_RENEW_SECONDS = 120.0
 
 STATUS_BY_CODE = {
     "BAD_REQUEST": status.HTTP_400_BAD_REQUEST,
@@ -106,6 +109,28 @@ class TradeHubClient:
                 "code": code,
             },
         )
+
+    async def follow_orders(
+        self, user_id: str, on_update: Callable[[dict[str, Any]], None]
+    ) -> None:
+        if self.nc is None or not self.connected:
+            raise unavailable("Trading is not available right now.")
+
+        async def forward(msg: Msg) -> None:
+            on_update(json.loads(msg.data))
+
+        sub = await self.nc.subscribe(f"trade.update.{user_id}", cb=forward)
+        try:
+            while True:
+                try:
+                    await self.call("trade.stream.lease", {"user_id": user_id})
+                except HTTPException as e:
+                    logger.warning(
+                        "Trade hub: order stream lease failed.\nReason: %s", e.detail
+                    )
+                await asyncio.sleep(LEASE_RENEW_SECONDS)
+        finally:
+            await sub.unsubscribe()
 
 
 def get_trade_hub(request: Request) -> TradeHubClient:

@@ -16,7 +16,7 @@
 
 	type TRow = TAccountRow<THolding>;
 
-	const holdings = tradeResource<THolding>(getHoldings, 30_000);
+	const holdings = tradeResource<THolding>(getHoldings);
 
 	let selected = $state<string[]>([]);
 	let exitTarget = $state<TExitTarget | null>(null);
