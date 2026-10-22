@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { slide } from 'svelte/transition';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
 	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
@@ -9,7 +8,7 @@
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
 	import AccountCell from '$lib/components/trade/AccountCell.svelte';
 	import InstrumentCell from '$lib/components/trade/InstrumentCell.svelte';
-	import ExpandLess from '$lib/components/svg-provider/material/ExpandLess.svelte';
+	import Info from '$lib/components/svg-provider/Info.svelte';
 	import TradeTable from '$lib/components/trade/TradeTable.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import {
@@ -22,7 +21,7 @@
 	} from '$lib/trade/const';
 	import { recall, remember } from '$lib/trade/storage';
 	import { instrumentOf, timeOf } from '$lib/trade/format';
-	import { instrumentNames } from '$lib/trade/names.svelte';
+	import { instrumentNames, plainSymbol } from '$lib/trade/names.svelte';
 	import { tradeResource, type TAccountRow } from '$lib/trade/resource.svelte';
 	import {
 		cancelOrder,
@@ -62,7 +61,16 @@
 	let view = $state('today');
 	let filter = $state<TFilter>('all');
 	let side = $state<TSideFilter>('all');
-	let expanded = $state('');
+	type TReason = {
+		status: TOrderStatus;
+		message?: string;
+		symbol: string;
+		side: string;
+		type: string;
+		product: string;
+	};
+
+	let reason = $state<TReason | null>(null);
 	let editing = $state<TBookRow | null>(null);
 	let modifyOpen = $state(false);
 	let quantity = $state('');
@@ -111,7 +119,6 @@
 		if (tokens) instrumentNames.want(tokens.split(','));
 	});
 
-	const toggle = (key: string) => (expanded = expanded === key ? '' : key);
 	const needsPrice = $derived(editing?.type === 'LIMIT' || editing?.type === 'SL');
 	const needsTrigger = $derived(editing?.type === 'SL' || editing?.type === 'SL-M');
 	const isOpen = (o: TBookRow) => OPEN_STATUSES.includes(o.status);
@@ -190,27 +197,18 @@
 	}
 </script>
 
-{#snippet status(o: { status: TOrderStatus; message?: string }, key: string)}
+{#snippet status(o: TReason)}
 	<td class="{TABLE.td} {STATUS_TONE[o.status]}">
 		{#if o.message}
 			<button
 				type="button"
-				aria-expanded={expanded === key}
-				aria-label="{expanded === key ? 'Hide' : 'Show'} reason"
-				class="inline-flex items-center gap-1"
-				onclick={() => toggle(key)}
+				aria-label="Show reason"
+				class="inline-flex items-center gap-1.5"
+				onclick={() => (reason = o)}
 			>
 				{o.status.replace('_', ' ')}
-				<ExpandLess class="size-4 transition-transform {expanded === key ? '' : 'rotate-180'}" />
+				<Info class="size-3.5 opacity-80" />
 			</button>
-			{#if expanded === key}
-				<p
-					transition:slide={{ duration: 150 }}
-					class="text-muted-foreground mt-1 max-h-28 w-64 overflow-y-auto text-sm whitespace-normal"
-				>
-					{o.message}
-				</p>
-			{/if}
 		{:else}
 			{o.status.replace('_', ' ')}
 		{/if}
@@ -264,12 +262,11 @@
 			<th class={TABLE.th}>Type</th>
 			<th class="{TABLE.th} text-right">Qty</th>
 			<th class="{TABLE.th} text-right">Price</th>
-			<th class="{TABLE.th} min-w-72">Status</th>
+			<th class={TABLE.th}>Status</th>
 			<th class="{TABLE.th} text-right">Actions</th>
 		{/snippet}
 		{#snippet body()}
 			{#each rows as o (`${o.account.id}:${o.order_id}`)}
-				{@const key = `${o.account.id}:${o.order_id}`}
 				<tr class={TABLE.row}>
 					<td class="{TABLE.td} text-muted-foreground">{timeOf(o.updated_at)}</td>
 					<AccountCell account={o.account} />
@@ -278,7 +275,7 @@
 					<td class="{TABLE.td} text-muted-foreground">{o.type} · {o.product}</td>
 					<td class="{TABLE.td} text-right">{o.filled_quantity}/{o.quantity}</td>
 					{@render priceCell(o.average_price || o.price, o.trigger_price)}
-					{@render status(o, key)}
+					{@render status(o)}
 					<td class="{TABLE.td} text-right">
 						{#if isOpen(o)}
 							<div class="flex justify-end gap-4">
@@ -352,7 +349,7 @@
 			<th class={TABLE.th}>Type</th>
 			<th class="{TABLE.th} text-right">Qty</th>
 			<th class="{TABLE.th} text-right">Price</th>
-			<th class="{TABLE.th} min-w-72">Status</th>
+			<th class={TABLE.th}>Status</th>
 		{/snippet}
 		{#snippet body()}
 			{#each historyRows as o (o.id)}
@@ -364,7 +361,7 @@
 					<td class="{TABLE.td} text-muted-foreground">{o.type} · {o.product}</td>
 					<td class="{TABLE.td} text-right">{o.filled_quantity}/{o.quantity}</td>
 					{@render priceCell(o.average_price || o.price, o.trigger_price)}
-					{@render status(o, o.id)}
+					{@render status({ ...o, symbol: instrumentOf(o.token) })}
 				</tr>
 			{/each}
 		{/snippet}
@@ -426,5 +423,23 @@
 				disabled={!!busy || Number(quantity) < 1}
 			/>
 		</form>
+	{/if}
+</SvaKoshModal>
+
+<SvaKoshModal
+	isOpen={!!reason}
+	onClose={() => (reason = null)}
+	width="26rem"
+	class="overflow-hidden"
+>
+	{#if reason}
+		<ModalHeader
+			title={`Order ${reason.status.replace('_', ' ').toLowerCase()}`}
+			subtitle={`${plainSymbol(reason.symbol)} · ${reason.side} · ${reason.type} · ${reason.product}`}
+			onClose={() => (reason = null)}
+		/>
+		<p class="text-foreground max-h-72 overflow-y-auto p-5 text-sm leading-relaxed">
+			{reason.message}
+		</p>
 	{/if}
 </SvaKoshModal>
