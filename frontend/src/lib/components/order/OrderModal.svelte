@@ -12,7 +12,8 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { tradeAccounts } from '$lib/trade/accounts.svelte';
-	import { placeOrder } from '$lib/trade/service';
+	import { untrack } from 'svelte';
+	import { getFunds, getMargin, placeOrder } from '$lib/trade/service';
 	import type { TOrderTicket } from './types';
 
 	type TOrderType = TOrderTicket['orderType'];
@@ -21,6 +22,7 @@
 
 	const TICK = 0.05;
 	const MAX_LOTS = 1800;
+	const MARGIN_DELAY_MS = 400;
 
 	const PRODUCT_TABS: { label: string; value: TProduct }[] = [
 		{ label: 'Intraday', value: 'MIS' },
@@ -64,6 +66,8 @@
 	let priceText = $state('');
 	let orderKey = $state('');
 	let placing = $state(false);
+	let available = $state<number | null>(null);
+	let required = $state<number | null>(null);
 
 	$effect(() => {
 		if (!draft) return;
@@ -76,6 +80,50 @@
 		orderKey = crypto.randomUUID();
 		if (!tradeAccounts.loaded) tradeAccounts.load();
 	});
+
+	const accountId = $derived(tradeAccounts.selected?.logged_in ? tradeAccounts.accountId : '');
+
+	$effect(() => {
+		available = null;
+		if (!isOpen || !accountId) return;
+		let live = true;
+		getFunds(accountId).then((res) => {
+			if (live && res.ok) available = res.data.available;
+		});
+		return () => {
+			live = false;
+		};
+	});
+
+	$effect(() => {
+		if (!isOpen || !accountId || !draft || !priceValid) {
+			required = null;
+			return;
+		}
+		const ticket = {
+			account_id: accountId,
+			token: draft.token,
+			side: isSell ? ('SELL' as const) : ('BUY' as const),
+			product,
+			type: isLimit ? ('LIMIT' as const) : ('MARKET' as const),
+			quantity,
+			price: isLimit ? limitPrice : untrack(() => liveLtp),
+			trigger_price: 0
+		};
+		let live = true;
+		const timer = setTimeout(async () => {
+			const res = await getMargin(ticket);
+			if (live && res.ok) required = res.data.required;
+		}, MARGIN_DELAY_MS);
+		return () => {
+			live = false;
+			clearTimeout(timer);
+		};
+	});
+
+	const shortfall = $derived(
+		required !== null && available !== null && required > available ? required - available : 0
+	);
 
 	const formatDecimal = (value: number) => (Number.isNaN(value) ? '—' : value.toFixed(2));
 
@@ -319,11 +367,22 @@
 			</div>
 
 			<div class="border-border-subtle flex items-center justify-between gap-4 border-t pt-4">
-				<dl class="flex items-center gap-2 tabular-nums">
+				<dl class="grid grid-cols-[auto_auto] items-center gap-x-2 gap-y-1 tabular-nums">
 					<dt class="text-muted-foreground text-xs">{isEquity ? 'Amount' : 'Premium'}</dt>
 					<dd class="text-foreground text-sm font-medium">
 						₹{premium.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
 					</dd>
+					{#if required !== null}
+						<dt class="text-muted-foreground text-xs">Margin</dt>
+						<dd class="text-xs {shortfall ? 'text-bearish' : 'text-foreground'}">
+							₹{required.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+							{#if available !== null}
+								<span class="text-muted-foreground">
+									/ ₹{available.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+								</span>
+							{/if}
+						</dd>
+					{/if}
 				</dl>
 
 				<SvaKoshButton

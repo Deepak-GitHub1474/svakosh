@@ -26,14 +26,14 @@ export type TPosition = {
 	symbol: string;
 	product: TProduct;
 	quantity: number;
+	overnight_quantity: number;
 	buy_quantity: number;
 	sell_quantity: number;
 	buy_price: number;
 	sell_price: number;
+	buy_value: number;
+	sell_value: number;
 	average_price: number;
-	last_price: number;
-	realised: number;
-	unrealised: number;
 };
 
 export type THolding = {
@@ -49,7 +49,31 @@ export type THolding = {
 	pnl: number;
 };
 
-export type TFunds = { available: number; used: number; total: number };
+export type TFunds = {
+	available: number;
+	used: number;
+	opening_balance: number;
+	pay_in: number;
+	pay_out: number;
+	collateral: number;
+	span: number;
+	exposure: number;
+	option_premium: number;
+	realised_pnl: number;
+	unrealised_pnl: number;
+};
+
+export type TMargin = { required: number };
+
+export type TExitTarget = {
+	mode: 'exit' | 'stoploss';
+	token: string;
+	symbol: string;
+	exchange: string;
+	product: TProduct;
+	quantity: number;
+	ltp: number;
+};
 
 export type TBrokerOrder = {
 	order_id: string;

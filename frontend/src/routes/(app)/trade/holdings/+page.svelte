@@ -1,25 +1,55 @@
 <script lang="ts">
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
+	import ExitModal from '$lib/components/trade/ExitModal.svelte';
 	import StatStrip from '$lib/components/trade/StatStrip.svelte';
+	import { marketFeed } from '$lib/market/feed.svelte';
 	import { TABLE, EMPTY_STATE } from '$lib/trade/const';
 	import { percent, signed, tone } from '$lib/trade/format';
 	import { tradeResource } from '$lib/trade/resource.svelte';
 	import { getHoldings } from '$lib/trade/service';
-	import type { THolding } from '$lib/trade/types';
+	import type { TExitTarget, THolding } from '$lib/trade/types';
 	import { formatNumber } from '$lib/utils';
 
 	const holdings = tradeResource<THolding[]>(getHoldings, [], 30_000);
 
+	let exitTarget = $state<TExitTarget | null>(null);
+	let exitOpen = $state(false);
+
 	const quantity = (h: THolding) => h.quantity + h.t1_quantity;
+	const ltpOf = (h: THolding) => (h.token && marketFeed.quotes[h.token]?.ltp) || h.last_price;
+	const prevOf = (h: THolding) =>
+		(h.token && marketFeed.quotes[h.token]?.prev_close) || h.close_price;
+
+	const tokens = $derived(
+		[...new Set(holdings.data.flatMap((h) => (h.token ? [h.token] : [])))].sort().join(',')
+	);
 	const invested = $derived(
 		holdings.data.reduce((sum, h) => sum + h.average_price * quantity(h), 0)
 	);
-	const current = $derived(holdings.data.reduce((sum, h) => sum + h.last_price * quantity(h), 0));
+	const current = $derived(holdings.data.reduce((sum, h) => sum + ltpOf(h) * quantity(h), 0));
 	const pnl = $derived(current - invested);
 	const day = $derived(
-		holdings.data.reduce((sum, h) => sum + (h.last_price - h.close_price) * quantity(h), 0)
+		holdings.data.reduce((sum, h) => sum + (ltpOf(h) - prevOf(h)) * quantity(h), 0)
 	);
+
+	$effect(() => {
+		if (!tokens) return;
+		return marketFeed.subscribe(tokens.split(','));
+	});
+
+	function openExit(h: THolding) {
+		exitTarget = {
+			mode: 'exit',
+			token: h.token ?? '',
+			symbol: h.symbol,
+			exchange: h.exchange,
+			product: 'CNC',
+			quantity: quantity(h),
+			ltp: ltpOf(h)
+		};
+		exitOpen = true;
+	}
 </script>
 
 {#if holdings.loading && !holdings.data.length}
@@ -61,12 +91,16 @@
 					<th class="{TABLE.th} text-right">LTP</th>
 					<th class="{TABLE.th} text-right">Current</th>
 					<th class="{TABLE.th} text-right">P&L</th>
+					<th class="{TABLE.th} text-right">Day</th>
+					<th class={TABLE.th}></th>
 				</tr>
 			</thead>
 			<tbody class={TABLE.body}>
 				{#each holdings.data as h (h.isin || h.symbol)}
-					{@const value = h.last_price * quantity(h)}
+					{@const ltp = ltpOf(h)}
+					{@const value = ltp * quantity(h)}
 					{@const gain = value - h.average_price * quantity(h)}
+					{@const dayGain = (ltp - prevOf(h)) * quantity(h)}
 					<tr class={TABLE.row}>
 						<td class={TABLE.td}>
 							{h.symbol}
@@ -79,7 +113,7 @@
 								>{/if}
 						</td>
 						<td class="{TABLE.td} text-right">{formatNumber(h.average_price)}</td>
-						<td class="{TABLE.td} text-right">{formatNumber(h.last_price)}</td>
+						<td class="{TABLE.td} text-right">{formatNumber(ltp)}</td>
 						<td class="{TABLE.td} text-right">{formatNumber(value)}</td>
 						<td class="{TABLE.td} text-right {tone(gain)}">
 							{signed(gain)}
@@ -87,9 +121,21 @@
 								>{percent(gain, h.average_price * quantity(h)).toFixed(2)}%</span
 							>
 						</td>
+						<td class="{TABLE.td} text-right {tone(dayGain)}">{signed(dayGain)}</td>
+						<td class="{TABLE.td} text-right">
+							{#if h.token}
+								<button
+									type="button"
+									class="text-bearish/80 hover:text-bearish transition-colors"
+									onclick={() => openExit(h)}>Exit</button
+								>
+							{/if}
+						</td>
 					</tr>
 				{/each}
 			</tbody>
 		</table>
 	</div>
 {/if}
+
+<ExitModal bind:isOpen={exitOpen} target={exitTarget} onDone={holdings.reload} />

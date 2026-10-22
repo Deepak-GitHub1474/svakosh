@@ -8,6 +8,7 @@ from app.api.endpoints.trade.models import (
     ModifyOrderRequest,
     PlaceOrderRequest,
     SessionRequest,
+    Ticket,
     UpdateAccountRequest,
 )
 from app.config import get_settings
@@ -118,6 +119,14 @@ async def place_order(
 ) -> Any:
     return await trade.call(
         "trade.order.place", {"user_id": claims.user_id, **body.model_dump()}
+    )
+
+
+async def order_margin(
+    trade: TradeHubClient, claims: AccessClaims, body: Ticket
+) -> Any:
+    return await trade.call(
+        "trade.order.margin", {"user_id": claims.user_id, **body.model_dump()}
     )
 
 

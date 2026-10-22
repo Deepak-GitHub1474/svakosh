@@ -10,6 +10,7 @@ from app.api.endpoints.trade.models import (
     ModifyOrderRequest,
     PlaceOrderRequest,
     SessionRequest,
+    Ticket,
     UpdateAccountRequest,
 )
 from app.responses import ok_response
@@ -121,6 +122,12 @@ async def order_history(
 async def place_order(body: PlaceOrderRequest, claims: CurrentClaims, trade: TradeHub):
     data = await controllers.place_order(trade, claims, body)
     return ok_response("Order placed.", data=data)
+
+
+@router.post("/orders/margin", status_code=status.HTTP_200_OK)
+async def order_margin(body: Ticket, claims: CurrentClaims, trade: TradeHub):
+    data = await controllers.order_margin(trade, claims, body)
+    return ok_response("Margin calculated.", data=data)
 
 
 @router.patch("/orders/{order_id}", status_code=status.HTTP_200_OK)

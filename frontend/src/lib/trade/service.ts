@@ -5,6 +5,7 @@ import type {
 	TFunds,
 	THolding,
 	TLinkAccount,
+	TMargin,
 	TOrderKind,
 	TOrderRecord,
 	TPlaceOrder,
@@ -61,6 +62,9 @@ export const getOrderHistory = (accountId: string, limit = 50) =>
 
 export const placeOrder = (body: TPlaceOrder) =>
 	apiCall<TOrderRecord>('/api/trade/orders', 'POST', body);
+
+export const getMargin = (body: TTicket) =>
+	apiCall<TMargin>('/api/trade/orders/margin', 'POST', body);
 
 export const modifyOrder = (orderId: string, body: TTicket) =>
 	apiCall<null>(`/api/trade/orders/${encodeURIComponent(orderId)}`, 'PATCH', body);
