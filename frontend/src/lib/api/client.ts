@@ -1,3 +1,14 @@
+import { invalidateAll } from '$app/navigation';
+
+const SESSION_RECHECK_MS = 30_000;
+let sessionCheckedAt = 0;
+
+function recheckSession() {
+	if (Date.now() - sessionCheckedAt < SESSION_RECHECK_MS) return;
+	sessionCheckedAt = Date.now();
+	void invalidateAll();
+}
+
 export type TResult<T = unknown> =
 	| { ok: true; data: T }
 	| { ok: false; error: string; status?: number };
@@ -13,6 +24,7 @@ export async function apiCall<T = unknown>(
 			headers: { 'content-type': 'application/json' },
 			body: body === undefined ? undefined : JSON.stringify(body)
 		});
+		if (res.status === 401) recheckSession();
 		const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
 		if (!res.ok || !json?.success) {
 			const detail = json?.data as Record<string, unknown> | null | undefined;

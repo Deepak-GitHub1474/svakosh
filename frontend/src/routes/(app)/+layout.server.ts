@@ -8,8 +8,8 @@ function authHeader(cookies: Cookies): Record<string, string> {
 	return { cookie: accessCookieHeader(cookies) };
 }
 
-export const load: ServerLoad = async ({ cookies, url, fetch }) => {
-	const target = url.pathname + url.search;
+export const load: ServerLoad = async ({ cookies, url, fetch, untrack }) => {
+	const target = untrack(() => url.pathname + url.search);
 	const signinUrl = `/auth/signin?redirect=${encodeURIComponent(target)}`;
 	const { apiUrl } = resolveBackendConfig();
 
