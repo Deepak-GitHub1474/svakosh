@@ -5,6 +5,7 @@
 	import AccountCell from '$lib/components/trade/AccountCell.svelte';
 	import PositionModal from '$lib/components/trade/PositionModal.svelte';
 	import RowActions from '$lib/components/trade/RowActions.svelte';
+	import SortHeader from '$lib/components/trade/SortHeader.svelte';
 	import StatStrip from '$lib/components/trade/StatStrip.svelte';
 	import TradeTable from '$lib/components/trade/TradeTable.svelte';
 	import { marketFeed } from '$lib/market/feed.svelte';
@@ -13,6 +14,7 @@
 	import { instrumentNames } from '$lib/trade/names.svelte';
 	import { tradeResource, type TAccountRow } from '$lib/trade/resource.svelte';
 	import { getHoldings } from '$lib/trade/service';
+	import { nextSort, sortBy, type TSortDir } from '$lib/trade/sort';
 	import type { TExitTarget, THolding } from '$lib/trade/types';
 	import { formatNumber } from '$lib/utils';
 
@@ -25,6 +27,7 @@
 	let exitOpen = $state(false);
 	let bulk = $state<TExitTarget[]>([]);
 	let bulkOpen = $state(false);
+	let pnlSort = $state<TSortDir>('');
 
 	const keyOf = (h: TRow) => `${h.account.id}:${h.isin || h.symbol}`;
 	const quantity = (h: THolding) => h.quantity + h.t1_quantity;
@@ -32,6 +35,15 @@
 	const prevOf = (h: THolding) =>
 		(h.token && marketFeed.quotes[h.token]?.prev_close) || h.close_price;
 
+	const rows = $derived(
+		sortBy(
+			[...holdings.data].sort(
+				(a, b) => a.symbol.localeCompare(b.symbol) || keyOf(a).localeCompare(keyOf(b))
+			),
+			pnlSort,
+			(h) => (ltpOf(h) - h.average_price) * quantity(h)
+		)
+	);
 	const tokens = $derived(
 		[...new Set(holdings.data.flatMap((h) => (h.token ? [h.token] : [])))].sort().join(',')
 	);
@@ -140,12 +152,17 @@
 		<th class="{TABLE.th} text-right">Avg</th>
 		<th class="{TABLE.th} text-right">LTP</th>
 		<th class="{TABLE.th} text-right">Current</th>
-		<th class="{TABLE.th} text-right">P&L</th>
+		<SortHeader
+			label="P&L"
+			dir={pnlSort}
+			onToggle={() => (pnlSort = nextSort(pnlSort))}
+			class="text-right"
+		/>
 		<th class="{TABLE.th} text-right">Day</th>
 		<th class="{TABLE.th} w-px text-right">Actions</th>
 	{/snippet}
 	{#snippet body()}
-		{#each holdings.data as h (keyOf(h))}
+		{#each rows as h (keyOf(h))}
 			{@const ltp = ltpOf(h)}
 			{@const value = ltp * quantity(h)}
 			{@const gain = value - h.average_price * quantity(h)}
@@ -175,7 +192,7 @@
 				<td class="{TABLE.td} text-right">{formatNumber(value)}</td>
 				<td class="{TABLE.td} text-right {tone(gain)}">
 					{signed(gain)}
-					<span class="ml-1 text-xs opacity-70"
+					<span class="block text-xs opacity-70"
 						>{percent(gain, h.average_price * quantity(h)).toFixed(2)}%</span
 					>
 				</td>

@@ -1,20 +1,25 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
-	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
 	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
-	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
+	import SvaKoshNumberInput from '$lib/components/svakosh/SvaKoshNumberInput.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
+	import TradeSheet from '$lib/components/trade/TradeSheet.svelte';
 	import AccountCell from '$lib/components/trade/AccountCell.svelte';
 	import InstrumentCell from '$lib/components/trade/InstrumentCell.svelte';
 	import Info from '$lib/components/svg-provider/Info.svelte';
 	import TradeTable from '$lib/components/trade/TradeTable.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import {
+		MAX_ORDER_PRICE,
+		MAX_ORDER_QUANTITY,
+		MODAL_BUTTON,
+		MODAL_STEPPER,
 		OPEN_STATUSES,
 		ORDERS_FILTER_KEY,
 		ORDERS_VIEW_KEY,
+		PRICE_TICK,
 		STATUS_TONE,
 		TABLE,
 		TRADES_SIDE_KEY
@@ -73,9 +78,9 @@
 	let reason = $state<TReason | null>(null);
 	let editing = $state<TBookRow | null>(null);
 	let modifyOpen = $state(false);
-	let quantity = $state('');
-	let price = $state('');
-	let trigger = $state('');
+	let quantity = $state(0);
+	let price = $state(0);
+	let trigger = $state(0);
 	let busy = $state('');
 
 	type TBookRow = TAccountRow<TBrokerOrder>;
@@ -150,9 +155,9 @@
 
 	function startModify(order: TBookRow) {
 		editing = order;
-		quantity = String(order.quantity);
-		price = order.price ? String(order.price) : '';
-		trigger = order.trigger_price ? String(order.trigger_price) : '';
+		quantity = order.quantity;
+		price = order.price || 0;
+		trigger = order.trigger_price || 0;
 		modifyOpen = true;
 	}
 
@@ -368,70 +373,59 @@
 	</TradeTable>
 {/if}
 
-<SvaKoshModal bind:isOpen={modifyOpen} width="22rem" class="overflow-hidden">
+<TradeSheet bind:isOpen={modifyOpen}>
 	{#if editing}
 		<ModalHeader
 			title={`Modify ${editing.symbol}`}
 			subtitle={`${editing.side} · ${editing.type} · ${editing.product}`}
 			onClose={() => (modifyOpen = false)}
 		/>
-		<form class="flex flex-col gap-4 p-4" onsubmit={submitModify}>
+		<form class="flex flex-col gap-4 p-4" onsubmit={submitModify} novalidate>
 			<div>
-				<SvaKoshLabel for="modify-qty">Quantity</SvaKoshLabel>
-				<SvaKoshInput
-					id="modify-qty"
-					placeholder="Quantity"
+				<SvaKoshLabel class="text-foreground/80">Quantity</SvaKoshLabel>
+				<SvaKoshNumberInput
+					class={MODAL_STEPPER}
 					bind:value={quantity}
-					type="number"
-					inputmode="numeric"
-					min="1"
-					step="1"
+					min={1}
+					max={MAX_ORDER_QUANTITY}
 				/>
 			</div>
 			{#if needsPrice}
 				<div>
-					<SvaKoshLabel for="modify-price">Price</SvaKoshLabel>
-					<SvaKoshInput
-						id="modify-price"
-						placeholder="Limit price"
+					<SvaKoshLabel class="text-foreground/80">Price</SvaKoshLabel>
+					<SvaKoshNumberInput
+						class={MODAL_STEPPER}
 						bind:value={price}
-						type="number"
-						inputmode="decimal"
-						min="0"
-						step="0.05"
+						min={0}
+						max={MAX_ORDER_PRICE}
+						step={PRICE_TICK}
 					/>
 				</div>
 			{/if}
 			{#if needsTrigger}
 				<div>
-					<SvaKoshLabel for="modify-trigger">Trigger price</SvaKoshLabel>
-					<SvaKoshInput
-						id="modify-trigger"
-						placeholder="Trigger price"
+					<SvaKoshLabel class="text-foreground/80">Trigger price</SvaKoshLabel>
+					<SvaKoshNumberInput
+						class={MODAL_STEPPER}
 						bind:value={trigger}
-						type="number"
-						inputmode="decimal"
-						min="0"
-						step="0.05"
+						min={0}
+						max={MAX_ORDER_PRICE}
+						step={PRICE_TICK}
 					/>
 				</div>
 			{/if}
 			<SvaKoshButton
 				type="submit"
-				variant="primary"
+				variant="solid"
+				class="mt-3 {MODAL_BUTTON}"
 				label={busy ? 'Sending…' : 'Modify order'}
 				disabled={!!busy || Number(quantity) < 1}
 			/>
 		</form>
 	{/if}
-</SvaKoshModal>
+</TradeSheet>
 
-<SvaKoshModal
-	isOpen={!!reason}
-	onClose={() => (reason = null)}
-	width="26rem"
-	class="overflow-hidden"
->
+<TradeSheet isOpen={!!reason} onClose={() => (reason = null)} width="26rem">
 	{#if reason}
 		<ModalHeader
 			title={`Order ${reason.status.replace('_', ' ').toLowerCase()}`}
@@ -442,4 +436,4 @@
 			{reason.message}
 		</p>
 	{/if}
-</SvaKoshModal>
+</TradeSheet>

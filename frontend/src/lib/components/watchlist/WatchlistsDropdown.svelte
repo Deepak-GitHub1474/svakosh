@@ -6,7 +6,7 @@
 	import AddCircle from '$lib/components/svg-provider/material/AddCircle.svelte';
 	import CheckCircle from '$lib/components/svg-provider/material/CheckCircle.svelte';
 	import Delete from '$lib/components/svg-provider/material/Delete.svelte';
-	import DriveFileRenameOutline from '$lib/components/svg-provider/material/DriveFileRenameOutline.svelte';
+	import Edit from '$lib/components/svg-provider/material/Edit.svelte';
 
 	interface Props {
 		isOpen: boolean;
@@ -61,14 +61,14 @@
 		transition:fly={{ y: -6, duration: 190, easing: cubicOut }}
 	>
 		<div
-			class="shrink-0 px-4 lg:px-3 py-2 text-[0.6875rem] text-muted-foreground border-b border-border-subtle bg-glass"
+			class="shrink-0 px-4 lg:px-3 py-2 text-xs text-muted-foreground border-b border-border-subtle bg-glass"
 		>
 			Select Watchlist:
 		</div>
 
 		<div class="flex-1 min-h-0 overflow-y-auto hide-scrollbar">
 			{#if watchlists.length === 0}
-				<div class="p-4 text-center text-[0.625rem] text-muted-foreground">
+				<div class="p-4 text-center text-xs text-muted-foreground">
 					No watchlists yet.
 				</div>
 			{:else}
@@ -85,9 +85,9 @@
 						<div class="flex items-center gap-1.5 min-w-0">
 							<span class="text-sm text-foreground truncate">{wl.name}</span>
 							{#if wl.predefined}
-								<SvaKoshBadge label="Predefined" variant="primary" class="shrink-0" />
+								<SvaKoshBadge label="Predefined" variant="primary" class="shrink-0 text-xs" />
 							{/if}
-							<span class="shrink-0 text-[0.625rem] text-muted-foreground"
+							<span class="shrink-0 text-xs text-muted-foreground"
 								>({wl.count} {wl.count === 1 ? 'Stock' : 'Stocks'})</span
 							>
 						</div>
@@ -96,25 +96,25 @@
 							<CheckCircle class="text-primary icon-size shrink-0" />
 						{:else if !wl.predefined}
 							<div
-								class="shrink-0 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity"
+								class="shrink-0 flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity"
 							>
 								<button
 									type="button"
 									onclick={(e) => handleRename(e, wl.name)}
 									aria-label="Rename watchlist"
 									title="Rename"
-									class="text-muted-foreground hover:text-primary cursor-pointer"
+									class="text-muted-foreground hover:text-primary flex size-8 cursor-pointer items-center justify-center rounded-md"
 								>
-									<DriveFileRenameOutline style="font-size:1rem" />
+									<Edit class="text-xl" />
 								</button>
 								<button
 									type="button"
 									onclick={(e) => handleDelete(e, wl.name)}
 									aria-label="Delete watchlist"
 									title="Delete"
-									class="text-muted-foreground hover:text-bearish cursor-pointer"
+									class="text-muted-foreground hover:text-bearish flex size-8 cursor-pointer items-center justify-center rounded-md"
 								>
-									<Delete style="font-size:1rem" />
+									<Delete class="text-xl" />
 								</button>
 							</div>
 						{/if}

@@ -1,6 +1,10 @@
 <script lang="ts">
-	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
+	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
+	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
+	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
+	import TradeSheet from '$lib/components/trade/TradeSheet.svelte';
+	import { MODAL_BUTTON } from '$lib/trade/const';
 	import type { TOpResult } from './types';
 
 	interface Props {
@@ -60,60 +64,50 @@
 	}
 </script>
 
-<SvaKoshModal bind:isOpen={modalOpen} onClose={close} position="center">
-	{#snippet title()}
-		<span class="text-sm text-foreground">Note for {symbolName}</span>
-		<span class="text-xs text-muted-foreground">
-			Private note for this symbol in this watchlist.
-		</span>
-	{/snippet}
-
+<TradeSheet bind:isOpen={modalOpen} onClose={close} width="26rem">
+	<ModalHeader title={`Note for ${symbolName}`} onClose={close} />
 	<div class="flex flex-col gap-4 p-4">
-		<textarea
-			bind:this={inputEl}
-			bind:value={note}
-			placeholder="Type your note..."
-			maxlength="500"
-			rows="4"
-			disabled={saving}
-			class="w-full px-3 py-2 text-xs text-foreground bg-glass border border-border-subtle rounded outline-none focus:border-primary resize-none disabled:opacity-50"
-		></textarea>
-
-		<div class="flex items-center justify-between text-xs text-muted-foreground">
-			<span>{trimmed.length}/500</span>
-		</div>
-
-		<div class="flex justify-between gap-2">
-			{#if initialNote.trim()}
-				<button
-					type="button"
-					onclick={clear}
-					disabled={saving}
-					class="px-3 py-1.5 text-xs text-bearish hover:text-bearish cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-				>
-					Clear note
-				</button>
-			{:else}
-				<span></span>
-			{/if}
-			<div class="flex gap-2">
-				<button
-					type="button"
-					onclick={close}
-					disabled={saving}
-					class="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-				>
-					Cancel
-				</button>
-				<button
-					type="button"
-					onclick={save}
-					disabled={saving || !isDirty || !trimmed}
-					class="px-3 py-1.5 text-xs text-primary bg-primary-subtle border border-primary/20 hover:bg-primary-hover rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-				>
-					{saving ? 'Saving...' : 'Save'}
-				</button>
+		<div>
+			<div class="mb-1.5 flex items-center justify-between gap-2">
+				<SvaKoshLabel for="watchlist-note" class="text-foreground/80 mb-0">Note</SvaKoshLabel>
+				<span class="text-muted-foreground text-xs tabular-nums">{trimmed.length}/500</span>
 			</div>
+			<textarea
+				id="watchlist-note"
+				bind:this={inputEl}
+				bind:value={note}
+				placeholder="Type your note..."
+				maxlength="500"
+				rows="4"
+				disabled={saving}
+				class="glass-panel text-foreground placeholder:text-muted-foreground hover:border-primary/40 focus:border-primary/40 w-full resize-none rounded-xl p-3 text-[0.857rem] focus:outline-none disabled:opacity-50"
+			></textarea>
+		</div>
+		{#if initialNote.trim()}
+			<button
+				type="button"
+				onclick={clear}
+				disabled={saving}
+				class="text-bearish hover:text-bearish/80 self-start text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+			>
+				Clear note
+			</button>
+		{/if}
+		<div class="mt-3 flex gap-3 md:justify-end">
+			<SvaKoshButton
+				variant="secondary"
+				label="Cancel"
+				disabled={saving}
+				onclick={close}
+				class="{MODAL_BUTTON} flex-1 [--terminal-border-hover:transparent] [--terminal-border:transparent] md:min-w-36 md:flex-none"
+			/>
+			<SvaKoshButton
+				variant="solid"
+				label={saving ? 'Saving…' : 'Save note'}
+				disabled={saving || !isDirty || !trimmed}
+				onclick={save}
+				class="{MODAL_BUTTON} flex-1 md:min-w-36 md:flex-none"
+			/>
 		</div>
 	</div>
-</SvaKoshModal>
+</TradeSheet>

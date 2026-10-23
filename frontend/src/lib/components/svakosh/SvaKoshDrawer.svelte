@@ -47,6 +47,8 @@
 		dismissOnDragDown?: boolean;
 	} = $props();
 
+	const KEYBOARD_SETTLE_MS = 300;
+
 	const points = $derived(
 		[...new Set(snapPoints)].filter((p) => p > 0 && p <= 100).sort((a, b) => a - b)
 	);
@@ -77,14 +79,42 @@
 		};
 	});
 
+	let keyboard = $state(0);
+	let visibleHeight = $state(0);
+
+	$effect(() => {
+		const vv = window.visualViewport;
+		if (!isOpen || !vv) return;
+		const sync = () => {
+			keyboard = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+			visibleHeight = vv.height;
+		};
+		sync();
+		vv.addEventListener('resize', sync);
+		vv.addEventListener('scroll', sync);
+		return () => {
+			vv.removeEventListener('resize', sync);
+			vv.removeEventListener('scroll', sync);
+			keyboard = 0;
+		};
+	});
+
+	function revealField(e: FocusEvent) {
+		const field = e.target;
+		if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) return;
+		setTimeout(() => field.scrollIntoView({ block: 'nearest' }), KEYBOARD_SETTLE_MS);
+	}
+
 	const heightStyle = $derived.by(() => {
+		const lift = keyboard ? `bottom:${keyboard}px;` : '';
+		const cap = keyboard ? `min(${maxVh}vh, ${Math.floor(visibleHeight * 0.95)}px)` : `${maxVh}vh`;
 		if (dragging && liveHeight !== null) {
-			return `height:${liveHeight}px;max-height:${maxVh}vh;`;
+			return `${lift}height:${liveHeight}px;max-height:${cap};`;
 		}
 		if (draggable) {
-			return `height:${points[snapIdx] ?? minVh}vh;max-height:${maxVh}vh;`;
+			return `${lift}height:${points[snapIdx] ?? minVh}vh;max-height:${cap};`;
 		}
-		return `min-height:${minVh}vh;max-height:${maxVh}vh;`;
+		return `${lift}min-height:${keyboard ? 0 : minVh}vh;max-height:${cap};`;
 	});
 
 	function close() {
@@ -143,7 +173,7 @@
 			type="button"
 			aria-label="Close"
 			onclick={handleBackdrop}
-			class={cn('fixed inset-0 z-[1120] bg-black/60 backdrop-blur-sm', backdropClass)}
+			class={cn('fixed inset-0 z-[1120] bg-black/50', backdropClass)}
 			transition:fade={{ duration: 200 }}
 		></button>
 	{/if}
@@ -153,9 +183,10 @@
 		role="dialog"
 		aria-modal="true"
 		style={heightStyle}
+		onfocusin={revealField}
 		class={cn(
 			'fixed inset-x-0 bottom-0 z-[1130] flex flex-col',
-			'rounded-t-2xl border-t border-surface-border bg-surface',
+			'border-surface-border bg-surface rounded-t-2xl border-t',
 			'shadow-[0_-10px_30px_-5px_rgba(0,0,0,0.6)]',
 			dragging ? 'transition-none' : 'transition-[height] duration-300 ease-out',
 			className
@@ -178,10 +209,10 @@
 		{/if}
 
 		{#if title || icon || showClose}
-			<div class="flex shrink-0 items-center gap-3 border-b border-border-subtle px-4 pb-3">
+			<div class="border-border-subtle flex shrink-0 items-center gap-3 border-b px-4 pb-3">
 				{#if icon}
 					<div
-						class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+						class="bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
 					>
 						{@render icon()}
 					</div>
@@ -189,7 +220,7 @@
 				{#if title}
 					<div class="flex min-w-0 flex-col">
 						{#if typeof title === 'string'}
-							<span class="truncate text-sm text-foreground">{title}</span>
+							<span class="text-foreground truncate text-sm">{title}</span>
 						{:else}
 							{@render title()}
 						{/if}
@@ -200,7 +231,7 @@
 						type="button"
 						onclick={close}
 						aria-label="Close"
-						class="ml-auto shrink-0 cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
+						class="text-muted-foreground hover:text-foreground ml-auto shrink-0 cursor-pointer transition-colors"
 					>
 						<CloseIcon class="h-5 w-5" />
 					</button>
@@ -210,7 +241,7 @@
 
 		<div
 			class={cn(
-				'min-h-0 flex-1 overflow-y-auto overscroll-contain hide-scrollbar',
+				'hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain',
 				!footer && 'pb-[max(1rem,env(safe-area-inset-bottom))]',
 				contentClass
 			)}
@@ -220,7 +251,7 @@
 
 		{#if footer}
 			<div
-				class="shrink-0 border-t border-border-subtle px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+				class="border-border-subtle shrink-0 border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
 			>
 				{@render footer()}
 			</div>

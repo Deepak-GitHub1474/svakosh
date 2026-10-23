@@ -19,17 +19,22 @@
 		class: className = '' 
 	}: Props = $props();
 
+	const decimals = $derived((String(step).split('.')[1] ?? '').length);
+	const round = (n: number) => Number(n.toFixed(decimals));
+
 	function increment() {
-		if (value + step <= max) value += step;
+		const next = round(value + step);
+		if (next <= max) value = next;
 	}
 
 	function decrement() {
-		if (value - step >= min) value -= step;
+		const next = round(value - step);
+		if (next >= min) value = next;
 	}
 
 	function handleInput(e: Event) {
 		const target = e.target as HTMLInputElement;
-		const val = parseInt(target.value);
+		const val = decimals ? parseFloat(target.value) : parseInt(target.value);
 		if (!isNaN(val)) {
 			if (val < min) value = min;
 			else if (val > max) value = max;
@@ -67,6 +72,7 @@
 		<div class="flex-1 min-w-[3.5rem] px-2">
 			<input 
 				type="number"
+				inputmode={decimals ? 'decimal' : 'numeric'}
 				{value}
 				{min}
 				{max}

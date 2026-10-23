@@ -183,6 +183,15 @@
 		searchInput?.focus();
 	}
 
+	function clearOrCloseSearch() {
+		if (searchQuery) {
+			clearSearch();
+			return;
+		}
+		isSearchFocused = false;
+		searchInput?.blur();
+	}
+
 	function focusSearchInput() {
 		searchQuery = 'NIFTY';
 		isSearchFocused = true;
@@ -324,9 +333,9 @@
 	<div use:handleClickOutsideSearch class="contents">
 		<div
 			data-search-zone
-			class="flex items-center gap-2 px-4 py-2 lg:p-2 border-b border-border-subtle bg-glass"
+			class="flex items-center gap-2 px-4 lg:px-3 py-2 border-b border-border-subtle bg-glass"
 		>
-			<Search class="text-muted-foreground icon-size" />
+			<Search class="text-muted-foreground icon-size -ml-0.5" />
 			<input
 				bind:this={searchInput}
 				bind:value={searchQuery}
@@ -335,11 +344,11 @@
 				placeholder="Search Company you want to invest"
 				class="flex-1 min-w-0 bg-transparent text-xs text-foreground placeholder:text-muted-foreground outline-none border-none"
 			/>
-			{#if searchQuery}
+			{#if searchQuery || isSearchFocused}
 				<button
 					type="button"
-					onclick={clearSearch}
-					aria-label="Clear search"
+					onclick={clearOrCloseSearch}
+					aria-label={searchQuery ? 'Clear search' : 'Close search'}
 					class="text-muted-foreground hover:text-error transition-colors"
 				>
 					<CloseIcon class="w-4 h-4" />
@@ -352,10 +361,10 @@
 		<button
 			type="button"
 			onclick={() => (isDropdownOpen = !isDropdownOpen)}
-			class="w-full flex items-center justify-between gap-2 px-4 py-2 lg:p-2 border-b border-border-subtle hover:bg-glass transition-colors cursor-pointer"
+			class="w-full flex items-center justify-between gap-2 px-4 lg:px-3 py-2 border-b border-border-subtle hover:bg-glass transition-colors cursor-pointer"
 		>
 			<div class="flex items-center gap-1.5 min-w-0">
-				<span class="text-xs text-foreground truncate text-left">
+				<span class="text-sm text-foreground truncate text-left">
 					{selectedName ?? 'Select Watchlist'}
 				</span>
 				{#if selectedItem?.predefined}

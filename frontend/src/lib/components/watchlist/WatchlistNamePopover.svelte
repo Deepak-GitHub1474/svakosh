@@ -1,6 +1,11 @@
 <script lang="ts">
-	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
+	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
+	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
+	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
+	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
+	import TradeSheet from '$lib/components/trade/TradeSheet.svelte';
+	import { MODAL_BUTTON, MODAL_CONTROL } from '$lib/trade/const';
 	import type { TOpResult } from './types';
 
 	interface Props {
@@ -12,28 +17,17 @@
 		onSubmit: (name: string) => Promise<TOpResult>;
 	}
 
-	let {
-		isOpen,
-		title,
-		submitLabel,
-		initialName = '',
-		onClose,
-		onSubmit
-	}: Props = $props();
+	let { isOpen, title, submitLabel, initialName = '', onClose, onSubmit }: Props = $props();
 
 	let modalOpen = $state(false);
 	let name = $state('');
 	let isLoading = $state(false);
-	let inputEl = $state<HTMLInputElement>();
 
 	$effect(() => {
 		modalOpen = isOpen;
 		if (isOpen) {
 			name = initialName;
-			setTimeout(() => {
-				inputEl?.focus();
-				inputEl?.select();
-			}, 50);
+			setTimeout(() => document.getElementById('watchlist-name')?.focus(), 50);
 		}
 	});
 
@@ -69,36 +63,36 @@
 	}
 </script>
 
-<SvaKoshModal bind:isOpen={modalOpen} onClose={close} position="center" {title}>
+<TradeSheet bind:isOpen={modalOpen} onClose={close} width="26rem">
+	<ModalHeader {title} onClose={close} />
 	<div class="flex flex-col gap-4 p-4">
-		<input
-			bind:this={inputEl}
-			bind:value={name}
-			type="text"
-			placeholder="Watchlist name"
-			maxlength="64"
-			disabled={isLoading}
-			onkeydown={handleKeydown}
-			class="w-full px-3 py-2 text-xs text-foreground bg-glass border border-border-subtle rounded outline-none focus:border-primary disabled:opacity-50"
-		/>
-
-		<div class="flex justify-end gap-2">
-			<button
-				type="button"
-				onclick={close}
+		<div>
+			<SvaKoshLabel for="watchlist-name" class="text-foreground/80">Name</SvaKoshLabel>
+			<SvaKoshInput
+				id="watchlist-name"
+				bind:value={name}
+				placeholder="Watchlist name"
+				maxlength="64"
 				disabled={isLoading}
-				class="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer disabled:cursor-not-allowed"
-			>
-				Cancel
-			</button>
-			<button
-				type="button"
-				onclick={handleSubmit}
+				onkeydown={handleKeydown}
+				class={MODAL_CONTROL}
+			/>
+		</div>
+		<div class="mt-3 flex gap-3 md:justify-end">
+			<SvaKoshButton
+				variant="secondary"
+				label="Cancel"
+				disabled={isLoading}
+				onclick={close}
+				class="{MODAL_BUTTON} flex-1 [--terminal-border-hover:transparent] [--terminal-border:transparent] md:min-w-36 md:flex-none"
+			/>
+			<SvaKoshButton
+				variant="solid"
+				label={isLoading ? 'Saving…' : submitLabel}
 				disabled={isLoading || !isDirty}
-				class="px-3 py-1.5 text-xs text-primary bg-primary-subtle border border-primary/20 hover:bg-primary-hover rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-			>
-				{isLoading ? 'Saving...' : submitLabel}
-			</button>
+				onclick={handleSubmit}
+				class="{MODAL_BUTTON} flex-1 md:min-w-36 md:flex-none"
+			/>
 		</div>
 	</div>
-</SvaKoshModal>
+</TradeSheet>

@@ -110,7 +110,7 @@
 							? ProgressActivity
 							: AddCircle}
 					<div
-						class="group flex items-center gap-3 px-4 lg:px-3 py-2 border-b border-border-subtle hover:bg-glass transition-colors"
+						class="group flex items-center gap-3 pl-3 pr-4 lg:pl-2 lg:pr-3 py-2 border-b border-border-subtle hover:bg-glass transition-colors"
 					>
 						<SymbolImage
 							name={hit.underlying_symbol}

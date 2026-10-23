@@ -5,6 +5,7 @@
 	import AccountCell from '$lib/components/trade/AccountCell.svelte';
 	import PositionModal from '$lib/components/trade/PositionModal.svelte';
 	import RowActions from '$lib/components/trade/RowActions.svelte';
+	import SortHeader from '$lib/components/trade/SortHeader.svelte';
 	import StatStrip from '$lib/components/trade/StatStrip.svelte';
 	import TradeTable from '$lib/components/trade/TradeTable.svelte';
 	import { marketFeed } from '$lib/market/feed.svelte';
@@ -14,6 +15,7 @@
 	import { isExpired, positionPnl } from '$lib/trade/position';
 	import { tradeResource, type TAccountRow } from '$lib/trade/resource.svelte';
 	import { getPositions } from '$lib/trade/service';
+	import { nextSort, sortBy, type TSortDir } from '$lib/trade/sort';
 	import type { TExitTarget, TPosition } from '$lib/trade/types';
 	import { formatNumber } from '$lib/utils';
 
@@ -26,6 +28,7 @@
 	let exitOpen = $state(false);
 	let bulk = $state<TExitTarget[]>([]);
 	let bulkOpen = $state(false);
+	let pnlSort = $state<TSortDir>('');
 
 	const keyOf = (p: TRow) =>
 		`${p.account.id}:${p.token ?? `${p.exchange}:${p.symbol}`}:${p.product}`;
@@ -36,7 +39,16 @@
 		[...new Set(positions.data.flatMap((p) => (p.token ? [p.token] : [])))].sort().join(',')
 	);
 	const rows = $derived(
-		[...positions.data].sort((a, b) => Number(!a.quantity) - Number(!b.quantity))
+		sortBy(
+			[...positions.data].sort(
+				(a, b) =>
+					Number(!a.quantity) - Number(!b.quantity) ||
+					a.symbol.localeCompare(b.symbol) ||
+					keyOf(a).localeCompare(keyOf(b))
+			),
+			pnlSort,
+			(p) => positionPnl(p, ltpOf(p))
+		)
 	);
 	const pnls = $derived(rows.map((p) => positionPnl(p, ltpOf(p))));
 	const total = $derived(pnls.reduce<number>((sum, v) => sum + (v ?? 0), 0));
@@ -131,7 +143,12 @@
 		<th class="{TABLE.th} text-right">Qty</th>
 		<th class="{TABLE.th} text-right">Avg</th>
 		<th class="{TABLE.th} text-right">LTP</th>
-		<th class="{TABLE.th} text-right">P&L</th>
+		<SortHeader
+			label="P&L"
+			dir={pnlSort}
+			onToggle={() => (pnlSort = nextSort(pnlSort))}
+			class="text-right"
+		/>
 		<th class="{TABLE.th} w-px text-right">Actions</th>
 	{/snippet}
 	{#snippet body()}

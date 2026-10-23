@@ -1,8 +1,9 @@
 <script lang="ts">
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
-	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
+	import TradeSheet from '$lib/components/trade/TradeSheet.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
+	import { MODAL_BUTTON } from '$lib/trade/const';
 	import { exitSide } from '$lib/trade/position';
 	import { sendOrder } from '$lib/trade/send';
 	import type { TExitTarget } from '$lib/trade/types';
@@ -51,7 +52,7 @@
 	}
 </script>
 
-<SvaKoshModal bind:isOpen width="24rem" class="overflow-hidden">
+<TradeSheet bind:isOpen width="24rem">
 	<ModalHeader
 		title={`Exit ${targets.length} ${targets.length === 1 ? noun : `${noun}s`}`}
 		subtitle="Market orders for the full open quantity"
@@ -77,10 +78,11 @@
 			{/each}
 		</ul>
 		<SvaKoshButton
-			variant="bearish"
+			variant="solid"
+			class="mt-3 {MODAL_BUTTON}"
 			label={placing ? 'Exiting…' : 'Exit at market'}
 			disabled={placing || !targets.length}
 			onclick={exitAll}
 		/>
 	</div>
-</SvaKoshModal>
+</TradeSheet>

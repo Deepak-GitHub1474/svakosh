@@ -1,10 +1,18 @@
 <script lang="ts">
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
-	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
 	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
-	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
+	import SvaKoshNumberInput from '$lib/components/svakosh/SvaKoshNumberInput.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
+	import TradeSheet from '$lib/components/trade/TradeSheet.svelte';
+	import {
+		MAX_ORDER_PRICE,
+		MAX_ORDER_QUANTITY,
+		MODAL_BUTTON,
+		MODAL_STEPPER,
+		PRICE_TICK,
+		SOFT_TABS
+	} from '$lib/trade/const';
 	import { exitSide } from '$lib/trade/position';
 	import { sendOrder } from '$lib/trade/send';
 	import type { TExitTarget } from '$lib/trade/types';
@@ -12,7 +20,6 @@
 
 	type TKind = 'MARKET' | 'LIMIT';
 
-	const TICK = 0.05;
 	const SL_BUFFER = 0.005;
 
 	const KINDS: { label: string; value: TKind }[] = [
@@ -33,22 +40,24 @@
 		onDone
 	}: { isOpen: boolean; target: TExitTarget | null; onDone?: () => void } = $props();
 
-	let quantity = $state('');
+	let quantity = $state(0);
 	let kind = $state<TKind>('MARKET');
-	let price = $state('');
-	let level = $state('');
-	let limit = $state('');
+	let price = $state(0);
+	let level = $state(0);
+	let limit = $state(0);
 	let limitEdited = $state(false);
+	let autoLimit = 0;
 	let orderKey = $state('');
 	let placing = $state(false);
 
 	$effect(() => {
 		if (!target) return;
-		quantity = target.mode === 'exit' ? String(Math.abs(target.quantity)) : '';
+		quantity = target.mode === 'exit' ? Math.abs(target.quantity) : 0;
 		kind = 'MARKET';
-		price = target.ltp ? target.ltp.toFixed(2) : '';
-		level = '';
-		limit = '';
+		price = target.ltp ? Number(target.ltp.toFixed(2)) : 0;
+		level = 0;
+		limit = 0;
+		autoLimit = 0;
 		limitEdited = false;
 		orderKey = crypto.randomUUID();
 	});
@@ -92,8 +101,16 @@
 
 	$effect(() => {
 		if (mode !== 'stoploss' || limitEdited || !(levelValue > 0)) return;
-		const buffer = Math.max(TICK, Math.round((levelValue * SL_BUFFER) / TICK) * TICK);
-		limit = (side === 'SELL' ? levelValue - buffer : levelValue + buffer).toFixed(2);
+		const buffer = Math.max(
+			PRICE_TICK,
+			Math.round((levelValue * SL_BUFFER) / PRICE_TICK) * PRICE_TICK
+		);
+		autoLimit = Number((side === 'SELL' ? levelValue - buffer : levelValue + buffer).toFixed(2));
+		limit = autoLimit;
+	});
+
+	$effect(() => {
+		if (limit !== autoLimit) limitEdited = true;
 	});
 
 	async function submit(event: SubmitEvent) {
@@ -128,7 +145,7 @@
 	}
 </script>
 
-<SvaKoshModal bind:isOpen width="22rem" class="overflow-hidden">
+<TradeSheet bind:isOpen>
 	{#if target}
 		<ModalHeader
 			title={`${TITLES[mode]} ${target.symbol}`}
@@ -136,34 +153,40 @@
 			onClose={() => (isOpen = false)}
 		/>
 		<form class="flex flex-col gap-4 p-4" onsubmit={submit} novalidate>
+			{#if !priced}
+				<div>
+					<SvaKoshLabel class="text-foreground/80">Order type</SvaKoshLabel>
+					<SvaKoshTabs
+						tabs={KINDS}
+						activeTab={kind}
+						onTabChange={(next: TKind) => (kind = next)}
+						class={SOFT_TABS}
+					/>
+				</div>
+			{/if}
 			<div>
-				<SvaKoshLabel for="position-qty">Quantity</SvaKoshLabel>
-				<SvaKoshInput
-					id="position-qty"
+				<div class="mb-1.5 flex items-center justify-between gap-2">
+					<SvaKoshLabel class="text-foreground/80 mb-0">Quantity</SvaKoshLabel>
+					<span class="text-muted-foreground text-xs tabular-nums">Open {held}</span>
+				</div>
+				<SvaKoshNumberInput
+					class={MODAL_STEPPER}
 					bind:value={quantity}
-					type="number"
-					inputmode="numeric"
-					min="1"
-					max={mode === 'add' ? undefined : String(held)}
-					step="1"
-					placeholder={mode === 'add' ? 'Quantity to add' : `Up to ${held}`}
-					class={quantity && !qtyValid ? 'border-bearish-muted' : ''}
+					min={1}
+					max={mode === 'add' ? MAX_ORDER_QUANTITY : held}
 				/>
-				<p class="text-muted-foreground mt-1 text-xs">Open {held}</p>
 			</div>
 			{#if priced}
 				<div>
-					<SvaKoshLabel for="position-level">
-						{mode === 'stoploss' ? 'Trigger price' : 'Target price'}
-					</SvaKoshLabel>
-					<SvaKoshInput
-						id="position-level"
+					<SvaKoshLabel class="text-foreground/80"
+						>{mode === 'stoploss' ? 'Trigger price' : 'Target price'}</SvaKoshLabel
+					>
+					<SvaKoshNumberInput
+						class={MODAL_STEPPER}
 						bind:value={level}
-						type="number"
-						inputmode="decimal"
-						min="0"
-						step="0.05"
-						class={levelError ? 'border-bearish-muted' : ''}
+						min={0}
+						max={MAX_ORDER_PRICE}
+						step={PRICE_TICK}
 					/>
 					<p class="mt-1 text-xs {levelError ? 'text-bearish' : 'text-muted-foreground'}">
 						{levelError ||
@@ -174,49 +197,35 @@
 				</div>
 				{#if mode === 'stoploss'}
 					<div>
-						<SvaKoshLabel for="position-limit">Limit price</SvaKoshLabel>
-						<SvaKoshInput
-							id="position-limit"
+						<SvaKoshLabel class="text-foreground/80">Limit price</SvaKoshLabel>
+						<SvaKoshNumberInput
+							class={MODAL_STEPPER}
 							bind:value={limit}
-							oninput={() => (limitEdited = true)}
-							type="number"
-							inputmode="decimal"
-							min="0"
-							step="0.05"
-							class={limitError ? 'border-bearish-muted' : ''}
+							min={0}
+							max={MAX_ORDER_PRICE}
+							step={PRICE_TICK}
 						/>
 						{#if limitError}
 							<p class="text-bearish mt-1 text-xs">{limitError}</p>
 						{/if}
 					</div>
 				{/if}
-			{:else}
+			{:else if kind === 'LIMIT'}
 				<div>
-					<SvaKoshLabel>Order type</SvaKoshLabel>
-					<SvaKoshTabs
-						tabs={KINDS}
-						activeTab={kind}
-						onTabChange={(next: TKind) => (kind = next)}
-						class="w-full [&>button]:flex-1 [&>button]:justify-center"
+					<SvaKoshLabel class="text-foreground/80">Limit price</SvaKoshLabel>
+					<SvaKoshNumberInput
+						class={MODAL_STEPPER}
+						bind:value={price}
+						min={0}
+						max={MAX_ORDER_PRICE}
+						step={PRICE_TICK}
 					/>
 				</div>
-				{#if kind === 'LIMIT'}
-					<div>
-						<SvaKoshLabel for="position-price">Limit price</SvaKoshLabel>
-						<SvaKoshInput
-							id="position-price"
-							bind:value={price}
-							type="number"
-							inputmode="decimal"
-							min="0"
-							step="0.05"
-						/>
-					</div>
-				{/if}
 			{/if}
 			<SvaKoshButton
 				type="submit"
-				variant={side === 'SELL' ? 'bearish' : 'bullish'}
+				variant="solid"
+				class="mt-3 {MODAL_BUTTON}"
 				label={placing
 					? 'Placing…'
 					: priced
@@ -226,4 +235,4 @@
 			/>
 		</form>
 	{/if}
-</SvaKoshModal>
+</TradeSheet>

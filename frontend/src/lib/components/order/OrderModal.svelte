@@ -13,6 +13,7 @@
 	import { resolve } from '$app/paths';
 	import { tradeAccounts } from '$lib/trade/accounts.svelte';
 	import { untrack } from 'svelte';
+	import { MODAL_BUTTON, MODAL_CONTROL, MODAL_STEPPER } from '$lib/trade/const';
 	import { getFunds, getMargin, placeOrder } from '$lib/trade/service';
 	import type { TOrderTicket } from './types';
 
@@ -236,7 +237,7 @@
 
 	const tabsSoft =
 		'[&>div]:bg-none [&>div]:bg-primary/15 [&>div]:shadow-none [&>div]:ring-1 [&>div]:ring-inset [&>div]:ring-primary/40 [&>button.text-black]:text-primary';
-	const tabsFill = `w-full [&>button]:flex-1 [&>button]:justify-center [&>button]:px-2 ${tabsSoft}`;
+	const tabsFill = `${MODAL_CONTROL} w-full [&>button]:flex-1 [&>button]:justify-center [&>button]:px-2 ${tabsSoft}`;
 	const fieldHead = 'mb-1.5 flex h-8 items-center justify-between gap-2';
 </script>
 
@@ -292,7 +293,7 @@
 		<form class="space-y-4 p-4" onsubmit={submit} novalidate>
 			<div class="grid grid-cols-2 gap-3">
 				<div>
-					<SvaKoshLabel>Product</SvaKoshLabel>
+					<SvaKoshLabel class="text-foreground/80">Product</SvaKoshLabel>
 					<SvaKoshTabs
 						tabs={isEquity ? EQUITY_PRODUCT_TABS : PRODUCT_TABS}
 						activeTab={product}
@@ -301,7 +302,7 @@
 					/>
 				</div>
 				<div>
-					<SvaKoshLabel>Order type</SvaKoshLabel>
+					<SvaKoshLabel class="text-foreground/80">Order type</SvaKoshLabel>
 					<SvaKoshTabs
 						tabs={ORDER_TYPE_TABS}
 						activeTab={orderType}
@@ -314,7 +315,7 @@
 			<div class="grid grid-cols-2 gap-3">
 				<div>
 					<div class={fieldHead}>
-						<SvaKoshLabel class="mb-0">Quantity</SvaKoshLabel>
+						<SvaKoshLabel class="text-foreground/80 mb-0">Quantity</SvaKoshLabel>
 						{#if !isEquity}
 							<SvaKoshTabs
 								tabs={UNIT_TABS}
@@ -326,6 +327,7 @@
 					</div>
 					<div onfocusin={onAmountFocusIn} onfocusout={onAmountFocusOut}>
 						<SvaKoshNumberInput
+							class={MODAL_STEPPER}
 							bind:value={amount}
 							min={isQty ? (typingAmount ? 0 : lotSize) : 1}
 							max={isQty ? MAX_LOTS * lotSize : MAX_LOTS}
@@ -335,7 +337,7 @@
 				</div>
 				<div>
 					<div class={fieldHead}>
-						<SvaKoshLabel for="order-price" class="mb-0">
+						<SvaKoshLabel for="order-price" class="text-foreground/80 mb-0">
 							{isLimit ? 'Limit price' : 'Market price'}
 						</SvaKoshLabel>
 						{#if isLimit}
@@ -351,7 +353,7 @@
 							step={TICK}
 							bind:value={priceText}
 							onblur={snapPrice}
-							class="h-[calc(2.5rem+2px)] [appearance:textfield] rounded-xl py-0 text-right tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none {priceValid
+							class="{MODAL_CONTROL} [appearance:textfield] rounded-xl py-0 text-right tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none {priceValid
 								? ''
 								: 'border-bearish-muted'}"
 						/>
@@ -360,7 +362,7 @@
 							id="order-price"
 							value={formatDecimal(liveLtp)}
 							disabled
-							class="h-[calc(2.5rem+2px)] rounded-xl py-0 text-right tabular-nums"
+							class="{MODAL_CONTROL} rounded-xl py-0 text-right tabular-nums"
 						/>
 					{/if}
 				</div>
@@ -390,7 +392,7 @@
 					variant={isSell ? 'bearish' : 'bullish'}
 					label={placing ? 'Placing…' : isSell ? 'Sell' : 'Buy'}
 					disabled={!priceValid || placing}
-					class="min-w-[10rem] font-semibold [--terminal-fg:white] {isSell
+					class="{MODAL_BUTTON} min-w-[10rem] font-semibold [--terminal-fg:white] {isSell
 						? '[--terminal-bg-hover:var(--bearish-solid-hover)] [--terminal-bg:var(--bearish-solid)] [--terminal-border-hover:transparent] [--terminal-border:transparent]'
 						: '[--terminal-bg-hover:var(--bullish-solid-hover)] [--terminal-bg:var(--bullish-solid)] [--terminal-border-hover:transparent] [--terminal-border:transparent]'}"
 				/>

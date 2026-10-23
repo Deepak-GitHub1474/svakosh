@@ -114,7 +114,7 @@
 	onmouseleave={() => {
 		if (isDesktop) actionsOpen = false;
 	}}
-	class="group relative flex items-center gap-3 px-4 lg:px-3 py-2 border-b border-border-subtle hover:bg-glass transition-colors"
+	class="group relative flex items-center gap-3 pl-3 pr-4 lg:pl-2 lg:pr-3 py-2 border-b border-border-subtle hover:bg-glass transition-colors"
 >
 	{#if hasActions}
 		<button
@@ -130,7 +130,7 @@
 	<div class="flex-1 min-w-0 flex items-center justify-between gap-2">
 		<div class="flex flex-col min-w-0">
 			<span class="flex items-center gap-1 min-w-0">
-				<span class="text-xs text-foreground truncate">{name}</span>
+				<span class="text-xs font-semibold text-foreground truncate">{name}</span>
 				{#if hasNote}
 					<span title="Has note" class="flex shrink-0">
 						<StickyNote2 class="text-primary" style="font-size:0.75rem" />
@@ -138,7 +138,7 @@
 				{/if}
 			</span>
 			{#if subtitle}
-				<span class="text-[0.625rem] text-muted-foreground truncate">{subtitle}</span>
+				<span class="text-xs text-muted-foreground truncate">{subtitle}</span>
 			{/if}
 		</div>
 
@@ -151,7 +151,7 @@
 						: ''}"
 			>
 				<span class="text-xs text-foreground">{formatNumber(ltp)}</span>
-				<span class="text-[0.625rem] {isUp ? 'text-bullish' : 'text-bearish'}">
+				<span class="text-xs {isUp ? 'text-bullish' : 'text-bearish'}">
 					{sign}{formatNumber(change)} ({sign}{formatNumber(changePct)}%)
 				</span>
 			</div>
@@ -189,7 +189,7 @@
 						onclick={toggleActions}
 						aria-label="More actions"
 						title="More"
-						class="w-7 h-7 items-center justify-center rounded bg-glass border border-border-subtle text-muted-foreground hover:text-primary hover:border-primary/30 cursor-pointer transition-colors
+						class="size-7 items-center justify-center rounded-md bg-surface-elevated border border-surface-border/40 text-foreground/80 hover:text-foreground hover:border-primary/40 cursor-pointer transition-colors
 						{actionsOpen && isDesktop
 							? 'flex text-primary border-primary/30'
 							: 'hidden lg:group-hover:flex'}"

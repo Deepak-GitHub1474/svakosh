@@ -1,6 +1,9 @@
 <script lang="ts">
-	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
+	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
+	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
+	import TradeSheet from '$lib/components/trade/TradeSheet.svelte';
+	import { MODAL_BUTTON } from '$lib/trade/const';
 	import type { TOpResult } from './types';
 
 	interface Props {
@@ -46,28 +49,26 @@
 </script>
 
 {#if isOpen}
-	<SvaKoshModal isOpen={true} onClose={close} position="center" {title}>
+	<TradeSheet isOpen={true} onClose={close} width="26rem">
+		<ModalHeader {title} onClose={close} />
 		<div class="flex flex-col gap-4 p-4">
-			<p class="text-xs text-muted-foreground">{description}</p>
-
-			<div class="flex justify-end gap-2">
-				<button
-					type="button"
+			<p class="text-foreground/80 text-sm">{description}</p>
+			<div class="mt-3 flex gap-3 md:justify-end">
+				<SvaKoshButton
+					variant="secondary"
+					label="Cancel"
+					disabled={isLoading}
 					onclick={close}
+					class="{MODAL_BUTTON} flex-1 [--terminal-border-hover:transparent] [--terminal-border:transparent] md:min-w-36 md:flex-none"
+				/>
+				<SvaKoshButton
+					variant="bearish"
+					label={isLoading ? loadingLabel : confirmLabel}
 					disabled={isLoading}
-					class="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer disabled:cursor-not-allowed"
-				>
-					Cancel
-				</button>
-				<button
-					type="button"
 					onclick={handleConfirm}
-					disabled={isLoading}
-					class="px-3 py-1.5 text-xs text-error bg-error-subtle border border-error/30 hover:bg-error-hover rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-				>
-					{isLoading ? loadingLabel : confirmLabel}
-				</button>
+					class="{MODAL_BUTTON} flex-1 [--terminal-bg-hover:var(--bearish-solid-hover)] [--terminal-bg:var(--bearish-solid)] [--terminal-border-hover:transparent] [--terminal-border:transparent] [--terminal-fg:white] md:min-w-36 md:flex-none"
+				/>
 			</div>
 		</div>
-	</SvaKoshModal>
+	</TradeSheet>
 {/if}
