@@ -7,6 +7,7 @@
 		min?: number;
 		max?: number;
 		step?: number;
+		emptyValue?: number;
 		class?: string;
 	};
 
@@ -16,6 +17,7 @@
 		min = 0, 
 		max = 100, 
 		step = 1,
+		emptyValue,
 		class: className = '' 
 	}: Props = $props();
 
@@ -34,12 +36,14 @@
 
 	function handleInput(e: Event) {
 		const target = e.target as HTMLInputElement;
-		const val = decimals ? parseFloat(target.value) : parseInt(target.value);
-		if (!isNaN(val)) {
-			if (val < min) value = min;
-			else if (val > max) value = max;
-			else value = val;
+		if (target.value.trim() === '') {
+			if (emptyValue !== undefined) value = emptyValue;
+			return;
 		}
+		const val = decimals ? parseFloat(target.value) : parseInt(target.value);
+		if (isNaN(val)) return;
+		value = Math.min(max, Math.max(min, val));
+		if (val > max) target.value = String(max);
 	}
 
 	function handleFocus(e: FocusEvent) {

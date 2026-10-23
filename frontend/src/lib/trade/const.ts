@@ -51,7 +51,7 @@ export const TABLE_EMPTY = 'py-10 whitespace-normal';
 export const SHEET_CONTEXT = 'trade-sheet';
 export const MODAL_CONTROL = 'h-[2.8929rem]';
 export const MODAL_BUTTON = 'h-[2.8929rem] text-sm';
-export const MODAL_STEPPER = '[&_.glass-panel]:h-[2.8929rem]';
+export const MODAL_STEPPER = '[&_.glass-panel]:h-[2.8929rem] [&_button]:bg-surface-elevated';
 
 export const SOFT_TABS =
 	'h-[2.8929rem] w-full [&>button]:flex-1 [&>button]:justify-center [&>button]:px-2 [&>div]:bg-none [&>div]:bg-primary/15 [&>div]:shadow-none [&>div]:ring-1 [&>div]:ring-inset [&>div]:ring-primary/40 [&>button.text-black]:text-primary';

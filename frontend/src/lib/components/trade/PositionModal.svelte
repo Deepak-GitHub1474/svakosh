@@ -172,7 +172,8 @@
 				<SvaKoshNumberInput
 					class={MODAL_STEPPER}
 					bind:value={quantity}
-					min={1}
+					min={0}
+					emptyValue={0}
 					max={mode === 'add' ? MAX_ORDER_QUANTITY : held}
 				/>
 			</div>
@@ -185,6 +186,7 @@
 						class={MODAL_STEPPER}
 						bind:value={level}
 						min={0}
+						emptyValue={0}
 						max={MAX_ORDER_PRICE}
 						step={PRICE_TICK}
 					/>
@@ -202,6 +204,7 @@
 							class={MODAL_STEPPER}
 							bind:value={limit}
 							min={0}
+							emptyValue={0}
 							max={MAX_ORDER_PRICE}
 							step={PRICE_TICK}
 						/>
@@ -217,6 +220,7 @@
 						class={MODAL_STEPPER}
 						bind:value={price}
 						min={0}
+						emptyValue={0}
 						max={MAX_ORDER_PRICE}
 						step={PRICE_TICK}
 					/>
@@ -230,7 +234,9 @@
 					? 'Placing…'
 					: priced
 						? `Place ${TITLES[mode].toLowerCase()}`
-						: `${side === 'SELL' ? 'Sell' : 'Buy'} ${qty || ''}`}
+						: side === 'SELL'
+							? 'Sell'
+							: 'Buy'}
 				disabled={!valid || placing}
 			/>
 		</form>

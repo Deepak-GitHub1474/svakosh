@@ -126,6 +126,9 @@
 
 	const needsPrice = $derived(editing?.type === 'LIMIT' || editing?.type === 'SL');
 	const needsTrigger = $derived(editing?.type === 'SL' || editing?.type === 'SL-M');
+	const modifyValid = $derived(
+		quantity >= 1 && (!needsPrice || price > 0) && (!needsTrigger || trigger > 0)
+	);
 	const isOpen = (o: TBookRow) => OPEN_STATUSES.includes(o.status);
 
 	function setView(next: string) {
@@ -179,7 +182,7 @@
 
 	async function submitModify(event: SubmitEvent) {
 		event.preventDefault();
-		if (!editing?.token || busy) return;
+		if (!editing?.token || busy || !modifyValid) return;
 		busy = editing.order_id;
 		const res = await modifyOrder(editing.order_id, {
 			account_id: editing.account.id,
@@ -386,7 +389,8 @@
 				<SvaKoshNumberInput
 					class={MODAL_STEPPER}
 					bind:value={quantity}
-					min={1}
+					min={0}
+					emptyValue={0}
 					max={MAX_ORDER_QUANTITY}
 				/>
 			</div>
@@ -397,6 +401,7 @@
 						class={MODAL_STEPPER}
 						bind:value={price}
 						min={0}
+						emptyValue={0}
 						max={MAX_ORDER_PRICE}
 						step={PRICE_TICK}
 					/>
@@ -409,6 +414,7 @@
 						class={MODAL_STEPPER}
 						bind:value={trigger}
 						min={0}
+						emptyValue={0}
 						max={MAX_ORDER_PRICE}
 						step={PRICE_TICK}
 					/>
@@ -419,7 +425,7 @@
 				variant="solid"
 				class="mt-3 {MODAL_BUTTON}"
 				label={busy ? 'Sending…' : 'Modify order'}
-				disabled={!!busy || Number(quantity) < 1}
+				disabled={!!busy || !modifyValid}
 			/>
 		</form>
 	{/if}
