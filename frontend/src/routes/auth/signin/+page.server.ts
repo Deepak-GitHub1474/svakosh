@@ -17,7 +17,7 @@ export const actions: Actions = {
 		const redirectTo = String(data.get('redirect') ?? '');
 		if (!identifier) return fail(400, { message: 'Identifier required.', identifier, redirect: redirectTo });
 		if (!isMobileAuthEnabled() && !identifier.includes('@')) {
-			return fail(400, { message: 'Enter your email address.', identifier, redirect: redirectTo });
+			return fail(400, { message: 'Enter a valid email address.', identifier, redirect: redirectTo });
 		}
 
 		const { apiUrl } = resolveBackendConfig();
