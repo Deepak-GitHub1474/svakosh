@@ -53,3 +53,48 @@ class PlaceOrderRequest(Ticket):
 
 class ModifyOrderRequest(Ticket):
     pass
+
+
+class ConvertRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    account_id: TrimStr = Field("", max_length=24)
+    token: TrimStr = Field(..., min_length=5, max_length=80)
+    side: Literal["BUY", "SELL"]
+    quantity: int = Field(..., gt=0, le=1_000_000)
+    from_: Literal["MIS", "CNC", "NRML"] = Field(..., alias="from")
+    to: Literal["MIS", "CNC", "NRML"]
+    overnight: bool = False
+
+
+class Leg(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    token: TrimStr = Field(..., min_length=5, max_length=80)
+    side: Literal["BUY", "SELL"]
+    product: Literal["MIS", "CNC", "NRML"]
+    type: Literal["MARKET", "LIMIT", "SL", "SL-M"]
+    quantity: int = Field(..., gt=0, le=1_000_000)
+    price: float = Field(0, ge=0)
+    trigger_price: float = Field(0, ge=0)
+
+
+Legs = Annotated[list[Leg], Field(min_length=1, max_length=20)]
+
+
+class SaveBasketRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: TrimStr = Field(..., min_length=1, max_length=60)
+    legs: Legs
+
+
+class BasketMarginRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    account_id: TrimStr = Field("", max_length=24)
+    legs: Legs
+
+
+class PlaceBasketRequest(BasketMarginRequest):
+    client_order_id: TrimStr = Field(..., pattern=r"^[A-Za-z0-9_-]{8,60}$")

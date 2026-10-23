@@ -150,3 +150,30 @@ export type TUpdateAccount = {
 	account_tag?: string;
 	credentials?: Record<string, string>;
 };
+
+export type TRowAction = TExitTarget['mode'] | 'convert';
+
+export type TConvertTarget = {
+	account_id: string;
+	token: string;
+	symbol: string;
+	product: TProduct;
+	quantity: number;
+	overnight_quantity: number;
+};
+
+export type TConvert = {
+	account_id: string;
+	token: string;
+	side: TSide;
+	quantity: number;
+	from: TProduct;
+	to: TProduct;
+	overnight: boolean;
+};
+
+export type TLeg = Omit<TTicket, 'account_id'>;
+
+export type TBasket = { id: string; name: string; legs: TLeg[]; updated_at: string };
+
+export type TLegResult = { leg: number; order?: TOrderRecord; code?: string; message?: string };

@@ -12,8 +12,17 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { tradeAccounts } from '$lib/trade/accounts.svelte';
+	import { basketDraft } from '$lib/trade/basket.svelte';
+	import { recall, remember } from '$lib/trade/storage';
+	import MarketDepth from './MarketDepth.svelte';
 	import { untrack } from 'svelte';
-	import { MODAL_BUTTON, MODAL_CONTROL, MODAL_STEPPER } from '$lib/trade/const';
+	import {
+		DEPTH_KEY,
+		MAX_BASKET_LEGS,
+		MODAL_BUTTON,
+		MODAL_CONTROL,
+		MODAL_STEPPER
+	} from '$lib/trade/const';
 	import { getFunds, getMargin, placeOrder } from '$lib/trade/service';
 	import type { TOrderTicket } from './types';
 
@@ -69,6 +78,7 @@
 	let placing = $state(false);
 	let available = $state<number | null>(null);
 	let required = $state<number | null>(null);
+	let showDepth = $state(recall(DEPTH_KEY, ['on']) === 'on');
 
 	$effect(() => {
 		if (!draft) return;
@@ -165,6 +175,41 @@
 		if (!(event.target instanceof HTMLInputElement)) return;
 		typingAmount = false;
 		amount = isQty ? quantity : lots;
+	}
+
+	function toggleDepth() {
+		showDepth = !showDepth;
+		remember(DEPTH_KEY, showDepth ? 'on' : 'off');
+	}
+
+	function pickPrice(price: number) {
+		orderType = 'Limit';
+		priceText = price.toFixed(2);
+	}
+
+	function addToBasket() {
+		if (!draft || !priceValid) return;
+		const added = basketDraft.add({
+			token: draft.token,
+			side: isSell ? 'SELL' : 'BUY',
+			product,
+			type: isLimit ? 'LIMIT' : 'MARKET',
+			quantity,
+			price: isLimit ? limitPrice : 0,
+			trigger_price: 0
+		});
+		if (!added) {
+			toast.error({
+				title: 'Basket is full',
+				description: `A basket holds up to ${MAX_BASKET_LEGS} orders.`
+			});
+			return;
+		}
+		toast.success({
+			title: `${isSell ? 'Sell' : 'Buy'} ${quantity} ${title} added to basket`,
+			action: { label: 'Basket', onClick: () => goto(resolve('/trade/baskets')) }
+		});
+		isOpen = false;
 	}
 
 	function snapPrice() {
@@ -367,6 +412,25 @@
 					{/if}
 				</div>
 			</div>
+
+			<div class="flex items-center justify-between gap-4 text-xs">
+				<button
+					type="button"
+					aria-expanded={showDepth}
+					class="text-muted-foreground hover:text-foreground transition-colors"
+					onclick={toggleDepth}>{showDepth ? 'Hide depth' : 'Market depth'}</button
+				>
+				<button
+					type="button"
+					class="text-primary hover:underline disabled:opacity-40"
+					disabled={!priceValid}
+					onclick={addToBasket}>Add to basket</button
+				>
+			</div>
+
+			{#if showDepth}
+				<MarketDepth token={draft.token} onPick={pickPrice} />
+			{/if}
 
 			<div class="border-border-subtle flex items-center justify-between gap-4 border-t pt-4">
 				<dl class="grid grid-cols-[auto_auto] items-center gap-x-2 gap-y-1 tabular-nums">

@@ -6,9 +6,13 @@ from fastapi import HTTPException, status
 
 from app.api.endpoints.auth.utils import AccessClaims
 from app.api.endpoints.trade.models import (
+    BasketMarginRequest,
+    ConvertRequest,
     LinkAccountRequest,
     ModifyOrderRequest,
+    PlaceBasketRequest,
     PlaceOrderRequest,
+    SaveBasketRequest,
     SessionRequest,
     Ticket,
     UpdateAccountRequest,
@@ -161,3 +165,52 @@ async def cancel_order(
         "type": order_type,
     }
     return await trade.call("trade.order.cancel", payload)
+
+
+async def convert_position(
+    trade: TradeHubClient, claims: AccessClaims, body: ConvertRequest
+) -> Any:
+    return await trade.call(
+        "trade.order.convert",
+        {"user_id": claims.user_id, **body.model_dump(by_alias=True)},
+    )
+
+
+async def list_baskets(trade: TradeHubClient, claims: AccessClaims) -> Any:
+    return await trade.call("trade.basket.list", {"user_id": claims.user_id})
+
+
+async def save_basket(
+    trade: TradeHubClient,
+    claims: AccessClaims,
+    body: SaveBasketRequest,
+    basket_id: str = "",
+) -> Any:
+    return await trade.call(
+        "trade.basket.save",
+        {"user_id": claims.user_id, "id": basket_id, **body.model_dump()},
+    )
+
+
+async def delete_basket(
+    trade: TradeHubClient, claims: AccessClaims, basket_id: str
+) -> Any:
+    return await trade.call(
+        "trade.basket.delete", {"user_id": claims.user_id, "id": basket_id}
+    )
+
+
+async def basket_margin(
+    trade: TradeHubClient, claims: AccessClaims, body: BasketMarginRequest
+) -> Any:
+    return await trade.call(
+        "trade.basket.margin", {"user_id": claims.user_id, **body.model_dump()}
+    )
+
+
+async def place_basket(
+    trade: TradeHubClient, claims: AccessClaims, body: PlaceBasketRequest
+) -> Any:
+    return await trade.call(
+        "trade.basket.place", {"user_id": claims.user_id, **body.model_dump()}
+    )

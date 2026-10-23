@@ -1,6 +1,11 @@
 import { apiCall } from '$lib/api';
 
-type TName = { sk_token: string; trading_symbol: string; company_name: string | null };
+type TName = {
+	sk_token: string;
+	trading_symbol: string;
+	company_name: string | null;
+	lot_size: number;
+};
 
 class InstrumentNames {
 	names = $state<Record<string, TName>>({});

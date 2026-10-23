@@ -199,7 +199,7 @@
 				<td class="{TABLE.td} text-right {tone(dayGain)}">{signed(dayGain)}</td>
 				<td class="{TABLE.td} text-right">
 					{#if h.token}
-						<RowActions onAction={(mode) => openExit(h, mode)} />
+						<RowActions onAction={(mode) => mode !== 'convert' && openExit(h, mode)} />
 					{/if}
 				</td>
 			</tr>

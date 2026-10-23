@@ -6,9 +6,13 @@ from fastapi import APIRouter, Path, Query, status
 
 from app.api.endpoints.trade import controllers
 from app.api.endpoints.trade.models import (
+    BasketMarginRequest,
+    ConvertRequest,
     LinkAccountRequest,
     ModifyOrderRequest,
+    PlaceBasketRequest,
     PlaceOrderRequest,
+    SaveBasketRequest,
     SessionRequest,
     Ticket,
     UpdateAccountRequest,
@@ -20,6 +24,7 @@ from app.utils.utils import CurrentClaims
 router = APIRouter(prefix="/trade", tags=["Trade"])
 
 AccountId = Path(..., pattern=r"^[a-f0-9]{24}$")
+BasketId = Path(..., pattern=r"^[a-f0-9]{24}$")
 OrderId = Path(..., min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
 AccountQuery = Query("", max_length=24)
 
@@ -159,3 +164,60 @@ async def cancel_order(
 ):
     await controllers.cancel_order(trade, claims, order_id, account_id, order_type)
     return ok_response("Order cancelled.")
+
+
+@router.post("/positions/convert", status_code=status.HTTP_200_OK)
+async def convert_position(
+    body: ConvertRequest, claims: CurrentClaims, trade: TradeHub
+):
+    await controllers.convert_position(trade, claims, body)
+    return ok_response("Position converted.")
+
+
+@router.get("/baskets", status_code=status.HTTP_200_OK)
+async def list_baskets(claims: CurrentClaims, trade: TradeHub):
+    data = await controllers.list_baskets(trade, claims)
+    return ok_response("Baskets fetched.", data=data)
+
+
+@router.post("/baskets", status_code=status.HTTP_201_CREATED)
+async def create_basket(
+    body: SaveBasketRequest, claims: CurrentClaims, trade: TradeHub
+):
+    data = await controllers.save_basket(trade, claims, body)
+    return ok_response("Basket saved.", data=data)
+
+
+@router.put("/baskets/{basket_id}", status_code=status.HTTP_200_OK)
+async def update_basket(
+    body: SaveBasketRequest,
+    claims: CurrentClaims,
+    trade: TradeHub,
+    basket_id: str = BasketId,
+):
+    data = await controllers.save_basket(trade, claims, body, basket_id)
+    return ok_response("Basket saved.", data=data)
+
+
+@router.delete("/baskets/{basket_id}", status_code=status.HTTP_200_OK)
+async def delete_basket(
+    claims: CurrentClaims, trade: TradeHub, basket_id: str = BasketId
+):
+    await controllers.delete_basket(trade, claims, basket_id)
+    return ok_response("Basket deleted.")
+
+
+@router.post("/baskets/margin", status_code=status.HTTP_200_OK)
+async def basket_margin(
+    body: BasketMarginRequest, claims: CurrentClaims, trade: TradeHub
+):
+    data = await controllers.basket_margin(trade, claims, body)
+    return ok_response("Margin calculated.", data=data)
+
+
+@router.post("/baskets/place", status_code=status.HTTP_200_OK)
+async def place_basket(
+    body: PlaceBasketRequest, claims: CurrentClaims, trade: TradeHub
+):
+    data = await controllers.place_basket(trade, claims, body)
+    return ok_response("Basket placed.", data=data)

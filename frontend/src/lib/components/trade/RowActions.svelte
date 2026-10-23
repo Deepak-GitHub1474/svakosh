@@ -1,8 +1,8 @@
 <script lang="ts">
 	import MoreVert from '$lib/components/svg-provider/material/MoreVert.svelte';
-	import type { TExitTarget } from '$lib/trade/types';
+	import type { TRowAction } from '$lib/trade/types';
 
-	type TMode = TExitTarget['mode'];
+	type TMode = TRowAction;
 
 	const MENU: { mode: TMode; label: string; tone: string }[] = [
 		{ mode: 'add', label: 'Add', tone: 'text-foreground/80 hover:bg-glass hover:text-foreground' },
@@ -21,10 +21,20 @@
 			label: 'Target',
 			tone: 'text-foreground/80 hover:bg-glass hover:text-foreground'
 		},
+		{
+			mode: 'convert',
+			label: 'Convert',
+			tone: 'text-foreground/80 hover:bg-glass hover:text-foreground'
+		},
 		{ mode: 'exit', label: 'Exit', tone: 'text-bearish bg-bearish/10 hover:bg-bearish/15' }
 	];
 
-	let { onAction }: { onAction: (mode: TMode) => void } = $props();
+	let {
+		onAction,
+		convertible = false
+	}: { onAction: (mode: TMode) => void; convertible?: boolean } = $props();
+
+	const items = $derived(MENU.filter((item) => convertible || item.mode !== 'convert'));
 
 	let menu = $state<{ top: number; right: number } | null>(null);
 
@@ -82,7 +92,7 @@
 		style:top="{menu.top}px"
 		style:right="{menu.right}px"
 	>
-		{#each MENU as item (item.mode)}
+		{#each items as item (item.mode)}
 			{#if item.mode === 'exit'}
 				<div role="separator" class="border-border-subtle my-1.5 border-t"></div>
 			{/if}

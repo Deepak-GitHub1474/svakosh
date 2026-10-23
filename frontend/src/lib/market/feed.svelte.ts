@@ -24,19 +24,25 @@ export type TQuoteField =
 
 export type TQuote = Partial<Record<TQuoteField, number>>;
 export type TChange = { change: number; change_pct: number };
+export type TDepthLevel = { price: number; qty: number; orders: number };
+export type TDepth = { ts: number; bids: TDepthLevel[]; asks: TDepthLevel[] };
 
 type TRow = { sk_token: string } & TQuote;
 type TServerMessage =
 	| { type: 'snapshot'; data: TRow[] }
 	| { type: 'tick'; data: TRow }
 	| { type: 'order'; data: unknown }
+	| { type: 'depth'; data: TDepth & { token: string } }
 	| { type: 'error'; message: string };
 type TTokenMessage = {
 	event: 'subscribe' | 'unsubscribe';
 	tokens: string[];
 	fields: TQuoteField[];
 };
-type TClientMessage = TTokenMessage | { event: 'orders'; on: boolean };
+type TClientMessage =
+	| TTokenMessage
+	| { event: 'orders'; on: boolean }
+	| { event: 'depth'; tokens: string[] };
 
 export const PRICE_FIELDS: TQuoteField[] = ['ltp', 'prev_close'];
 
@@ -79,6 +85,7 @@ function grouped(event: TTokenMessage['event'], changes: TFieldsByToken) {
 
 class MarketFeed {
 	quotes: Record<string, TQuote> = $state({});
+	depth: Record<string, TDepth> = $state({});
 	connected = $state(false);
 	error = $state('');
 
@@ -91,6 +98,29 @@ class MarketFeed {
 	private released: TFieldsByToken = {};
 	private flushQueued = false;
 	private orderListeners = new Set<(update: unknown) => void>();
+	private depthRefs: Record<string, number> = {};
+
+	watchDepth(token: string): () => void {
+		clearTimeout(this.closeTimer);
+		this.depthRefs[token] = (this.depthRefs[token] ?? 0) + 1;
+		if (this.depthRefs[token] === 1) this.sendDepth();
+		this.connect();
+		return () => {
+			const left = (this.depthRefs[token] ?? 0) - 1;
+			if (left > 0) {
+				this.depthRefs[token] = left;
+				return;
+			}
+			delete this.depthRefs[token];
+			delete this.depth[token];
+			this.sendDepth();
+			if (!this.needed()) this.closeTimer = setTimeout(() => this.close(), IDLE_CLOSE_MS);
+		};
+	}
+
+	private sendDepth() {
+		this.send({ event: 'depth', tokens: Object.keys(this.depthRefs) });
+	}
 
 	followOrders(listener: (update: unknown) => void): () => void {
 		clearTimeout(this.closeTimer);
@@ -159,7 +189,11 @@ class MarketFeed {
 	}
 
 	private needed() {
-		return Object.keys(this.refs).length > 0 || this.orderListeners.size > 0;
+		return (
+			Object.keys(this.refs).length > 0 ||
+			this.orderListeners.size > 0 ||
+			Object.keys(this.depthRefs).length > 0
+		);
 	}
 
 	private send(message: TClientMessage) {
@@ -189,6 +223,7 @@ class MarketFeed {
 			}
 			grouped('subscribe', all).forEach((message) => this.send(message));
 			if (this.orderListeners.size) this.send({ event: 'orders', on: true });
+			if (Object.keys(this.depthRefs).length) this.sendDepth();
 		};
 		socket.onmessage = (event) => this.receive(JSON.parse(event.data) as TServerMessage);
 		socket.onclose = () => {
@@ -203,7 +238,10 @@ class MarketFeed {
 		else if (message.type === 'snapshot') message.data.forEach((row) => this.apply(row));
 		else if (message.type === 'order')
 			this.orderListeners.forEach((listener) => listener(message.data));
-		else this.error = message.message;
+		else if (message.type === 'depth') {
+			const { token, ...book } = message.data;
+			if (token in this.depthRefs) this.depth[token] = book;
+		} else this.error = message.message;
 	}
 
 	private apply({ sk_token, ...fields }: TRow) {

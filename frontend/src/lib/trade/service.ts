@@ -1,9 +1,13 @@
 import { apiCall, type TResult } from '$lib/api';
 import type {
+	TBasket,
 	TBrokerAccount,
+	TConvert,
 	TBrokerOrder,
 	TFunds,
 	THolding,
+	TLeg,
+	TLegResult,
 	TLinkAccount,
 	TMargin,
 	TOrderKind,
@@ -83,3 +87,26 @@ export const cancelOrder = (orderId: string, accountId: string, type: TOrderKind
 		`/api/trade/orders/${encodeURIComponent(orderId)}${query({ account_id: accountId, type })}`,
 		'DELETE'
 	);
+
+export const convertPosition = (body: TConvert) =>
+	apiCall<null>('/api/trade/positions/convert', 'POST', body);
+
+export const listBaskets = () => apiCall<TBasket[]>('/api/trade/baskets', 'GET');
+
+export const saveBasket = (body: { name: string; legs: TLeg[] }, id = '') =>
+	id
+		? apiCall<TBasket>(`/api/trade/baskets/${encodeURIComponent(id)}`, 'PUT', body)
+		: apiCall<TBasket>('/api/trade/baskets', 'POST', body);
+
+export const deleteBasket = (id: string) =>
+	apiCall<null>(`/api/trade/baskets/${encodeURIComponent(id)}`, 'DELETE');
+
+export const basketMargin = (accountId: string, legs: TLeg[]) =>
+	apiCall<TMargin>('/api/trade/baskets/margin', 'POST', { account_id: accountId, legs });
+
+export const placeBasket = (accountId: string, clientOrderId: string, legs: TLeg[]) =>
+	apiCall<TLegResult[]>('/api/trade/baskets/place', 'POST', {
+		account_id: accountId,
+		client_order_id: clientOrderId,
+		legs
+	});

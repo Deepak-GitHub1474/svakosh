@@ -1,12 +1,18 @@
 import type { TOrderStatus } from './types';
 
-export type TTradeRoute = '/trade/positions' | '/trade/holdings' | '/trade/orders' | '/trade/funds';
+export type TTradeRoute =
+	| '/trade/positions'
+	| '/trade/holdings'
+	| '/trade/orders'
+	| '/trade/funds'
+	| '/trade/baskets';
 
 export const TRADE_TABS: { label: string; value: TTradeRoute }[] = [
 	{ label: 'Positions', value: '/trade/positions' },
 	{ label: 'Holdings', value: '/trade/holdings' },
 	{ label: 'Funds', value: '/trade/funds' },
-	{ label: 'Orders', value: '/trade/orders' }
+	{ label: 'Orders', value: '/trade/orders' },
+	{ label: 'Baskets', value: '/trade/baskets' }
 ];
 
 export const TRADE_STATIC_IP = '35.244.31.217';
@@ -30,6 +36,9 @@ export const ORDERS_VIEW_KEY = 'svakosh:orders-view';
 export const ORDERS_FILTER_KEY = 'svakosh:orders-filter';
 export const TRADES_SIDE_KEY = 'svakosh:trades-side';
 export const BROKER_VIEW_KEY = 'svakosh:broker-accounts-view';
+export const BASKET_KEY = 'svakosh:basket';
+export const DEPTH_KEY = 'svakosh:order-depth';
+export const MAX_BASKET_LEGS = 20;
 export const REFRESH_MS = 60_000;
 export const LIVE_RELOAD_MS = 300;
 

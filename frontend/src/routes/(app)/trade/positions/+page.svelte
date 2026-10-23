@@ -3,6 +3,7 @@
 	import ExitAllModal from '$lib/components/trade/ExitAllModal.svelte';
 	import InstrumentCell from '$lib/components/trade/InstrumentCell.svelte';
 	import AccountCell from '$lib/components/trade/AccountCell.svelte';
+	import ConvertModal from '$lib/components/trade/ConvertModal.svelte';
 	import PositionModal from '$lib/components/trade/PositionModal.svelte';
 	import RowActions from '$lib/components/trade/RowActions.svelte';
 	import SortHeader from '$lib/components/trade/SortHeader.svelte';
@@ -16,7 +17,7 @@
 	import { tradeResource, type TAccountRow } from '$lib/trade/resource.svelte';
 	import { getPositions } from '$lib/trade/service';
 	import { nextSort, sortBy, type TSortDir } from '$lib/trade/sort';
-	import type { TExitTarget, TPosition } from '$lib/trade/types';
+	import type { TConvertTarget, TExitTarget, TPosition, TRowAction } from '$lib/trade/types';
 	import { formatNumber } from '$lib/utils';
 
 	type TRow = TAccountRow<TPosition>;
@@ -29,6 +30,8 @@
 	let bulk = $state<TExitTarget[]>([]);
 	let bulkOpen = $state(false);
 	let pnlSort = $state<TSortDir>('');
+	let convertTarget = $state<TConvertTarget | null>(null);
+	let convertOpen = $state(false);
 
 	const keyOf = (p: TRow) =>
 		`${p.account.id}:${p.token ?? `${p.exchange}:${p.symbol}`}:${p.product}`;
@@ -82,7 +85,19 @@
 		};
 	}
 
-	function openExit(p: TRow, mode: TExitTarget['mode']) {
+	function openAction(p: TRow, mode: TRowAction) {
+		if (mode === 'convert') {
+			convertTarget = {
+				account_id: p.account.id,
+				token: p.token ?? '',
+				symbol: p.symbol,
+				product: p.product,
+				quantity: p.quantity,
+				overnight_quantity: p.overnight_quantity
+			};
+			convertOpen = true;
+			return;
+		}
 		exitTarget = target(p, mode);
 		exitOpen = true;
 	}
@@ -185,7 +200,7 @@
 				</td>
 				<td class="{TABLE.td} text-right">
 					{#if canExit(p)}
-						<RowActions onAction={(mode) => openExit(p, mode)} />
+						<RowActions convertible onAction={(mode) => openAction(p, mode)} />
 					{/if}
 				</td>
 			</tr>
@@ -205,3 +220,4 @@
 
 <PositionModal bind:isOpen={exitOpen} target={exitTarget} onDone={done} />
 <ExitAllModal bind:isOpen={bulkOpen} targets={bulk} onDone={done} />
+<ConvertModal bind:isOpen={convertOpen} target={convertTarget} onDone={done} />

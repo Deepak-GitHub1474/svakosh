@@ -43,7 +43,9 @@ class MarketDataClient:
         self.quotes: dict[str, dict[str, Any]] = {}
         self.tasks: list[asyncio.Task[None]] = []
         self.listeners: set[Callable[[dict[str, Any]], None]] = set()
+        self.depth_listeners: set[Callable[[dict[str, Any]], None]] = set()
         self.wanted: dict[str, int] = {}
+        self.depth_wanted: dict[str, int] = {}
         self.subjects: set[str] = set()
         self.fii_dii_cache: tuple[float, list[list[dict[str, Any]]]] = (0.0, [])
         self.instrument_cache: dict[str, dict[str, Any]] = {}
@@ -78,6 +80,7 @@ class MarketDataClient:
                 for subject in BASE_SUBJECTS:
                     await self.nc.subscribe(subject, cb=self.on_tick)
                     await self.load_snapshot(subject)
+                await self.nc.subscribe("depth.>", cb=self.on_depth)
                 logger.info("Market data: connected, %d symbols loaded.", len(self.quotes))
                 return
             except Exception as e:
@@ -93,6 +96,7 @@ class MarketDataClient:
         for subject in (*BASE_SUBJECTS, *self.subjects):
             await self.load_snapshot(subject)
         await self.lease(list(self.wanted))
+        await self.lease(list(self.depth_wanted), "ctl.depth")
 
     async def load_snapshot(self, subject: str) -> None:
         if self.nc is None:
@@ -113,6 +117,27 @@ class MarketDataClient:
         self.quotes.setdefault(tick["token"], {}).update(tick)
         for notify in self.listeners:
             notify(tick)
+
+    async def on_depth(self, msg: Msg) -> None:
+        book = json.loads(msg.data)
+        for notify in self.depth_listeners:
+            notify(book)
+
+    async def want_depth(self, tokens: Iterable[str]) -> None:
+        fresh = []
+        for token in tokens:
+            self.depth_wanted[token] = self.depth_wanted.get(token, 0) + 1
+            if self.depth_wanted[token] == 1:
+                fresh.append(token)
+        await self.lease(fresh, "ctl.depth")
+
+    def unwant_depth(self, tokens: Iterable[str]) -> None:
+        for token in tokens:
+            left = self.depth_wanted.get(token, 0) - 1
+            if left > 0:
+                self.depth_wanted[token] = left
+            else:
+                self.depth_wanted.pop(token, None)
 
     async def want(self, tokens: Iterable[str]) -> None:
         fresh = []
@@ -137,14 +162,14 @@ class MarketDataClient:
             else:
                 self.wanted.pop(token, None)
 
-    async def lease(self, tokens: list[str]) -> None:
+    async def lease(self, tokens: list[str], subject: str = "ctl.subscribe") -> None:
         if self.nc is None or not tokens:
             return
         for i in range(0, len(tokens), LEASE_BATCH):
             batch = tokens[i : i + LEASE_BATCH]
             try:
                 await self.nc.request(
-                    "ctl.subscribe",
+                    subject,
                     json.dumps({"tokens": batch}).encode(),
                     timeout=REQUEST_TIMEOUT_SECONDS,
                 )
@@ -155,6 +180,7 @@ class MarketDataClient:
         while True:
             await asyncio.sleep(LEASE_RENEW_SECONDS)
             await self.lease(list(self.wanted))
+            await self.lease(list(self.depth_wanted), "ctl.depth")
 
     async def ask(self, subject: str, payload: dict[str, Any], timeout: float = REQUEST_TIMEOUT_SECONDS) -> Any:
         if self.nc is None or not self.nc.is_connected:
