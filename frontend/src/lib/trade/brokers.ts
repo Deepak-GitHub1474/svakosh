@@ -36,6 +36,37 @@ export const BROKERS: TBroker[] = [
 		}
 	},
 	{
+		value: 'zerodha',
+		label: 'Zerodha',
+		logo: 'ZERODHA',
+		api: 'Kite Connect',
+		partner: false,
+		is_free: true,
+		live: true,
+		fields: [
+			{ key: 'client_id', label: 'Client ID', placeholder: 'AB1234' },
+			{
+				key: 'api_key',
+				label: 'API key',
+				placeholder: 'Paste the API key of your Kite Connect app'
+			},
+			{
+				key: 'api_secret',
+				label: 'API secret',
+				placeholder: 'Paste the API secret of your Kite Connect app',
+				secret: true
+			}
+		],
+		guide: {
+			portal: 'https://developers.kite.trade/apps',
+			steps: [
+				'Log in to Kite Connect and create a Personal app with this Client ID.',
+				'Set the Redirect URL below, and add the Primary Static IP in your Kite Connect profile.',
+				'Copy the app API key and API secret here.'
+			]
+		}
+	},
+	{
 		value: 'paper',
 		label: 'Paper',
 		logo: 'PAPER',
