@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from fastapi import HTTPException, status
+
 from app.api.endpoints.auth.utils import AccessClaims
 from app.api.endpoints.trade.models import (
     LinkAccountRequest,
@@ -15,6 +17,7 @@ from app.config import get_settings
 from app.trade_hub import TradeHubClient
 
 HISTORY_LIMIT_MAX = 200
+ADMIN_ONLY_BROKERS = frozenset({"paper"})
 
 
 async def list_accounts(trade: TradeHubClient, claims: AccessClaims) -> Any:
@@ -24,6 +27,11 @@ async def list_accounts(trade: TradeHubClient, claims: AccessClaims) -> Any:
 async def link_account(
     trade: TradeHubClient, claims: AccessClaims, body: LinkAccountRequest
 ) -> Any:
+    if body.broker.lower() in ADMIN_ONLY_BROKERS and claims.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This broker is available to admins only.",
+        )
     return await trade.call(
         "trade.account.link", {"user_id": claims.user_id, **body.model_dump()}
     )

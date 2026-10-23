@@ -18,7 +18,7 @@
 	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import { tradeAccounts } from '$lib/trade/accounts.svelte';
 	import { page } from '$app/state';
-	import { BROKERS, LIVE_BROKERS, brokerOf } from '$lib/trade/brokers';
+	import { BROKERS, brokerOf, linkableBrokers } from '$lib/trade/brokers';
 	import {
 		BROKER_VIEW_KEY,
 		CALLBACK_PATH,
@@ -51,7 +51,8 @@
 	let modalOpen = $state(false);
 	let mode = $state<TMode>('add');
 	let target = $state<TBrokerAccount | null>(null);
-	let broker = $state(LIVE_BROKERS[0].value);
+	const brokerOptions = $derived(linkableBrokers(page.data.user?.role === 'admin'));
+	let broker = $state(linkableBrokers(false)[0].value);
 	let setupOpen = $state(false);
 	let tag = $state('');
 	let creds = $state<Record<string, string>>(blank());
@@ -80,7 +81,7 @@
 	function open(next: TMode, account: TBrokerAccount | null = null) {
 		mode = next;
 		target = account;
-		broker = account?.broker ?? LIVE_BROKERS[0].value;
+		broker = account?.broker ?? brokerOptions[0].value;
 		tag = account?.account_tag ?? '';
 		creds = blank();
 		setupOpen = false;
@@ -350,7 +351,7 @@
 				<div>
 					<p class={label}>Broker</p>
 					<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-						{#each LIVE_BROKERS as option (option.value)}
+						{#each brokerOptions as option (option.value)}
 							{@const selected = broker === option.value}
 							<button
 								type="button"

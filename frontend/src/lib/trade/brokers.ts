@@ -8,6 +8,7 @@ export type TBroker = {
 	partner: boolean;
 	is_free: boolean;
 	live: boolean;
+	adminOnly?: boolean;
 	fields: TBrokerField[];
 	guide?: { portal: string; steps: string[] };
 };
@@ -42,11 +43,15 @@ export const BROKERS: TBroker[] = [
 		partner: false,
 		is_free: true,
 		live: true,
+		adminOnly: true,
 		fields: [{ key: 'client_id', label: 'Paper account ID', placeholder: 'PAPER01' }]
 	}
 ];
 
 export const LIVE_BROKERS = BROKERS.filter((b) => b.live);
+
+export const linkableBrokers = (isAdmin: boolean) =>
+	LIVE_BROKERS.filter((b) => isAdmin || !b.adminOnly);
 
 const byValue = new Map(BROKERS.map((b) => [b.value, b]));
 
