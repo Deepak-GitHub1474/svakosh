@@ -1,5 +1,6 @@
 import { ACCOUNT_KEY } from './const';
-import { getLoginUrl, listAccounts } from './service';
+import { brokerOf } from './brokers';
+import { connectSession, getLoginUrl, listAccounts } from './service';
 import type { TBrokerAccount } from './types';
 
 function saved(): string {
@@ -34,11 +35,17 @@ class TradeAccounts {
 		if (!this.selectedId) this.selectedId = saved();
 	}
 
-	async login(id: string): Promise<string | null> {
+	async login(id: string): Promise<{ error?: string; redirected?: boolean }> {
+		const account = this.list.find((a) => a.id === id);
+		if (account && brokerOf(account.broker)?.autoLogin) {
+			const res = await connectSession(id, { login: 'api_key' });
+			await this.load();
+			return res.ok ? {} : { error: res.error };
+		}
 		const res = await getLoginUrl(id);
-		if (!res.ok) return res.error;
+		if (!res.ok) return { error: res.error };
 		window.location.assign(res.data.url);
-		return null;
+		return { redirected: true };
 	}
 
 	select(id: string) {

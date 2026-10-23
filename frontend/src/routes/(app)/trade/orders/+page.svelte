@@ -170,7 +170,7 @@
 
 	async function cancel(order: TBookRow) {
 		busy = order.order_id;
-		const res = await cancelOrder(order.order_id, order.account.id, order.type);
+		const res = await cancelOrder(order.order_id, order.account.id, order.type, order.token);
 		busy = '';
 		if (!res.ok) {
 			toast.error({ title: 'Could not cancel', description: res.error });

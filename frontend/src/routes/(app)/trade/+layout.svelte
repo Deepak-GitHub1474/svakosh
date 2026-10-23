@@ -8,6 +8,7 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
+	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import { tradeAccounts } from '$lib/trade/accounts.svelte';
 	import { orderUpdates } from '$lib/trade/live.svelte';
 	import { TRADE_TABS, type TTradeRoute, EMPTY_STATE } from '$lib/trade/const';
@@ -27,8 +28,10 @@
 	async function login() {
 		if (!loggedOut.length) return;
 		loggingIn = true;
-		const error = await tradeAccounts.login(loggedOut[0].id);
-		if (error) loggingIn = false;
+		const { error, redirected } = await tradeAccounts.login(loggedOut[0].id);
+		if (redirected) return;
+		loggingIn = false;
+		if (error) toast.error({ title: 'Could not log in to the broker', description: error });
 	}
 
 	const title = $derived(TRADE_TABS.find((t) => t.value === active)?.label ?? 'Trade');

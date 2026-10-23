@@ -161,8 +161,11 @@ async def cancel_order(
     order_id: str = OrderId,
     account_id: str = AccountQuery,
     order_type: Literal["MARKET", "LIMIT", "SL", "SL-M"] = Query("LIMIT", alias="type"),
+    token: str = Query("", max_length=80),
 ):
-    await controllers.cancel_order(trade, claims, order_id, account_id, order_type)
+    await controllers.cancel_order(
+        trade, claims, order_id, account_id, order_type, token
+    )
     return ok_response("Order cancelled.")
 
 

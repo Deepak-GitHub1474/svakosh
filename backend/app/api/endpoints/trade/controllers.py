@@ -157,12 +157,14 @@ async def cancel_order(
     order_id: str,
     account_id: str,
     order_type: str,
+    token: str = "",
 ) -> Any:
     payload = {
         "user_id": claims.user_id,
         "account_id": account_id,
         "order_id": order_id,
         "type": order_type,
+        "token": token,
     }
     return await trade.call("trade.order.cancel", payload)
 

@@ -10,6 +10,7 @@
 	import StatStrip from '$lib/components/trade/StatStrip.svelte';
 	import TradeTable from '$lib/components/trade/TradeTable.svelte';
 	import { marketFeed } from '$lib/market/feed.svelte';
+	import { brokerOf } from '$lib/trade/brokers';
 	import { TABLE } from '$lib/trade/const';
 	import { compactSigned, signed, tone } from '$lib/trade/format';
 	import { instrumentNames } from '$lib/trade/names.svelte';
@@ -200,7 +201,10 @@
 				</td>
 				<td class="{TABLE.td} text-right">
 					{#if canExit(p)}
-						<RowActions convertible onAction={(mode) => openAction(p, mode)} />
+						<RowActions
+							convertible={brokerOf(p.account.broker)?.convert !== false}
+							onAction={(mode) => openAction(p, mode)}
+						/>
 					{/if}
 				</td>
 			</tr>

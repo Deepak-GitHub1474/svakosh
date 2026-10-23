@@ -82,9 +82,9 @@ export const getMargin = (body: TTicket) =>
 export const modifyOrder = (orderId: string, body: TTicket) =>
 	apiCall<null>(`/api/trade/orders/${encodeURIComponent(orderId)}`, 'PATCH', body);
 
-export const cancelOrder = (orderId: string, accountId: string, type: TOrderKind) =>
+export const cancelOrder = (orderId: string, accountId: string, type: TOrderKind, token?: string) =>
 	apiCall<null>(
-		`/api/trade/orders/${encodeURIComponent(orderId)}${query({ account_id: accountId, type })}`,
+		`/api/trade/orders/${encodeURIComponent(orderId)}${query({ account_id: accountId, type, token })}`,
 		'DELETE'
 	);
 
