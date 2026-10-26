@@ -137,6 +137,9 @@ async def referral_coupon(mongo: AsyncIOMotorDatabase, user_id: str) -> dict[str
 
 
 async def trial_available(mongo: AsyncIOMotorDatabase, user_id: str, plan_type: str) -> bool:
+    user = await mongo[COL_USERS].find_one({"_id": ObjectId(user_id)}, {"trial_claims": 1}) or {}
+    if plan_type in (user.get("trial_claims") or {}):
+        return False
     plan_ids = [p["_id"] async for p in mongo[COL_PLANS].find({"type": plan_type}, {"_id": 1})]
     started = await mongo[COL_SUBSCRIPTIONS].find_one(
         {"user_id": user_id, "plan_id": {"$in": plan_ids}, "started_at": {"$ne": None}}, {"_id": 1}
@@ -393,7 +396,7 @@ async def confirm(
             logger.warning("Billing: confirm of %s deferred.\nReason: %s", sub["_id"], e)
             return await view_of(mongo, sub)
         if payment is None:
-            await activate_trial(mongo, redis, sub, remote)
+            await activate_trial(mongo, redis, rz, sub, remote)
         else:
             start = from_epoch(payment.get("created_at")) or now_utc()
             end = from_epoch(remote.get("start_at")) or period_end(start, sub["tenure"])
@@ -521,4 +524,4 @@ async def webhook(
         })
     except DuplicateKeyError:
         return
-    await process_event(mongo, redis, key)
+    await process_event(mongo, redis, rz, key)

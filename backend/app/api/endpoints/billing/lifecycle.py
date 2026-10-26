@@ -15,6 +15,7 @@ from app.api.endpoints.billing.constants import (
     COL_COUPONS,
     COL_PAYMENT_EVENTS,
     COL_PAYMENTS,
+    COL_PLANS,
     COL_SUBSCRIPTIONS,
     COL_USERS,
     COUPON_OFFER,
@@ -150,7 +151,28 @@ def is_trial(notes: dict[str, Any]) -> bool:
     return notes.get("trial") == TRIAL_NOTE
 
 
-async def activate_trial(mongo: AsyncIOMotorDatabase, redis: Redis, sub: dict[str, Any], remote: dict[str, Any]) -> None:
+async def claim_trial(mongo: AsyncIOMotorDatabase, sub: dict[str, Any]) -> bool:
+    plan = await mongo[COL_PLANS].find_one({"_id": sub["plan_id"]}, {"type": 1})
+    if plan is None or not ObjectId.is_valid(sub["user_id"]):
+        return False
+    field = f"trial_claims.{plan['type']}"
+    user_id = ObjectId(sub["user_id"])
+    claimed = await mongo[COL_USERS].update_one(
+        {"_id": user_id, field: {"$exists": False}}, {"$set": {field: str(sub["_id"])}}
+    )
+    if claimed.modified_count:
+        return True
+    user = await mongo[COL_USERS].find_one({"_id": user_id}, {"trial_claims": 1}) or {}
+    return (user.get("trial_claims") or {}).get(plan["type"]) == str(sub["_id"])
+
+
+async def activate_trial(
+    mongo: AsyncIOMotorDatabase, redis: Redis, rz: RazorpayClient, sub: dict[str, Any], remote: dict[str, Any],
+) -> None:
+    if not await claim_trial(mongo, sub):
+        logger.warning("Billing: second free month refused for subscription %s.", sub["_id"])
+        await abandon(mongo, redis, rz, sub)
+        return
     start = from_epoch(remote.get("created_at")) or now_utc()
     end = from_epoch(remote.get("start_at")) or period_end(start, TRIAL_TENURE)
     payment = {"id": f"trial:{remote['id']}", "amount": 0, "status": "captured", "created_at": remote.get("created_at")}
@@ -170,7 +192,7 @@ async def stop_renewal(mongo: AsyncIOMotorDatabase, redis: Redis, sub: dict[str,
     await forget_entitlements(redis, sub["user_id"])
 
 
-async def handle_event(mongo: AsyncIOMotorDatabase, redis: Redis, event: dict[str, Any]) -> None:
+async def handle_event(mongo: AsyncIOMotorDatabase, redis: Redis, rz: RazorpayClient, event: dict[str, Any]) -> None:
     kind = event.get("event", "")
     payload = event.get("payload") or {}
     if kind == "refund.processed":
@@ -191,7 +213,7 @@ async def handle_event(mongo: AsyncIOMotorDatabase, redis: Redis, event: dict[st
         if start and end:
             await apply_payment(mongo, redis, sub, payment, start, end, notes, first=False)
     elif kind in FIRST_PAYMENT_EVENTS and is_trial(notes):
-        await activate_trial(mongo, redis, sub, entity)
+        await activate_trial(mongo, redis, rz, sub, entity)
     elif kind in FIRST_PAYMENT_EVENTS and payment:
         start = from_epoch(payment.get("created_at")) or now_utc()
         end = from_epoch(entity.get("start_at")) or period_end(start, sub["tenure"])
@@ -200,12 +222,12 @@ async def handle_event(mongo: AsyncIOMotorDatabase, redis: Redis, event: dict[st
         await stop_renewal(mongo, redis, sub)
 
 
-async def process_event(mongo: AsyncIOMotorDatabase, redis: Redis, event_id: str) -> None:
+async def process_event(mongo: AsyncIOMotorDatabase, redis: Redis, rz: RazorpayClient, event_id: str) -> None:
     doc = await mongo[COL_PAYMENT_EVENTS].find_one({"_id": event_id, "processed_at": None})
     if doc is None:
         return
     try:
-        await handle_event(mongo, redis, doc["payload"])
+        await handle_event(mongo, redis, rz, doc["payload"])
     except Exception as e:
         logger.exception("Billing: event %s failed.", event_id)
         await mongo[COL_PAYMENT_EVENTS].update_one({"_id": event_id}, {"$set": {"error": f"{type(e).__name__}: {e}"}})
@@ -220,7 +242,7 @@ async def sync_from_provider(
     notes = remote.get("notes") or {}
     trial = is_trial(notes)
     if trial and remote.get("status") in ("authenticated", "active"):
-        await activate_trial(mongo, redis, sub, remote)
+        await activate_trial(mongo, redis, rz, sub, remote)
     invoices = sorted(await rz.paid_invoices(remote["id"]), key=lambda i: i.get("paid_at") or i.get("created_at") or 0)
     for index, invoice in enumerate(invoices):
         payment = await rz.fetch_payment(invoice["payment_id"])
@@ -243,7 +265,7 @@ async def reconcile(mongo: AsyncIOMotorDatabase, redis: Redis, rz: RazorpayClien
     now = now_utc()
     retry_before = now - timedelta(seconds=EVENT_RETRY_AFTER_SECONDS)
     async for event in mongo[COL_PAYMENT_EVENTS].find({"processed_at": None, "received_at": {"$lt": retry_before}}, {"_id": 1}):
-        await process_event(mongo, redis, event["_id"])
+        await process_event(mongo, redis, rz, event["_id"])
 
     subs = mongo[COL_SUBSCRIPTIONS]
     if rz.configured:
