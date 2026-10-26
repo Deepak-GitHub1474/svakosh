@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BRAND, BUSINESS } from '$lib/brand';
+	import { BRAND } from '$lib/brand';
 	import Icon from '$lib/components/landing/Icon.svelte';
 	import { CONTACT } from '../_lib/content';
 </script>
@@ -44,7 +44,3 @@
 		</div>
 	{/each}
 </dl>
-
-<p class="text-muted-foreground mt-8 text-sm leading-relaxed">
-	{BUSINESS.legalName} operates {BRAND.name}. {CONTACT.response}
-</p>

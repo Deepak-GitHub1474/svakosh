@@ -7,7 +7,7 @@ const contact = BUSINESS.email;
 export const ABOUT: TLegalDoc = {
 	title: 'About Us',
 	eyebrow: 'Company',
-	intro: `SvaKosh is market analytics and trading software for Indian indices, stocks and derivatives, built and operated by ${BUSINESS.legalName}.`,
+	intro: `SvaKosh is market analytics and trading software for Indian indices, stocks and derivatives.`,
 	sections: [
 		{
 			heading: 'What we build',
@@ -39,7 +39,7 @@ export const ABOUT: TLegalDoc = {
 
 export const TERMS: TLegalDoc = {
 	title: 'Terms & Conditions',
-	intro: `These terms govern your use of SvaKosh, a software service operated by ${BUSINESS.legalName}. By creating an account or using the service you agree to them.`,
+	intro: `These terms govern your use of SvaKosh, a software service. By creating an account or using the service you agree to them.`,
 	sections: [
 		{
 			heading: 'The service',
@@ -109,9 +109,7 @@ export const TERMS: TLegalDoc = {
 		},
 		{
 			heading: 'Governing law',
-			body: [
-				`These terms are governed by the laws of India, and courts in ${BUSINESS.city} have exclusive jurisdiction.`
-			]
+			body: ['These terms are governed by the laws of India.']
 		},
 		{
 			heading: 'Contact',
@@ -122,7 +120,7 @@ export const TERMS: TLegalDoc = {
 
 export const PRIVACY: TLegalDoc = {
 	title: 'Privacy Policy',
-	intro: `This policy explains what personal data SvaKosh collects, why, and how it is protected. It is operated by ${BUSINESS.legalName} and follows the Digital Personal Data Protection Act, 2023.`,
+	intro: `This policy explains what personal data SvaKosh collects, why, and how it is protected, in line with the Digital Personal Data Protection Act, 2023.`,
 	sections: [
 		{
 			heading: 'What we collect',
@@ -216,6 +214,5 @@ export const REFUNDS: TLegalDoc = {
 
 export const CONTACT = {
 	intro: 'Questions about your account, billing, a refund or a broker connection? Reach us here.',
-	response: 'We reply to every message within one working day.',
 	items: [{ label: 'Email', value: BUSINESS.email, kind: 'email', icon: ICONS.bookmark }]
 };
