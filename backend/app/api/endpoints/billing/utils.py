@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import calendar
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Any
 
 from app.api.endpoints.billing.constants import COUPON_FLOOR_PAISE, TENURE_MONTHS
@@ -21,11 +21,20 @@ def from_epoch(seconds: int | None) -> datetime | None:
     return datetime.fromtimestamp(seconds, UTC) if seconds else None
 
 
-def add_tenure(start: datetime, tenure: str) -> datetime:
-    months = start.month - 1 + TENURE_MONTHS[tenure]
-    year, month = start.year + months // 12, months % 12 + 1
-    day = min(start.day, calendar.monthrange(year, month)[1])
-    return start.replace(year=year, month=month, day=day)
+IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def end_of_day(value: datetime) -> datetime:
+    local = utc(value).astimezone(IST)
+    return local.replace(hour=23, minute=59, second=59, microsecond=0).astimezone(UTC)
+
+
+def period_end(start: datetime, tenure: str) -> datetime:
+    local = utc(start).astimezone(IST)
+    months = local.month - 1 + TENURE_MONTHS[tenure]
+    year, month = local.year + months // 12, months % 12 + 1
+    day = min(local.day, calendar.monthrange(year, month)[1])
+    return end_of_day(local.replace(year=year, month=month, day=day))
 
 
 def match_price(plan: dict[str, Any], tenure: str, broker: str | None, ip: str | None) -> dict[str, Any] | None:

@@ -53,7 +53,6 @@ from app.api.endpoints.billing.lifecycle import (
 )
 from app.api.endpoints.billing.models import ConfirmRequest, QuoteRequest
 from app.api.endpoints.billing.utils import (
-    add_tenure,
     as_utc,
     coupon_live,
     discount_for,
@@ -61,6 +60,7 @@ from app.api.endpoints.billing.utils import (
     iso,
     match_price,
     payment_view,
+    period_end,
     plan_view,
     subscription_view,
     utc,
@@ -293,7 +293,7 @@ async def checkout(
         remote = await rz.create_subscription(
             plan_id,
             TOTAL_CYCLES[q["tenure"]],
-            int(add_tenure(now, q["tenure"]).timestamp()),
+            int(period_end(now, q["tenure"]).timestamp()),
             q["payable_paise"],
             notes_for(doc["_id"], claims.user_id, q),
         )
@@ -363,7 +363,7 @@ async def confirm(
             logger.warning("Billing: confirm of %s deferred.\nReason: %s", sub["_id"], e)
             return await view_of(mongo, sub)
         start = from_epoch(payment.get("created_at")) or now_utc()
-        end = from_epoch(remote.get("start_at")) or add_tenure(start, sub["tenure"])
+        end = from_epoch(remote.get("start_at")) or period_end(start, sub["tenure"])
         await apply_payment(mongo, redis, sub, payment, start, end, remote.get("notes") or {}, first=True)
         sub = await mongo[COL_SUBSCRIPTIONS].find_one({"_id": sub["_id"]}) or sub
     return await view_of(mongo, sub)

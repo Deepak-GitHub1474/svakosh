@@ -20,7 +20,7 @@ from app.api.endpoints.billing.constants import (
     COUPON_OFFER,
     COUPON_REFERRAL,
     EVENT_RETRY_AFTER_SECONDS,
-    PENDING_ABANDON_HOURS,
+    PENDING_SYNC_MINUTES,
     PROVIDER_RAZORPAY,
     RENEWAL_GRACE_HOURS,
     STATUS_ACTIVE,
@@ -30,7 +30,7 @@ from app.api.endpoints.billing.constants import (
     STATUS_PENDING,
     VALID_STATUSES,
 )
-from app.api.endpoints.billing.utils import add_tenure, from_epoch, utc
+from app.api.endpoints.billing.utils import end_of_day, from_epoch, period_end
 from app.razorpay import RazorpayClient, RazorpayError
 from app.utils.utils import now_utc
 
@@ -46,14 +46,15 @@ async def apply_payment(
     redis: Redis,
     sub: dict[str, Any],
     payment: dict[str, Any],
-    period_start: datetime,
-    period_end: datetime,
+    start: datetime,
+    end: datetime,
     notes: dict[str, Any],
     first: bool,
 ) -> None:
     if payment.get("status") not in PAID_STATES:
         return
     now = now_utc()
+    end = end_of_day(end)
     coupon_id = notes.get("coupon_id") if first else None
     discount = int(notes.get("discount_paise") or 0) if first else 0
     doc = {
@@ -63,8 +64,8 @@ async def apply_payment(
         "amount_paise": int(payment["amount"]),
         "discount_paise": discount,
         "coupon_id": ObjectId(coupon_id) if coupon_id else None,
-        "period_start": period_start,
-        "period_end": period_end,
+        "period_start": start,
+        "period_end": end,
         "status": "captured",
         "paid_at": from_epoch(payment.get("created_at")) or now,
         "created_at": now,
@@ -78,7 +79,7 @@ async def apply_payment(
     if first:
         await subs.update_one(
             {"_id": sub["_id"], "status": {"$in": [STATUS_PENDING, STATUS_FAILED]}},
-            {"$set": {"status": STATUS_ACTIVE, "started_at": period_start, "auto_renew": True, "updated_at": now}},
+            {"$set": {"status": STATUS_ACTIVE, "started_at": start, "auto_renew": True, "updated_at": now}},
         )
     else:
         await subs.update_one(
@@ -87,7 +88,7 @@ async def apply_payment(
         )
     await subs.update_one(
         {"_id": sub["_id"]},
-        {"$max": {"expires_at": period_end}, "$set": {"updated_at": now}},
+        {"$max": {"expires_at": end}, "$set": {"updated_at": now}},
     )
     if first and doc:
         await redeem(mongo, doc)
@@ -96,6 +97,8 @@ async def apply_payment(
 
 
 async def referral_of(mongo: AsyncIOMotorDatabase, user_id: str) -> dict[str, Any] | None:
+    if not ObjectId.is_valid(user_id):
+        return None
     user = await mongo[COL_USERS].find_one({"_id": ObjectId(user_id)}, {"referred_by": 1, "referred_at": 1})
     if not user or not user.get("referred_at"):
         return None
@@ -172,7 +175,7 @@ async def handle_event(mongo: AsyncIOMotorDatabase, redis: Redis, event: dict[st
             await apply_payment(mongo, redis, sub, payment, start, end, notes, first=False)
     elif kind in FIRST_PAYMENT_EVENTS and payment:
         start = from_epoch(payment.get("created_at")) or now_utc()
-        end = from_epoch(entity.get("start_at")) or add_tenure(start, sub["tenure"])
+        end = from_epoch(entity.get("start_at")) or period_end(start, sub["tenure"])
         await apply_payment(mongo, redis, sub, payment, start, end, notes, first=True)
     elif kind in STOP_EVENTS:
         await stop_renewal(mongo, redis, sub)
@@ -201,7 +204,7 @@ async def sync_from_provider(
         payment = await rz.fetch_payment(invoice["payment_id"])
         if index == 0:
             start = from_epoch(payment.get("created_at")) or now_utc()
-            end = from_epoch(remote.get("start_at")) or add_tenure(start, sub["tenure"])
+            end = from_epoch(remote.get("start_at")) or period_end(start, sub["tenure"])
         else:
             start = from_epoch(invoice.get("billing_start")) or from_epoch(remote.get("current_start"))
             end = from_epoch(invoice.get("billing_end")) or from_epoch(remote.get("current_end"))
@@ -223,19 +226,20 @@ async def reconcile(mongo: AsyncIOMotorDatabase, redis: Redis, rz: RazorpayClien
     if rz.configured:
         stale = {"provider": PROVIDER_RAZORPAY, "provider_subscription_id": {"$type": "string"}}
         checks = [
-            {**stale, "status": STATUS_PENDING, "created_at": {"$lt": now - timedelta(minutes=5)}},
+            {**stale, "status": STATUS_PENDING, "created_at": {"$lt": now - timedelta(minutes=PENDING_SYNC_MINUTES)}},
             {**stale, "status": STATUS_ACTIVE, "auto_renew": True, "expires_at": {"$lt": now}},
         ]
         for query in checks:
             async for sub in subs.find(query):
                 try:
-                    remote = await sync_from_provider(mongo, redis, rz, sub)
+                    await sync_from_provider(mongo, redis, rz, sub)
                 except RazorpayError as e:
                     logger.warning("Billing: reconcile of %s skipped.\nReason: %s", sub["_id"], e)
                     continue
-                abandoned = utc(sub["created_at"]) < now - timedelta(hours=PENDING_ABANDON_HOURS)
-                if sub["status"] == STATUS_PENDING and remote.get("status") == "created" and abandoned:
-                    await abandon(mongo, redis, rz, sub)
+                if sub["status"] == STATUS_PENDING:
+                    fresh = await subs.find_one({"_id": sub["_id"]}, {"status": 1})
+                    if fresh and fresh["status"] == STATUS_PENDING:
+                        await abandon(mongo, redis, rz, sub)
 
     await subs.update_many(
         {
