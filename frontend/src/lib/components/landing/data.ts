@@ -417,13 +417,14 @@ export const PRICING = {
 	note: 'Prices in INR. Access runs until 11:59 PM IST on the last day of the period. SvaKosh provides software and market data views only; it does not give investment advice.',
 	periods: [
 		{ label: 'Monthly', value: 'monthly' },
+		{ label: 'Quarterly', value: 'quarterly' },
 		{ label: 'Annually', value: 'annually' }
 	],
 	plans: [
 		{
 			name: 'Free',
 			body: 'The core analytics desk.',
-			prices: { monthly: 0, annually: 0 },
+			prices: { monthly: 0, quarterly: 0, annually: 0 },
 			features: [
 				'Option chain and max pain',
 				'OI glimpse, buildup and lookup',
@@ -434,7 +435,7 @@ export const PRICING = {
 		{
 			name: 'Premium',
 			body: 'Advanced analytics tools.',
-			prices: { monthly: 499, annually: 4999 },
+			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
 			featured: true,
 			features: [
 				'Everything in Free',
@@ -446,7 +447,7 @@ export const PRICING = {
 		{
 			name: 'Broker Account',
 			body: 'Per linked broker account.',
-			prices: { monthly: 199, annually: 1999 },
+			prices: { monthly: 199, quarterly: 549, annually: 1999 },
 			features: [
 				'Place and manage orders from SvaKosh',
 				'Positions, holdings and funds',

@@ -11,7 +11,12 @@
 	let period = $state<TPeriod>('monthly');
 
 	const amount = (value: number) => `₹${value.toLocaleString('en-IN')}`;
-	const unit = $derived(period === 'monthly' ? '/ month' : '/ year');
+	const UNITS: Record<TPeriod, string> = {
+		monthly: '/ month',
+		quarterly: '/ quarter',
+		annually: '/ year'
+	};
+	const unit = $derived(UNITS[period]);
 </script>
 
 <section id="pricing" class="mx-auto max-w-6xl px-4 pt-20 sm:px-6 md:pt-28">
