@@ -10,7 +10,7 @@
 				<span class="text-2xl font-semibold tracking-tight sm:text-3xl">
 					Sva<span class="text-primary">Kosh</span>
 				</span>
-				<p class="text-muted-foreground mt-4 max-w-xs text-sm leading-relaxed">
+				<p class="text-muted-foreground mt-1.5 max-w-xs text-sm leading-relaxed">
 					{BRAND.tagline}
 				</p>
 			</div>
