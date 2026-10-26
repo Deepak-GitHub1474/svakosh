@@ -137,7 +137,8 @@
 		border-collapse: collapse;
 	}
 
-	th, td {
+	th,
+	td {
 		font-weight: 400;
 		font-size: 0.75rem;
 	}
@@ -342,6 +343,7 @@ select:-webkit-autofill:focus {
 	--animate-marquee: marquee 46s linear infinite;
 	--animate-blink: blink 1s steps(2, start) infinite;
 	--animate-drift: drift 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+	--animate-float: float 7s ease-in-out infinite;
 
 	@keyframes marquee {
 		to {
@@ -352,6 +354,12 @@ select:-webkit-autofill:focus {
 	@keyframes blink {
 		50% {
 			opacity: 0;
+		}
+	}
+
+	@keyframes float {
+		50% {
+			transform: translateY(-0.75rem);
 		}
 	}
 

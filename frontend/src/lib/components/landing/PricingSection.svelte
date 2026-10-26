@@ -1,113 +1,158 @@
 <script lang="ts">
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
+	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import Icon from './Icon.svelte';
 	import SectionHead from './SectionHead.svelte';
 	import { ICONS, PRICING } from './data';
 	import { spotlight } from './utils';
 
-	type TPlanId = (typeof PRICING.plans)[number]['id'];
+	type TPeriod = (typeof PRICING.periods)[number]['value'];
 
-	let active = $state<TPlanId>(PRICING.plans[0].id);
+	let period = $state<TPeriod>('monthly');
 
-	const plan = $derived(PRICING.plans.find((p) => p.id === active) ?? PRICING.plans[0]);
-	const monthly = $derived(plan.prices.monthly);
-	const saving = (price: number, months: number) =>
-		months > 1 ? Math.round((1 - price / (monthly * months)) * 100) : 0;
+	const amount = (value: number) => `₹${value.toLocaleString('en-IN')}`;
+	const UNITS: Record<TPeriod, string> = {
+		monthly: '/ month',
+		quarterly: '/ quarter',
+		annually: '/ year'
+	};
+	const unit = $derived(UNITS[period]);
+	const reference = PRICING.plans.find((p) => p.prices.monthly)?.prices;
+	const tabs = PRICING.periods.map((p) => {
+		const save = reference
+			? Math.round((1 - reference[p.value] / (reference.monthly * p.months)) * 100)
+			: 0;
+		return { label: save > 0 ? `${p.label} · Save ${save}%` : p.label, value: p.value };
+	});
 </script>
 
 <section id="pricing" class="mx-auto max-w-6xl px-4 pt-20 sm:px-6 md:pt-28">
-	<SectionHead eyebrow="Pricing" title={PRICING.title} />
+	<div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+		<SectionHead eyebrow="Pricing" title={PRICING.title} />
+		<SvaKoshTabs
+			{tabs}
+			activeTab={period}
+			onTabChange={(value: TPeriod) => (period = value)}
+			class="reveal border-primary/20 bg-primary-subtle w-fit shrink-0"
+		/>
+	</div>
 
-	<div class="reveal border-border-muted bg-surface/40 mt-10 overflow-hidden rounded-3xl border">
-		<div class="grid grid-cols-2" role="tablist">
-			{#each PRICING.plans as option (option.id)}
-				<button
-					type="button"
-					role="tab"
-					aria-selected={option.id === active}
-					onclick={() => (active = option.id)}
-					class="border-b py-4 text-sm transition-colors sm:text-base {option.id === active
-						? 'border-primary text-foreground'
-						: 'border-border-muted text-muted-foreground hover:text-foreground'}"
-				>
-					{option.name}
-				</button>
-			{/each}
+	<div class="relative mt-10">
+		<div
+			class="pointer-events-none absolute -top-10 -left-14 hidden -rotate-12 lg:block"
+			aria-hidden="true"
+		>
+			<div class="bg-primary/10 absolute inset-0 rounded-full blur-2xl"></div>
+			<svg viewBox="0 0 120 72" class="motion-safe:animate-float relative w-28">
+				<rect
+					x="2"
+					y="2"
+					width="116"
+					height="68"
+					rx="10"
+					class="fill-surface stroke-border-muted"
+					stroke-width="2"
+				/>
+				<rect
+					x="10"
+					y="10"
+					width="100"
+					height="52"
+					rx="6"
+					class="stroke-primary/30 fill-none"
+					stroke-width="1.5"
+				/>
+				<circle
+					cx="60"
+					cy="36"
+					r="16"
+					class="fill-primary/10 stroke-primary/40"
+					stroke-width="1.5"
+				/>
+				<text x="60" y="43" text-anchor="middle" class="fill-primary text-xl font-semibold">₹</text>
+			</svg>
 		</div>
 
-		<div class="grid gap-8 px-4 py-8 sm:px-6 md:grid-cols-3 md:gap-5 md:py-10">
-			{#each PRICING.periods as period (period.value)}
-				{@const price = plan.prices[period.value]}
-				{@const save = saving(price, period.months)}
-				<div class="flex flex-col">
-					<p class="mb-4 flex items-center justify-center gap-2">
-						<span class="text-muted-foreground text-lg tracking-[0.3em] uppercase">
-							{period.label}
+		<div
+			class="pointer-events-none absolute -right-12 -bottom-12 z-10 hidden rotate-12 lg:block"
+			aria-hidden="true"
+		>
+			<div class="bg-primary/10 absolute inset-0 rounded-full blur-2xl"></div>
+			<svg
+				viewBox="0 0 80 112"
+				class="motion-safe:animate-float relative w-16 [animation-delay:-3.5s]"
+			>
+				<path
+					d="M40 2 78 26v72a12 12 0 0 1-12 12H14A12 12 0 0 1 2 98V26Z"
+					class="fill-surface stroke-border-muted"
+					stroke-width="2"
+				/>
+				<circle
+					cx="40"
+					cy="28"
+					r="6"
+					class="fill-background stroke-border-muted"
+					stroke-width="2"
+				/>
+				<text x="40" y="82" text-anchor="middle" class="fill-primary text-3xl font-semibold">%</text
+				>
+			</svg>
+		</div>
+
+		<div class="relative grid gap-4 md:grid-cols-3">
+			{#each PRICING.plans as plan (plan.name)}
+				{@const featured = 'featured' in plan && plan.featured}
+				<article
+					class="reveal spot relative flex flex-col rounded-2xl border p-6 {featured
+						? 'border-primary/40 bg-primary/5'
+						: 'border-border-muted bg-surface/40'}"
+					use:spotlight
+				>
+					<div class="flex items-start justify-between gap-3">
+						<span class="bg-primary/10 text-primary grid size-10 place-items-center rounded-xl">
+							<Icon path={plan.icon} class="size-5" />
 						</span>
-						{#if save}
-							<span class="bg-primary/15 text-primary rounded-md px-1.5 py-0.5 text-xs font-medium">
-								Save {save}%
-							</span>
+						{#if plan.trial}
+							<span class="bg-primary/15 text-primary rounded-md px-2 py-1 text-xs"
+								>First month free</span
+							>
+						{/if}
+					</div>
+					<h3 class="mt-4 text-lg font-semibold tracking-tight">{plan.name}</h3>
+					<p class="text-muted-foreground mt-1 text-sm">{plan.body}</p>
+
+					<p class="mt-6 flex items-baseline gap-1.5">
+						<span class="text-3xl font-semibold tracking-tight tabular-nums">
+							{amount(plan.prices[period])}
+						</span>
+						{#if plan.prices[period]}
+							<span class="text-muted-foreground text-sm">{unit}</span>
 						{/if}
 					</p>
 
-					<article
-						class="spot border-border-muted bg-surface/60 relative flex flex-1 flex-col rounded-2xl border p-5"
-						use:spotlight
-					>
-						<div class="flex items-start justify-between gap-3">
-							<span class="bg-primary/10 text-primary grid size-10 place-items-center rounded-xl">
-								<Icon path={plan.icon} class="size-5" />
-							</span>
-							<span
-								class="border-border-muted text-muted-foreground rounded-full border px-2.5 py-1 text-xs tracking-wider uppercase"
-							>
-								First month free
-							</span>
-						</div>
+					<ul class="text-muted-foreground mt-6 flex flex-1 flex-col gap-3 text-sm">
+						{#each plan.features as feature (feature.label)}
+							<li class="flex items-start gap-2.5">
+								<Icon path={feature.icon} class="text-primary mt-0.5 size-4 shrink-0" />
+								{feature.label}
+							</li>
+						{/each}
+						{#if plan.more}
+							<li class="flex items-center gap-1.5">
+								{plan.more}
+								<Icon path={ICONS.arrow} class="size-3.5" />
+							</li>
+						{/if}
+					</ul>
 
-						<h3 class="mt-4 font-semibold tracking-tight">{plan.name}</h3>
-						<p class="text-muted-foreground text-sm">{plan.body}</p>
-
-						<p class="mt-5 flex items-baseline gap-1.5">
-							<span class="text-3xl font-semibold tracking-tight tabular-nums">
-								₹{price.toLocaleString('en-IN')}
-							</span>
-							<span class="text-muted-foreground text-xs">/ {plan.per}{period.unit}</span>
-						</p>
-
-						<SvaKoshButton
-							variant="solid"
-							href="/auth/signin"
-							label="Start free month"
-							class="mt-5 h-12 w-full border-transparent text-sm normal-case"
-						/>
-
-						<div class="bg-border-muted my-5 h-px"></div>
-
-						<h4 class="text-sm font-medium">Features</h4>
-						<ul class="text-muted-foreground mt-3 flex flex-col gap-3 text-sm">
-							{#each plan.features as feature (feature.label)}
-								<li class="flex items-center gap-2.5">
-									<Icon path={feature.icon} class="text-primary size-4" />
-									{feature.label}
-								</li>
-							{/each}
-						</ul>
-						<p class="text-muted-foreground mt-4 flex items-center gap-1 text-sm">
-							and more
-							<Icon path={ICONS.arrow} class="size-3.5" />
-						</p>
-					</article>
-				</div>
+					<SvaKoshButton
+						variant={featured ? 'solid' : 'secondary'}
+						href="/auth/signin"
+						label={plan.trial ? 'Start free month' : 'Start free'}
+						class="mt-8 h-12 w-full border-transparent text-sm normal-case"
+					/>
+				</article>
 			{/each}
 		</div>
-
-		<p
-			class="text-muted-foreground border-border-muted flex items-start gap-3 border-t px-4 py-5 text-sm leading-relaxed sm:px-6"
-		>
-			<Icon path={ICONS.info} class="mt-0.5 size-4" />
-			{PRICING.note}
-		</p>
 	</div>
 </section>

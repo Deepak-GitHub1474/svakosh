@@ -19,8 +19,7 @@ export const ICONS = {
 	clock:
 		'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z',
 	bookmark: 'M17 3H7a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2zm0 15-5-2.2L7 18V5h10v13z',
-	arrow: 'M12 4l-1.4 1.4L16.2 11H4v2h12.2l-5.6 5.6L12 20l8-8-8-8z',
-	info: 'M11 7h2v2h-2V7zm0 4h2v6h-2v-6zm1-9a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z'
+	arrow: 'M12 4l-1.4 1.4L16.2 11H4v2h12.2l-5.6 5.6L12 20l8-8-8-8z'
 } as const;
 
 export const NAV = [
@@ -384,40 +383,53 @@ export const SECURITY = {
 
 export const PRICING = {
 	title: 'Plans',
-	note: 'The platform and core analytics, like market overview, max pain, PCR and watchlists, are free with no subscription.',
 	periods: [
-		{ label: 'Monthly', value: 'monthly', unit: 'month', months: 1 },
-		{ label: 'Quarterly', value: 'quarterly', unit: '3 months', months: 3 },
-		{ label: 'Annually', value: 'annually', unit: '12 months', months: 12 }
+		{ label: 'Monthly', value: 'monthly', months: 1 },
+		{ label: 'Quarterly', value: 'quarterly', months: 3 },
+		{ label: 'Annually', value: 'annually', months: 12 }
 	],
 	plans: [
 		{
-			id: 'analytics',
-			name: 'Premium Analytics',
-			body: 'For active traders',
-			icon: ICONS.layers,
-			per: '',
-			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
+			name: 'Free',
+			body: 'The platform and core analytics.',
+			icon: ICONS.grid,
+			trial: false,
+			prices: { monthly: 0, quarterly: 0, annually: 0 },
 			features: [
-				{ label: 'Option chain', icon: ICONS.layers },
-				{ label: 'OI Tracker', icon: ICONS.pulse },
-				{ label: 'Stocks Screener', icon: ICONS.screen },
-				{ label: 'Everything in Free', icon: ICONS.grid }
-			]
+				{ label: 'Market overview', icon: ICONS.pulse },
+				{ label: 'Max pain and PCR', icon: ICONS.scale },
+				{ label: 'Watchlists', icon: ICONS.bookmark }
+			],
+			more: 'And more'
 		},
 		{
-			id: 'broker',
-			name: 'Broker Account',
-			body: 'Trade from SvaKosh',
-			icon: ICONS.key,
-			per: 'per account ',
+			name: 'Premium Analytics',
+			body: 'Advanced analytics tools.',
+			icon: ICONS.layers,
+			trial: true,
+			featured: true,
 			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
 			features: [
-				{ label: 'Place and manage orders', icon: ICONS.arrow },
+				{ label: 'Everything in Free', icon: ICONS.grid },
+				{ label: 'Option chain', icon: ICONS.layers },
+				{ label: 'OI Tracker', icon: ICONS.waves },
+				{ label: 'Stocks Screener', icon: ICONS.screen }
+			],
+			more: 'And many more'
+		},
+		{
+			name: 'Broker Account',
+			body: 'Per linked broker account.',
+			icon: ICONS.key,
+			trial: true,
+			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
+			features: [
+				{ label: 'Free analytics included', icon: ICONS.grid },
+				{ label: 'Place and manage orders from SvaKosh', icon: ICONS.arrow },
 				{ label: 'Positions, holdings and funds', icon: ICONS.scale },
-				{ label: 'Your own broker login', icon: ICONS.shield },
-				{ label: 'Free analytics included', icon: ICONS.grid }
-			]
+				{ label: 'One subscription per account', icon: ICONS.shield }
+			],
+			more: ''
 		}
 	]
 } as const;
