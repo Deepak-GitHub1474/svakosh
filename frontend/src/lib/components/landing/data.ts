@@ -28,7 +28,8 @@ export const NAV = [
 	{ label: 'Modules', id: 'modules' },
 	{ label: 'Analytics', id: 'analytics' },
 	{ label: 'Workflow', id: 'workflow' },
-	{ label: 'Security', id: 'security' }
+	{ label: 'Security', id: 'security' },
+	{ label: 'Pricing', id: 'pricing' }
 ];
 
 export const HERO = {
@@ -410,6 +411,52 @@ export const SECURITY = {
 	]
 };
 
+export const PRICING = {
+	title: 'Simple plans, billed in INR',
+	body: 'SvaKosh is subscription software. Core analytics are free; Premium unlocks advanced tools, and each broker account you trade through is a separate subscription. Renews automatically, cancel anytime.',
+	note: 'Prices in INR. Access runs until 11:59 PM IST on the last day of the period. SvaKosh provides software and market data views only; it does not give investment advice.',
+	periods: [
+		{ label: 'Monthly', value: 'monthly' },
+		{ label: 'Annually', value: 'annually' }
+	],
+	plans: [
+		{
+			name: 'Free',
+			body: 'The core analytics desk.',
+			prices: { monthly: 0, annually: 0 },
+			features: [
+				'Option chain and max pain',
+				'OI glimpse, buildup and lookup',
+				'Straddle and strangle charts',
+				'Market overview and pulse'
+			]
+		},
+		{
+			name: 'Premium',
+			body: 'Advanced analytics tools.',
+			prices: { monthly: 499, annually: 4999 },
+			featured: true,
+			features: [
+				'Everything in Free',
+				'OI Tracker',
+				'Stocks Screener',
+				'New premium tools as they ship'
+			]
+		},
+		{
+			name: 'Broker Account',
+			body: 'Per linked broker account.',
+			prices: { monthly: 199, annually: 1999 },
+			features: [
+				'Place and manage orders from SvaKosh',
+				'Positions, holdings and funds',
+				'Your own broker account and login',
+				'One subscription per account'
+			]
+		}
+	]
+} as const;
+
 export const CTA = {
 	eyebrow: 'Get started',
 	title: 'The chain opens at 9:15',
@@ -435,6 +482,16 @@ export const FOOTER = [
 			{ label: '52-Week Breakout', href: '/stocks/breakout/52-week' },
 			{ label: 'Volume Breakout', href: '/stocks/breakout/volume' },
 			{ label: 'Market Pulse', href: '/market-pulse' }
+		]
+	},
+	{
+		title: 'Company',
+		links: [
+			{ label: 'Pricing', href: '/#pricing' },
+			{ label: 'Contact Us', href: '/contact' },
+			{ label: 'Terms & Conditions', href: '/terms' },
+			{ label: 'Privacy Policy', href: '/privacy' },
+			{ label: 'Refund & Cancellation', href: '/refund-policy' }
 		]
 	}
 ];

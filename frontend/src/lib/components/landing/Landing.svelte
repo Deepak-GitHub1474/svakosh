@@ -9,6 +9,7 @@
 	import Nav from './Nav.svelte';
 	import MarketPanel from './MarketPanel.svelte';
 	import OptionsPanel from './OptionsPanel.svelte';
+	import PricingSection from './PricingSection.svelte';
 	import TrackerPanel from './TrackerPanel.svelte';
 	import SectionHead from './SectionHead.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
@@ -107,6 +108,8 @@
 			{/each}
 		</dl>
 	</section>
+
+	<PricingSection />
 
 	<section class="mx-auto max-w-6xl px-4 pt-20 sm:px-6 md:pt-28">
 		<div
