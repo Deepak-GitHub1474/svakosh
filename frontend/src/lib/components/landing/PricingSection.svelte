@@ -39,41 +39,6 @@
 
 	<div class="relative mt-10">
 		<div
-			class="pointer-events-none absolute -top-10 -left-14 hidden -rotate-12 lg:block"
-			aria-hidden="true"
-		>
-			<div class="bg-primary/10 absolute inset-0 rounded-full blur-2xl"></div>
-			<svg viewBox="0 0 120 72" class="motion-safe:animate-float relative w-28">
-				<rect
-					x="2"
-					y="2"
-					width="116"
-					height="68"
-					rx="10"
-					class="fill-surface stroke-border-muted"
-					stroke-width="2"
-				/>
-				<rect
-					x="10"
-					y="10"
-					width="100"
-					height="52"
-					rx="6"
-					class="stroke-primary/30 fill-none"
-					stroke-width="1.5"
-				/>
-				<circle
-					cx="60"
-					cy="36"
-					r="16"
-					class="fill-primary/10 stroke-primary/40"
-					stroke-width="1.5"
-				/>
-				<text x="60" y="43" text-anchor="middle" class="fill-primary text-xl font-semibold">₹</text>
-			</svg>
-		</div>
-
-		<div
 			class="pointer-events-none absolute -right-12 -bottom-12 z-10 hidden rotate-12 lg:block"
 			aria-hidden="true"
 		>
