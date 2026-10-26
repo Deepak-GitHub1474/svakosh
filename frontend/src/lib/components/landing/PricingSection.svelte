@@ -21,7 +21,7 @@
 
 <section id="pricing" class="mx-auto max-w-6xl px-4 pt-20 sm:px-6 md:pt-28">
 	<div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-		<SectionHead eyebrow="Pricing" title={PRICING.title} body={PRICING.body} />
+		<SectionHead eyebrow="Pricing" title={PRICING.title} />
 		<SvaKoshTabs
 			tabs={[...PRICING.periods]}
 			activeTab={period}

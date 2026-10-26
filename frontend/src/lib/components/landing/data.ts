@@ -413,7 +413,6 @@ export const SECURITY = {
 
 export const PRICING = {
 	title: 'Simple plans, billed in INR',
-	body: 'SvaKosh is subscription software. The platform and core analytics are free forever. Premium Analytics and each broker account you trade through are separate subscriptions, each with the first month free. Renews automatically, cancel anytime.',
 	periods: [
 		{ label: 'Monthly', value: 'monthly' },
 		{ label: 'Quarterly', value: 'quarterly' },
