@@ -447,7 +447,7 @@ export const PRICING = {
 		{
 			name: 'Broker Account',
 			body: 'Per linked broker account.',
-			prices: { monthly: 199, quarterly: 549, annually: 1999 },
+			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
 			features: [
 				'Place and manage orders from SvaKosh',
 				'Positions, holdings and funds',
