@@ -20,8 +20,7 @@ export const ICONS = {
 		'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z',
 	bookmark: 'M17 3H7a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2zm0 15-5-2.2L7 18V5h10v13z',
 	arrow: 'M12 4l-1.4 1.4L16.2 11H4v2h12.2l-5.6 5.6L12 20l8-8-8-8z',
-	check: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z',
-	chevron: 'M12 15.5 5.5 9 7 7.6l5 5 5-5L18.5 9 12 15.5z'
+	check: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z'
 } as const;
 
 export const NAV = [
@@ -396,12 +395,7 @@ export const PRICING = {
 			body: 'The platform and core analytics.',
 			trial: false,
 			options: [{ label: '', prices: { monthly: 0, quarterly: 0, annually: 0 } }],
-			features: [
-				'Market overview',
-				'Max pain and PCR',
-				'Watchlists',
-				'And more…'
-			]
+			features: ['Market overview', 'Max pain and PCR', 'Watchlists', 'And more…']
 		},
 		{
 			name: 'Premium Analytics',
@@ -438,7 +432,7 @@ export const PRICING = {
 export const CTA = {
 	eyebrow: 'Get started',
 	title: 'Start free today',
-	body: 'Sign in with a passkey — no broker to link, no setup screen in the way. Seventeen modules, six index chains, three expiries out.',
+	body: 'Free to start. Add Premium Analytics or link a broker account when you need more.',
 	label: 'Launch platform',
 	href: '/auth/signin'
 };

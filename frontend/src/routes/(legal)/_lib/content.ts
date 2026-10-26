@@ -1,13 +1,11 @@
 import { BUSINESS } from '$lib/brand';
-import { ICONS } from '$lib/components/landing/data';
 import type { TLegalDoc } from './types';
-
-const contact = BUSINESS.email;
 
 export const ABOUT: TLegalDoc = {
 	title: 'About Us',
 	eyebrow: 'Company',
-	intro: `SvaKosh is market analytics and trading software for Indian indices, stocks and derivatives.`,
+	intro:
+		'SvaKosh is market analytics and trading software for Indian indices, stocks and derivatives.',
 	sections: [
 		{
 			heading: 'What we build',
@@ -39,7 +37,8 @@ export const ABOUT: TLegalDoc = {
 
 export const TERMS: TLegalDoc = {
 	title: 'Terms & Conditions',
-	intro: `These terms govern your use of SvaKosh, a software service. By creating an account or using the service you agree to them.`,
+	intro:
+		'These terms govern your use of SvaKosh, a software service. By creating an account or using the service you agree to them.',
 	sections: [
 		{
 			heading: 'The service',
@@ -113,14 +112,15 @@ export const TERMS: TLegalDoc = {
 		},
 		{
 			heading: 'Contact',
-			body: [`Questions about these terms: ${contact}.`]
+			body: [`Questions about these terms: ${BUSINESS.email}.`]
 		}
 	]
 };
 
 export const PRIVACY: TLegalDoc = {
 	title: 'Privacy Policy',
-	intro: `This policy explains what personal data SvaKosh collects, why, and how it is protected, in line with the Digital Personal Data Protection Act, 2023.`,
+	intro:
+		'This policy explains what personal data SvaKosh collects, why, and how it is protected, in line with the Digital Personal Data Protection Act, 2023.',
 	sections: [
 		{
 			heading: 'What we collect',
@@ -207,12 +207,11 @@ export const REFUNDS: TLegalDoc = {
 		},
 		{
 			heading: 'Contact',
-			body: [`For billing questions or refund requests: ${contact}.`]
+			body: [`For billing questions or refund requests: ${BUSINESS.email}.`]
 		}
 	]
 };
 
 export const CONTACT = {
-	intro: 'Questions about your account, billing, a refund or a broker connection? Reach us here.',
-	items: [{ label: 'Email', value: BUSINESS.email, kind: 'email', icon: ICONS.bookmark }]
+	intro: 'Questions about your account, billing, a refund or a broker connection? Write to us.'
 };

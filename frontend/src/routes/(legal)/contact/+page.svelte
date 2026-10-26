@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { BRAND } from '$lib/brand';
+	import { BRAND, BUSINESS } from '$lib/brand';
 	import Icon from '$lib/components/landing/Icon.svelte';
+	import { ICONS } from '$lib/components/landing/data';
 	import { CONTACT } from '../_lib/content';
 </script>
 
@@ -18,29 +19,18 @@
 </h1>
 <p class="text-muted-foreground mt-5 leading-relaxed">{CONTACT.intro}</p>
 
-<dl class="mt-10 grid gap-3 sm:grid-cols-2">
-	{#each CONTACT.items as item (item.label)}
-		<div
-			class="border-border-muted bg-surface/40 grid grid-cols-[2.75rem_1fr] gap-x-3 rounded-2xl border p-4"
-		>
-			<span
-				class="bg-primary/10 text-primary row-span-2 grid size-11 place-items-center rounded-xl"
-				aria-hidden="true"
-			>
-				<Icon path={item.icon} class="size-5" />
-			</span>
-			<dt class="text-muted-foreground self-center text-xs tracking-wider uppercase">
-				{item.label}
-			</dt>
-			<dd class="mt-1 text-sm leading-relaxed break-words">
-				{#if item.kind === 'email'}
-					<a href="mailto:{item.value}" class="text-foreground hover:text-primary transition-colors"
-						>{item.value}</a
-					>
-				{:else}
-					{item.value}
-				{/if}
-			</dd>
-		</div>
-	{/each}
-</dl>
+<a
+	href="mailto:{BUSINESS.email}"
+	class="border-border-muted bg-surface/40 hover:border-primary/40 mt-10 inline-flex items-center gap-3 rounded-2xl border p-4 transition-colors"
+>
+	<span
+		class="bg-primary/10 text-primary grid size-11 place-items-center rounded-xl"
+		aria-hidden="true"
+	>
+		<Icon path={ICONS.bookmark} class="size-5" />
+	</span>
+	<span>
+		<span class="text-muted-foreground block text-xs tracking-wider uppercase">Email</span>
+		<span class="text-foreground mt-1 block text-sm">{BUSINESS.email}</span>
+	</span>
+</a>
