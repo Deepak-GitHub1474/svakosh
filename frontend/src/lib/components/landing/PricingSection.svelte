@@ -53,7 +53,9 @@
 					{@const price = plan.options[0].prices[period]}
 					<p class="mt-6 flex items-baseline gap-1.5">
 						<span class="text-3xl font-semibold tracking-tight tabular-nums">{amount(price)}</span>
-						<span class="text-muted-foreground text-sm">{price ? unit : 'always'}</span>
+						{#if price}
+							<span class="text-muted-foreground text-sm">{unit}</span>
+						{/if}
 					</p>
 				{:else}
 					<dl class="mt-6 flex flex-col gap-1.5">
