@@ -295,6 +295,11 @@ async def checkout(
         until = as_utc(current.get("expires_at"))
         message = f"You already have this plan until {until:%d %b %Y}." if until else "You already have this plan."
         raise fail(status.HTTP_409_CONFLICT, message)
+    if q["broker_account_id"] and q["ip"]:
+        await trade.call(
+            "trade.account.update",
+            {"user_id": claims.user_id, "account_id": q["broker_account_id"], "ip": q["ip"]},
+        )
     now = now_utc()
     base = {**target, "tenure": q["tenure"], "ip": q["ip"], "cancelled_at": None, "created_at": now, "updated_at": now}
 
