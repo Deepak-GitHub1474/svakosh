@@ -412,7 +412,7 @@ export const SECURITY = {
 };
 
 export const PRICING = {
-	title: 'Simple plans, billed in INR',
+	title: 'Plans',
 	periods: [
 		{ label: 'Monthly', value: 'monthly' },
 		{ label: 'Quarterly', value: 'quarterly' },
