@@ -21,9 +21,9 @@
 	<EmptyState
 		class="min-h-[60vh]"
 		icon={AwardStar}
-		title="{title} is a Premium tool"
-		description="Upgrade to SvaKosh Premium to unlock {title} and every other premium analytics tool."
-		actionLabel="See Premium plans"
+		title="{title} is part of Premium Analytics"
+		description="Subscribe to Premium Analytics to unlock {title} and every other premium tool. Your first month is free."
+		actionLabel="See Premium Analytics"
 		onAction={() => openPage(resolve('/pricing'), { plan: PLAN_CODES.analytics })}
 	/>
 {/if}

@@ -28,6 +28,8 @@ from app.api.endpoints.billing.constants import (
     STATUS_EXPIRED,
     STATUS_FAILED,
     STATUS_PENDING,
+    TRIAL_NOTE,
+    TRIAL_TENURE,
     VALID_STATUSES,
 )
 from app.api.endpoints.billing.utils import end_of_day, from_epoch, period_end
@@ -90,7 +92,7 @@ async def apply_payment(
         {"_id": sub["_id"]},
         {"$max": {"expires_at": end}, "$set": {"updated_at": now}},
     )
-    if first and doc:
+    if doc:
         await redeem(mongo, doc)
     await forget_entitlements(redis, sub["user_id"])
     logger.info("Billing: payment %s applied to subscription %s.", payment["id"], sub["_id"])
@@ -129,15 +131,30 @@ async def redeem(mongo: AsyncIOMotorDatabase, payment: dict[str, Any]) -> None:
     applied = await mongo[COL_COUPONS].find_one({"_id": payment["coupon_id"]}) if payment.get("coupon_id") else None
     if applied and applied["kind"] == COUPON_OFFER and await record(mongo, applied, payment, payment["discount_paise"], 0):
         await mongo[COL_COUPONS].update_one({"_id": applied["_id"]}, {"$inc": {"used_count": 1}, "$set": {"updated_at": now_utc()}})
+    if payment["amount_paise"] <= 0:
+        return
     referral = applied if applied and applied["kind"] == COUPON_REFERRAL else await referral_of(mongo, payment["user_id"])
     if referral is None:
         return
-    earlier = await mongo[COL_PAYMENTS].find_one({"user_id": payment["user_id"], "_id": {"$ne": payment["_id"]}}, {"_id": 1})
+    earlier = await mongo[COL_PAYMENTS].find_one(
+        {"user_id": payment["user_id"], "_id": {"$ne": payment["_id"]}, "amount_paise": {"$gt": 0}}, {"_id": 1}
+    )
     if earlier is not None:
         return
     discount = payment["discount_paise"] if referral is applied else 0
     reward = payment["amount_paise"] * int(referral.get("referral_reward_percent", 0)) // 100
     await record(mongo, referral, payment, discount, reward)
+
+
+def is_trial(notes: dict[str, Any]) -> bool:
+    return notes.get("trial") == TRIAL_NOTE
+
+
+async def activate_trial(mongo: AsyncIOMotorDatabase, redis: Redis, sub: dict[str, Any], remote: dict[str, Any]) -> None:
+    start = from_epoch(remote.get("created_at")) or now_utc()
+    end = from_epoch(remote.get("start_at")) or period_end(start, TRIAL_TENURE)
+    payment = {"id": f"trial:{remote['id']}", "amount": 0, "status": "captured", "created_at": remote.get("created_at")}
+    await apply_payment(mongo, redis, sub, payment, start, end, remote.get("notes") or {}, first=True)
 
 
 async def stop_renewal(mongo: AsyncIOMotorDatabase, redis: Redis, sub: dict[str, Any]) -> None:
@@ -173,6 +190,8 @@ async def handle_event(mongo: AsyncIOMotorDatabase, redis: Redis, event: dict[st
         start, end = from_epoch(entity.get("current_start")), from_epoch(entity.get("current_end"))
         if start and end:
             await apply_payment(mongo, redis, sub, payment, start, end, notes, first=False)
+    elif kind in FIRST_PAYMENT_EVENTS and is_trial(notes):
+        await activate_trial(mongo, redis, sub, entity)
     elif kind in FIRST_PAYMENT_EVENTS and payment:
         start = from_epoch(payment.get("created_at")) or now_utc()
         end = from_epoch(entity.get("start_at")) or period_end(start, sub["tenure"])
@@ -199,10 +218,14 @@ async def sync_from_provider(
 ) -> dict[str, Any]:
     remote = await rz.fetch_subscription(sub["provider_subscription_id"])
     notes = remote.get("notes") or {}
+    trial = is_trial(notes)
+    if trial and remote.get("status") in ("authenticated", "active"):
+        await activate_trial(mongo, redis, sub, remote)
     invoices = sorted(await rz.paid_invoices(remote["id"]), key=lambda i: i.get("paid_at") or i.get("created_at") or 0)
     for index, invoice in enumerate(invoices):
         payment = await rz.fetch_payment(invoice["payment_id"])
-        if index == 0:
+        first = index == 0 and not trial
+        if first:
             start = from_epoch(payment.get("created_at")) or now_utc()
             end = from_epoch(remote.get("start_at")) or period_end(start, sub["tenure"])
         else:
@@ -210,7 +233,7 @@ async def sync_from_provider(
             end = from_epoch(invoice.get("billing_end")) or from_epoch(remote.get("current_end"))
             if not (start and end):
                 continue
-        await apply_payment(mongo, redis, sub, payment, start, end, notes, first=index == 0)
+        await apply_payment(mongo, redis, sub, payment, start, end, notes, first=first)
     if remote.get("status") in ("cancelled", "completed", "halted", "expired"):
         await stop_renewal(mongo, redis, sub)
     return remote

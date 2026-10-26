@@ -26,6 +26,9 @@ COUPON_OFFER = "offer"
 COUPON_REFERRAL = "referral"
 COUPON_FLOOR_PAISE = 1000
 
+TRIAL_TENURE = "monthly"
+TRIAL_NOTE = "1"
+
 REFERRAL_WINDOW_DAYS = 30
 REFERRAL_DISCOUNT_PERCENT = 10
 REFERRAL_REWARD_PERCENT = 10
@@ -44,7 +47,7 @@ ENTITLEMENT_CACHE_KEY = "billing:entitlements:{}"
 DEFAULT_PLANS = (
     {
         "code": "premium",
-        "name": "Svakosh Premium",
+        "name": "Premium Analytics",
         "type": PLAN_ANALYTICS,
         "description": "Premium analytics tools",
         "features": ["oi_tracker", "stocks_screener"],
@@ -64,6 +67,9 @@ DEFAULT_PLANS = (
             {"tenure": "monthly", "broker": None, "ip": "ipv4", "price_paise": 49900, "provider_plan_id": None},
             {"tenure": "quarterly", "broker": None, "ip": "ipv4", "price_paise": 134900, "provider_plan_id": None},
             {"tenure": "annually", "broker": None, "ip": "ipv4", "price_paise": 499900, "provider_plan_id": None},
+            {"tenure": "monthly", "broker": None, "ip": "ipv6", "price_paise": 29900, "provider_plan_id": None},
+            {"tenure": "quarterly", "broker": None, "ip": "ipv6", "price_paise": 79900, "provider_plan_id": None},
+            {"tenure": "annually", "broker": None, "ip": "ipv6", "price_paise": 299900, "provider_plan_id": None},
         ],
     },
 )

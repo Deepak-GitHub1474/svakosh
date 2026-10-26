@@ -4,7 +4,7 @@
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
 	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
 	import { TENURE_LABELS, TENURE_UNITS } from '$lib/billing/const';
-	import { rupees } from '$lib/billing/helper';
+	import { rupees, shortDate } from '$lib/billing/helper';
 	import type { TQuote } from '$lib/billing/types';
 
 	let {
@@ -32,6 +32,7 @@
 	} = $props();
 
 	const free = $derived(quote?.price_paise === 0);
+	const trial = $derived(!!quote?.trial);
 	const couponNote = $derived.by(() => {
 		if (!quote) return null;
 		if (applied && quote.coupon_error) return { tone: 'text-bearish', text: quote.coupon_error };
@@ -48,7 +49,7 @@
 		Bill summary
 	</h2>
 
-	{#if !free}
+	{#if !free && !trial}
 		<div>
 			<SvaKoshLabel for="coupon">Coupon code</SvaKoshLabel>
 			<form
@@ -87,7 +88,11 @@
 			<dd class="text-foreground text-right">{free ? 'Free' : rupees(quote.price_paise)}</dd>
 			{#if quote.discount_paise}
 				<dt class="text-muted-foreground">
-					{quote.coupon?.kind === 'referral' ? 'Referral discount' : `Coupon ${quote.coupon?.code}`}
+					{trial
+						? 'First month free'
+						: quote.coupon?.kind === 'referral'
+							? 'Referral discount'
+							: `Coupon ${quote.coupon?.code}`}
 				</dt>
 				<dd class="text-bullish text-right">−{rupees(quote.discount_paise)}</dd>
 			{/if}
@@ -97,7 +102,13 @@
 				{free ? 'Free' : rupees(quote.payable_paise)}
 			</dd>
 		</dl>
-		{#if !free}
+		{#if trial}
+			<p class="text-muted-foreground text-xs">
+				You authorise autopay now. First charge of {rupees(quote.price_paise)} on {shortDate(
+					quote.first_charge_at
+				)}, then every {TENURE_UNITS[quote.tenure]}. Cancel before then and you won't be charged.
+			</p>
+		{:else if !free}
 			<p class="text-muted-foreground text-xs">
 				{quote.discount_paise
 					? `Renews at ${rupees(quote.price_paise)} per ${TENURE_UNITS[quote.tenure]} with autopay. `
@@ -122,9 +133,11 @@
 				? 'Processing…'
 				: free
 					? 'Activate'
-					: notice
-						? 'Try again'
-						: `Pay ${quote ? rupees(quote.payable_paise) : ''}`}
+					: trial
+						? 'Start free month'
+						: notice
+							? 'Try again'
+							: `Pay ${quote ? rupees(quote.payable_paise) : ''}`}
 			class="h-11 w-full justify-center text-sm font-semibold"
 			disabled={!quote || !!error || loading || paying}
 			onclick={onPay}

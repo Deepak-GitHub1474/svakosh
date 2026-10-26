@@ -41,11 +41,15 @@ from app.api.endpoints.billing.constants import (
     STATUS_FAILED,
     STATUS_PENDING,
     TOTAL_CYCLES,
+    TRIAL_NOTE,
+    TRIAL_TENURE,
     VALID_STATUSES,
 )
 from app.api.endpoints.billing.lifecycle import (
     abandon,
+    activate_trial,
     apply_payment,
+    is_trial,
     process_event,
     referral_of,
     stop_renewal,
@@ -132,6 +136,14 @@ async def referral_coupon(mongo: AsyncIOMotorDatabase, user_id: str) -> dict[str
     return await referral_of(mongo, user_id)
 
 
+async def trial_available(mongo: AsyncIOMotorDatabase, user_id: str, plan_type: str) -> bool:
+    plan_ids = [p["_id"] async for p in mongo[COL_PLANS].find({"type": plan_type}, {"_id": 1})]
+    started = await mongo[COL_SUBSCRIPTIONS].find_one(
+        {"user_id": user_id, "plan_id": {"$in": plan_ids}, "started_at": {"$ne": None}}, {"_id": 1}
+    )
+    return started is None
+
+
 async def build_quote(
     mongo: AsyncIOMotorDatabase, trade: TradeHubClient, claims: AccessClaims, body: QuoteRequest,
 ) -> dict[str, Any]:
@@ -151,6 +163,25 @@ async def build_quote(
     if entry is None:
         raise fail(status.HTTP_400_BAD_REQUEST, "This plan is not available for the selected options.")
     price = int(entry["price_paise"])
+    base = {
+        "plan": plan,
+        "entry": entry,
+        "broker": broker,
+        "broker_account_id": account_id,
+        "ip": ip,
+        "tenure": body.tenure,
+        "price_paise": price,
+    }
+    if price and await trial_available(mongo, claims.user_id, plan["type"]):
+        return {
+            **base,
+            "trial": True,
+            "first_charge_at": period_end(now_utc(), TRIAL_TENURE),
+            "discount_paise": price,
+            "payable_paise": 0,
+            "coupon": None,
+            "coupon_error": "Your first month is free, so coupons apply from your next purchase." if body.coupon else "",
+        }
     offer, coupon_error = (None, "")
     if body.coupon:
         offer, coupon_error = await offer_coupon(mongo, claims.user_id, body.coupon, plan["type"], price)
@@ -160,13 +191,9 @@ async def build_quote(
     if not discount:
         applied = None
     return {
-        "plan": plan,
-        "entry": entry,
-        "broker": broker,
-        "broker_account_id": account_id,
-        "ip": ip,
-        "tenure": body.tenure,
-        "price_paise": price,
+        **base,
+        "trial": False,
+        "first_charge_at": None,
         "discount_paise": discount,
         "payable_paise": price - discount,
         "coupon": applied,
@@ -185,6 +212,8 @@ def quote_view(q: dict[str, Any]) -> dict[str, Any]:
         "price_paise": q["price_paise"],
         "discount_paise": q["discount_paise"],
         "payable_paise": q["payable_paise"],
+        "trial": q["trial"],
+        "first_charge_at": iso(q["first_charge_at"]),
         "coupon": {"code": coupon["code"], "kind": coupon["kind"]} if coupon else None,
         "coupon_error": q["coupon_error"],
     }
@@ -245,6 +274,7 @@ def notes_for(sub_id: Any, user_id: str, q: dict[str, Any]) -> dict[str, str]:
         "payable_paise": str(q["payable_paise"]),
         "discount_paise": str(q["discount_paise"]),
         "coupon_id": str(coupon["_id"]) if coupon else "",
+        "trial": TRIAL_NOTE if q["trial"] else "",
     }
 
 
@@ -253,7 +283,7 @@ async def checkout(
     claims: AccessClaims, body: QuoteRequest,
 ) -> dict[str, Any]:
     q = await build_quote(mongo, trade, claims, body)
-    if body.coupon and q["coupon_error"]:
+    if body.coupon and q["coupon_error"] and not q["trial"]:
         raise fail(status.HTTP_400_BAD_REQUEST, q["coupon_error"])
     subs = mongo[COL_SUBSCRIPTIONS]
     target = {"user_id": claims.user_id, "plan_id": q["plan"]["_id"], "broker_account_id": q["broker_account_id"]}
@@ -293,7 +323,7 @@ async def checkout(
         remote = await rz.create_subscription(
             plan_id,
             TOTAL_CYCLES[q["tenure"]],
-            int(period_end(now, q["tenure"]).timestamp()),
+            int((q["first_charge_at"] or period_end(now, q["tenure"])).timestamp()),
             q["payable_paise"],
             notes_for(doc["_id"], claims.user_id, q),
         )
@@ -357,14 +387,17 @@ async def confirm(
         raise fail(status.HTTP_400_BAD_REQUEST, "Payment could not be verified.")
     if sub["status"] not in VALID_STATUSES:
         try:
-            payment = await rz.fetch_payment(body.razorpay_payment_id)
             remote = await rz.fetch_subscription(body.razorpay_subscription_id)
+            payment = None if is_trial(remote.get("notes") or {}) else await rz.fetch_payment(body.razorpay_payment_id)
         except RazorpayError as e:
             logger.warning("Billing: confirm of %s deferred.\nReason: %s", sub["_id"], e)
             return await view_of(mongo, sub)
-        start = from_epoch(payment.get("created_at")) or now_utc()
-        end = from_epoch(remote.get("start_at")) or period_end(start, sub["tenure"])
-        await apply_payment(mongo, redis, sub, payment, start, end, remote.get("notes") or {}, first=True)
+        if payment is None:
+            await activate_trial(mongo, redis, sub, remote)
+        else:
+            start = from_epoch(payment.get("created_at")) or now_utc()
+            end = from_epoch(remote.get("start_at")) or period_end(start, sub["tenure"])
+            await apply_payment(mongo, redis, sub, payment, start, end, remote.get("notes") or {}, first=True)
         sub = await mongo[COL_SUBSCRIPTIONS].find_one({"_id": sub["_id"]}) or sub
     return await view_of(mongo, sub)
 

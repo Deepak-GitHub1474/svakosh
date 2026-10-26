@@ -65,15 +65,17 @@ class RazorpayClient:
     async def create_subscription(
         self, plan_id: str, total_count: int, start_at: int, upfront_paise: int, notes: dict[str, str],
     ) -> dict[str, Any]:
-        return await self.call("POST", "/subscriptions", {
+        body: dict[str, Any] = {
             "plan_id": plan_id,
             "total_count": total_count,
             "quantity": 1,
             "customer_notify": 1,
             "start_at": start_at,
-            "addons": [{"item": {"name": "First period", "amount": upfront_paise, "currency": "INR"}}],
             "notes": notes,
-        })
+        }
+        if upfront_paise:
+            body["addons"] = [{"item": {"name": "First period", "amount": upfront_paise, "currency": "INR"}}]
+        return await self.call("POST", "/subscriptions", body)
 
     async def fetch_subscription(self, subscription_id: str) -> dict[str, Any]:
         return await self.call("GET", f"/subscriptions/{subscription_id}")

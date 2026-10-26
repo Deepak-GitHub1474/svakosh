@@ -20,7 +20,7 @@ export const PLAN_CODES: Record<TPlanType, string> = {
 };
 
 export const PLAN_HOME: Record<TPlanType, { href: string; label: string }> = {
-	analytics: { href: '/oi/tracker', label: 'Open Premium tools' },
+	analytics: { href: '/oi/tracker', label: 'Open Premium Analytics' },
 	broker: { href: '/trade/positions', label: 'Go to trading' }
 };
 
@@ -39,6 +39,8 @@ export const STATUS_TONE: Record<TSubscriptionStatus, string> = {
 	expired: 'text-muted-foreground',
 	failed: 'text-bearish'
 };
+
+export const IP_LABELS: Record<string, string> = { ipv4: 'IPv4', ipv6: 'IPv6' };
 
 export const RAZORPAY_SCRIPT = 'https://checkout.razorpay.com/v1/checkout.js';
 export const STATUS_POLL_MS = 2000;

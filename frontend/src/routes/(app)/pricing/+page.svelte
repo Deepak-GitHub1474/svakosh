@@ -8,7 +8,7 @@
 	import SvaKoshLabel from '$lib/components/svakosh/SvaKoshLabel.svelte';
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
-	import { FEATURE_LABELS, PLAN_CODES, QUOTE_DELAY_MS } from '$lib/billing/const';
+	import { FEATURE_LABELS, IP_LABELS, PLAN_CODES, QUOTE_DELAY_MS } from '$lib/billing/const';
 	import { openRazorpay } from '$lib/billing/helper';
 	import { confirmPayment, getQuote, startCheckout } from '$lib/billing/service';
 	import type { TPlan, TQuote, TQuoteRequest, TTenure } from '$lib/billing/types';
@@ -23,6 +23,7 @@
 	let accountId = $state(params.get('account') ?? '');
 	let accountOpen = $state(false);
 	let tenure = $state<TTenure>('monthly');
+	let ip = $state('ipv4');
 	let couponText = $state(params.get('coupon')?.toUpperCase() ?? '');
 	let applied = $state(untrack(() => couponText));
 	let quote = $state<TQuote | null>(null);
@@ -39,6 +40,12 @@
 	const accountOptions = $derived(
 		accounts.map((a) => ({ label: `${accountLabel(a)} · ${a.broker}`, value: a.id }))
 	);
+	const ipOptions = $derived(
+		[...new Set(plan?.prices.flatMap((p) => (p.ip ? [p.ip] : [])) ?? [])].map((value) => ({
+			label: IP_LABELS[value] ?? value,
+			value
+		}))
+	);
 	const entitlements = $derived(page.data.entitlements);
 	const blocked = $derived.by(() => {
 		if (!plan) return '';
@@ -48,7 +55,7 @@
 				: '';
 		}
 		return plan.features.every((f) => entitlements?.features.includes(f))
-			? 'You already have SvaKosh Premium.'
+			? `You already have ${plan.name}.`
 			: '';
 	});
 	const request = $derived<TQuoteRequest | null>(
@@ -57,7 +64,7 @@
 			: {
 					plan: plan.code,
 					tenure,
-					...(isBroker ? { broker_account_id: accountId } : {}),
+					...(isBroker ? { broker_account_id: accountId, ip } : {}),
 					...(applied ? { coupon: applied } : {})
 				}
 	);
@@ -207,12 +214,24 @@
 				</div>
 			{/if}
 
+			{#if isBroker && ipOptions.length > 1}
+				<div>
+					<SvaKoshLabel>Static IP</SvaKoshLabel>
+					<SvaKoshTabs
+						tabs={ipOptions}
+						activeTab={ip}
+						onTabChange={(value: string) => (ip = value)}
+						class="border-primary/20 bg-primary-subtle w-fit"
+					/>
+				</div>
+			{/if}
+
 			<div>
 				<SvaKoshLabel>Billing period</SvaKoshLabel>
 				<TenurePicker
 					{plan}
 					broker={account?.broker ?? null}
-					ip={isBroker ? 'ipv4' : null}
+					ip={isBroker ? ip : null}
 					bind:value={tenure}
 				/>
 			</div>

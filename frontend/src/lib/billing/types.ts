@@ -23,6 +23,7 @@ export type TQuoteRequest = {
 	plan: string;
 	tenure: TTenure;
 	broker_account_id?: string;
+	ip?: string;
 	coupon?: string;
 };
 
@@ -35,6 +36,8 @@ export type TQuote = {
 	price_paise: number;
 	discount_paise: number;
 	payable_paise: number;
+	trial: boolean;
+	first_charge_at: string | null;
 	coupon: { code: string; kind: 'offer' | 'referral' } | null;
 	coupon_error: string;
 };
