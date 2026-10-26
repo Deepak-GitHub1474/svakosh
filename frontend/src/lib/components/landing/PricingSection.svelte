@@ -49,31 +49,14 @@
 				</div>
 				<p class="text-muted-foreground mt-1 text-sm">{plan.body}</p>
 
-				{#if plan.options.length === 1}
-					{@const price = plan.options[0].prices[period]}
-					<p class="mt-6 flex items-baseline gap-1.5">
-						<span class="text-3xl font-semibold tracking-tight tabular-nums">{amount(price)}</span>
-						{#if price}
-							<span class="text-muted-foreground text-sm">{unit}</span>
-						{/if}
-					</p>
-				{:else}
-					<dl class="mt-6 flex flex-col gap-1.5">
-						{#each plan.options as option (option.label)}
-							<div class="flex items-baseline gap-1.5">
-								<dt class="text-muted-foreground w-10 shrink-0 text-xs tracking-wider">
-									{option.label}
-								</dt>
-								<dd class="flex items-baseline gap-1.5">
-									<span class="text-2xl font-semibold tracking-tight tabular-nums">
-										{amount(option.prices[period])}
-									</span>
-									<span class="text-muted-foreground text-sm">{unit}</span>
-								</dd>
-							</div>
-						{/each}
-					</dl>
-				{/if}
+				<p class="mt-6 flex items-baseline gap-1.5">
+					<span class="text-3xl font-semibold tracking-tight tabular-nums">
+						{amount(plan.prices[period])}
+					</span>
+					{#if plan.prices[period]}
+						<span class="text-muted-foreground text-sm">{unit}</span>
+					{/if}
+				</p>
 
 				<ul class="text-muted-foreground mt-6 flex flex-1 flex-col gap-3 text-sm">
 					{#each plan.features as feature (feature)}

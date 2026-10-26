@@ -394,7 +394,7 @@ export const PRICING = {
 			name: 'Free',
 			body: 'The platform and core analytics.',
 			trial: false,
-			options: [{ label: '', prices: { monthly: 0, quarterly: 0, annually: 0 } }],
+			prices: { monthly: 0, quarterly: 0, annually: 0 },
 			features: ['Market overview', 'Max pain and PCR', 'Watchlists', 'And more…']
 		},
 		{
@@ -402,7 +402,7 @@ export const PRICING = {
 			body: 'Advanced analytics tools.',
 			trial: true,
 			featured: true,
-			options: [{ label: '', prices: { monthly: 499, quarterly: 1349, annually: 4999 } }],
+			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
 			features: [
 				'Everything in Free',
 				'Option chain',
@@ -413,12 +413,9 @@ export const PRICING = {
 		},
 		{
 			name: 'Broker Account',
-			body: 'Per linked broker account. IPv6 where your broker supports it.',
+			body: 'Per linked broker account.',
 			trial: true,
-			options: [
-				{ label: 'IPv4', prices: { monthly: 499, quarterly: 1349, annually: 4999 } },
-				{ label: 'IPv6', prices: { monthly: 299, quarterly: 799, annually: 2999 } }
-			],
+			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
 			features: [
 				'Free analytics included',
 				'Place and manage orders from SvaKosh',
