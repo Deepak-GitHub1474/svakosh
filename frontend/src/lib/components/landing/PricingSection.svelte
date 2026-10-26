@@ -86,7 +86,7 @@
 					variant={featured ? 'solid' : 'secondary'}
 					href="/auth/signin"
 					label={plan.trial ? 'Start free month' : 'Start free'}
-					class="mt-8 h-11 w-full text-sm normal-case"
+					class="mt-8 h-12 w-full border-transparent text-sm normal-case"
 				/>
 			</article>
 		{/each}
