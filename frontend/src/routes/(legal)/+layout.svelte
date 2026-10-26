@@ -7,7 +7,7 @@
 </script>
 
 <Nav sections={false} />
-<main class="mx-auto max-w-3xl px-4 pt-12 sm:px-6 md:pt-16">
+<main class="mx-auto max-w-6xl px-4 pt-12 sm:px-6 md:pt-16">
 	{@render children()}
 </main>
 <Footer />

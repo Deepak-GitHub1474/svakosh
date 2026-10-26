@@ -4,6 +4,39 @@ import type { TLegalDoc } from './types';
 
 const contact = BUSINESS.email;
 
+export const ABOUT: TLegalDoc = {
+	title: 'About Us',
+	eyebrow: 'Company',
+	intro: `SvaKosh is market analytics and trading software for Indian indices, stocks and derivatives, built and operated by ${BUSINESS.legalName}.`,
+	sections: [
+		{
+			heading: 'What we build',
+			body: [
+				'One workspace for reading the market: option chains, open interest, max pain, straddle and strangle charts, screeners and breakout scans, with live data during market hours.',
+				'Traders who link their own broker account can also place and manage orders, and track positions, holdings and funds from SvaKosh.'
+			]
+		},
+		{
+			heading: 'Who it is for',
+			body: [
+				'Individual traders and investors in India who want fast, clear market data views and a single place to act on their own decisions.'
+			]
+		},
+		{
+			heading: 'What we are not',
+			body: [
+				'SvaKosh is software. We do not give investment advice, tips or recommendations, we are not a stock broker, and we never hold customer funds or securities.'
+			]
+		},
+		{
+			heading: 'How it is priced',
+			body: [
+				'The platform and core analytics are free. Premium Analytics and each linked broker account are optional monthly, quarterly or annual subscriptions, with the first month free.'
+			]
+		}
+	]
+};
+
 export const TERMS: TLegalDoc = {
 	title: 'Terms & Conditions',
 	intro: `These terms govern your use of SvaKosh, a software service operated by ${BUSINESS.legalName}. By creating an account or using the service you agree to them.`,
@@ -186,7 +219,6 @@ export const CONTACT = {
 	response: 'We reply to every message within one working day.',
 	items: [
 		{ label: 'Email', value: BUSINESS.email, kind: 'email', icon: ICONS.bookmark },
-		{ label: 'Address', value: BUSINESS.address, kind: 'text', icon: ICONS.layers },
-		{ label: 'Support hours', value: BUSINESS.hours, kind: 'text', icon: ICONS.clock }
+		{ label: 'Address', value: BUSINESS.address, kind: 'text', icon: ICONS.layers }
 	]
 };

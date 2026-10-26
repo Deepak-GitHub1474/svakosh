@@ -494,6 +494,7 @@ export const FOOTER = [
 	{
 		title: 'Company',
 		links: [
+			{ label: 'About Us', href: '/about' },
 			{ label: 'Pricing', href: '/#pricing' },
 			{ label: 'Contact Us', href: '/contact' },
 			{ label: 'Terms & Conditions', href: '/terms' },

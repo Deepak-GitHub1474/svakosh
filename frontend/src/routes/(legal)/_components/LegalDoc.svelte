@@ -13,7 +13,7 @@
 <article>
 	<p class="text-muted-foreground flex items-center gap-3 text-xs tracking-[0.2em] uppercase">
 		<span class="bg-primary h-px w-8 shrink-0" aria-hidden="true"></span>
-		Last updated {BUSINESS.updated}
+		{doc.eyebrow ?? `Last updated ${BUSINESS.updated}`}
 	</p>
 	<h1 class="mt-5 text-[clamp(1.75rem,5vw,2.5rem)] leading-tight font-semibold tracking-tight">
 		{doc.title}
