@@ -15,7 +15,7 @@
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import Ticker from './Ticker.svelte';
 	import Watermark from './Watermark.svelte';
-	import { ANALYTICS, CTA, MODULES, SECURITY, WORKFLOW } from './data';
+	import { ANALYTICS, CTA, MODULES, SECURITY } from './data';
 	import { spotlight } from './utils';
 </script>
 
@@ -53,34 +53,6 @@
 				<FeatureCard index={i} {...item} />
 			{/each}
 		</div>
-	</section>
-
-	<section id="workflow" class="mx-auto max-w-6xl px-4 pt-20 sm:px-6 md:pt-28">
-		<SectionHead eyebrow="Workflow" title={WORKFLOW.title} body={WORKFLOW.body} />
-
-		<ol class="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
-			{#each WORKFLOW.items as step, i (step.title)}
-				<li class="reveal">
-					<div class="bg-border-muted relative h-px">
-						<span class="bg-primary absolute inset-y-0 left-0 w-12" aria-hidden="true"></span>
-					</div>
-
-					<div class="flex items-center gap-4 pt-6">
-						<span
-							class="border-border-muted bg-surface text-primary grid size-11 place-items-center rounded-xl border"
-						>
-							<Icon path={step.icon} class="size-5" />
-						</span>
-						<span class="text-muted-foreground text-xs tracking-[0.18em] uppercase">
-							Step {String(i + 1).padStart(2, '0')}
-						</span>
-					</div>
-
-					<h3 class="mt-6 text-xl font-semibold tracking-tight">{step.title}</h3>
-					<p class="text-muted-foreground mt-3 leading-relaxed">{step.body}</p>
-				</li>
-			{/each}
-		</ol>
 	</section>
 
 	<section id="security" class="mx-auto max-w-6xl px-4 pt-20 sm:px-6 md:pt-28">

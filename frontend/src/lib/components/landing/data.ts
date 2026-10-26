@@ -27,7 +27,6 @@ export const ICONS = {
 export const NAV = [
 	{ label: 'Modules', id: 'modules' },
 	{ label: 'Analytics', id: 'analytics' },
-	{ label: 'Workflow', id: 'workflow' },
 	{ label: 'Security', id: 'security' },
 	{ label: 'Pricing', id: 'pricing' }
 ];
@@ -359,28 +358,6 @@ export const ANALYTICS = {
 			body: 'A filterable equity screener with 52-week and volume breakout scans, so cash-market moves reach you at the same time as the derivatives signal.',
 			route: '/stocks/stocks-screener',
 			icon: ICONS.screen
-		}
-	]
-};
-
-export const WORKFLOW = {
-	title: 'How a session runs',
-	body: 'No broker account to link and no configuration screen in the way — open a module and start reading.',
-	items: [
-		{
-			title: 'Pick symbol and expiry',
-			body: 'Six index chains, three expiries out. Set them on the module you are reading and the strikes follow.',
-			icon: ICONS.bookmark
-		},
-		{
-			title: 'Read it from three angles',
-			body: 'Open interest and buildup for positioning, max pain and PCR for pressure, straddle and premium decay for what the volatility costs to hold.',
-			icon: ICONS.pulse
-		},
-		{
-			title: 'Keep what matters',
-			body: 'Save symbols into named watchlists with your own notes attached. They are waiting the next time you sign in.',
-			icon: ICONS.grid
 		}
 	]
 };
