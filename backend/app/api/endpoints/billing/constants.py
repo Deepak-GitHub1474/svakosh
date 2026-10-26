@@ -50,7 +50,7 @@ DEFAULT_PLANS = (
         "name": "Premium Analytics",
         "type": PLAN_ANALYTICS,
         "description": "Premium analytics tools",
-        "features": ["oi_tracker", "stocks_screener"],
+        "features": ["option_chain", "oi_tracker", "stocks_screener"],
         "prices": [
             {"tenure": "monthly", "broker": None, "ip": None, "price_paise": 49900, "provider_plan_id": None},
             {"tenure": "quarterly", "broker": None, "ip": None, "price_paise": 134900, "provider_plan_id": None},

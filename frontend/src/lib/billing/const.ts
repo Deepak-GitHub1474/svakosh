@@ -49,6 +49,7 @@ export const QUOTE_DELAY_MS = 300;
 export const REFERRAL_PATH = '/profile';
 
 export const FEATURE_LABELS: Record<string, string> = {
+	option_chain: 'Option Chain',
 	oi_tracker: 'OI Tracker',
 	stocks_screener: 'Stocks Screener',
 	trading: 'Place orders from SvaKosh'
