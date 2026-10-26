@@ -413,7 +413,8 @@ export const PRICING = {
 				'Everything in Free',
 				'Option chain',
 				'OI Tracker',
-				'Stocks Screener'
+				'Stocks Screener',
+				'And many more…'
 			]
 		},
 		{
