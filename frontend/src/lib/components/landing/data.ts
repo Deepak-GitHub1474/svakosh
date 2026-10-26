@@ -436,7 +436,7 @@ export const PRICING = {
 
 export const CTA = {
 	eyebrow: 'Get started',
-	title: 'The chain opens at 9:15',
+	title: 'Start free today',
 	body: 'Sign in with a passkey — no broker to link, no setup screen in the way. Seventeen modules, six index chains, three expiries out.',
 	label: 'Launch platform',
 	href: '/auth/signin'
