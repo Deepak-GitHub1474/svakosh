@@ -37,87 +37,59 @@
 		/>
 	</div>
 
-	<div class="relative mt-10">
-		<div
-			class="pointer-events-none absolute -right-12 -bottom-12 z-10 hidden rotate-12 lg:block"
-			aria-hidden="true"
-		>
-			<div class="bg-primary/10 absolute inset-0 rounded-full blur-2xl"></div>
-			<svg
-				viewBox="0 0 80 112"
-				class="motion-safe:animate-float relative w-16 [animation-delay:-3.5s]"
+	<div class="mt-10 grid gap-4 md:grid-cols-3">
+		{#each PRICING.plans as plan (plan.name)}
+			{@const featured = 'featured' in plan && plan.featured}
+			<article
+				class="reveal spot relative flex flex-col rounded-2xl border p-6 {featured
+					? 'border-primary/40 bg-primary/5'
+					: 'border-border-muted bg-surface/40'}"
+				use:spotlight
 			>
-				<path
-					d="M40 2 78 26v72a12 12 0 0 1-12 12H14A12 12 0 0 1 2 98V26Z"
-					class="fill-surface stroke-border-muted"
-					stroke-width="2"
+				<div class="flex items-start justify-between gap-3">
+					<span class="bg-primary/10 text-primary grid size-10 place-items-center rounded-xl">
+						<Icon path={plan.icon} class="size-5" />
+					</span>
+					{#if plan.trial}
+						<span class="bg-primary/15 text-primary rounded-md px-2 py-1 text-xs"
+							>First month free</span
+						>
+					{/if}
+				</div>
+				<h3 class="mt-4 text-lg font-semibold tracking-tight">{plan.name}</h3>
+				<p class="text-muted-foreground mt-1 text-sm">{plan.body}</p>
+
+				<p class="mt-6 flex items-baseline gap-1.5">
+					<span class="text-3xl font-semibold tracking-tight tabular-nums">
+						{amount(plan.prices[period])}
+					</span>
+					{#if plan.prices[period]}
+						<span class="text-muted-foreground text-sm">{unit}</span>
+					{/if}
+				</p>
+
+				<ul class="text-muted-foreground mt-6 flex flex-1 flex-col gap-3 text-sm">
+					{#each plan.features as feature (feature.label)}
+						<li class="flex items-start gap-2.5">
+							<Icon path={feature.icon} class="text-primary mt-0.5 size-4 shrink-0" />
+							{feature.label}
+						</li>
+					{/each}
+					{#if plan.more}
+						<li class="flex items-center gap-1.5">
+							{plan.more}
+							<Icon path={ICONS.arrow} class="size-3.5" />
+						</li>
+					{/if}
+				</ul>
+
+				<SvaKoshButton
+					variant={featured ? 'solid' : 'secondary'}
+					href="/auth/signin"
+					label={plan.trial ? 'Start free month' : 'Start free'}
+					class="mt-8 h-12 w-full border-transparent text-sm normal-case"
 				/>
-				<circle
-					cx="40"
-					cy="28"
-					r="6"
-					class="fill-background stroke-border-muted"
-					stroke-width="2"
-				/>
-				<text x="40" y="82" text-anchor="middle" class="fill-primary text-3xl font-semibold">%</text
-				>
-			</svg>
-		</div>
-
-		<div class="relative grid gap-4 md:grid-cols-3">
-			{#each PRICING.plans as plan (plan.name)}
-				{@const featured = 'featured' in plan && plan.featured}
-				<article
-					class="reveal spot relative flex flex-col rounded-2xl border p-6 {featured
-						? 'border-primary/40 bg-primary/5'
-						: 'border-border-muted bg-surface/40'}"
-					use:spotlight
-				>
-					<div class="flex items-start justify-between gap-3">
-						<span class="bg-primary/10 text-primary grid size-10 place-items-center rounded-xl">
-							<Icon path={plan.icon} class="size-5" />
-						</span>
-						{#if plan.trial}
-							<span class="bg-primary/15 text-primary rounded-md px-2 py-1 text-xs"
-								>First month free</span
-							>
-						{/if}
-					</div>
-					<h3 class="mt-4 text-lg font-semibold tracking-tight">{plan.name}</h3>
-					<p class="text-muted-foreground mt-1 text-sm">{plan.body}</p>
-
-					<p class="mt-6 flex items-baseline gap-1.5">
-						<span class="text-3xl font-semibold tracking-tight tabular-nums">
-							{amount(plan.prices[period])}
-						</span>
-						{#if plan.prices[period]}
-							<span class="text-muted-foreground text-sm">{unit}</span>
-						{/if}
-					</p>
-
-					<ul class="text-muted-foreground mt-6 flex flex-1 flex-col gap-3 text-sm">
-						{#each plan.features as feature (feature.label)}
-							<li class="flex items-start gap-2.5">
-								<Icon path={feature.icon} class="text-primary mt-0.5 size-4 shrink-0" />
-								{feature.label}
-							</li>
-						{/each}
-						{#if plan.more}
-							<li class="flex items-center gap-1.5">
-								{plan.more}
-								<Icon path={ICONS.arrow} class="size-3.5" />
-							</li>
-						{/if}
-					</ul>
-
-					<SvaKoshButton
-						variant={featured ? 'solid' : 'secondary'}
-						href="/auth/signin"
-						label={plan.trial ? 'Start free month' : 'Start free'}
-						class="mt-8 h-12 w-full border-transparent text-sm normal-case"
-					/>
-				</article>
-			{/each}
-		</div>
+			</article>
+		{/each}
 	</div>
 </section>
