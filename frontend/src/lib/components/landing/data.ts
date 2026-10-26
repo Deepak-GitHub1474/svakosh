@@ -413,8 +413,8 @@ export const SECURITY = {
 
 export const PRICING = {
 	title: 'Simple plans, billed in INR',
-	body: 'SvaKosh is subscription software. Core analytics are free; Premium unlocks advanced tools, and each broker account you trade through is a separate subscription. Renews automatically, cancel anytime.',
-	note: 'Prices in INR. Access runs until 11:59 PM IST on the last day of the period. SvaKosh provides software and market data views only; it does not give investment advice.',
+	body: 'SvaKosh is subscription software. The platform and core analytics are free forever. Premium Analytics and each broker account you trade through are separate subscriptions, each with the first month free. Renews automatically, cancel anytime.',
+	note: 'Prices in INR. First month free once per user for Premium Analytics and once for a broker account. Access runs until 11:59 PM IST on the last day of the period. SvaKosh provides software and market data views only; it does not give investment advice.',
 	periods: [
 		{ label: 'Monthly', value: 'monthly' },
 		{ label: 'Quarterly', value: 'quarterly' },
@@ -423,8 +423,9 @@ export const PRICING = {
 	plans: [
 		{
 			name: 'Free',
-			body: 'The core analytics desk.',
-			prices: { monthly: 0, quarterly: 0, annually: 0 },
+			body: 'The platform and core analytics.',
+			trial: false,
+			options: [{ label: '', prices: { monthly: 0, quarterly: 0, annually: 0 } }],
 			features: [
 				'Option chain and max pain',
 				'OI glimpse, buildup and lookup',
@@ -433,10 +434,11 @@ export const PRICING = {
 			]
 		},
 		{
-			name: 'Premium',
+			name: 'Premium Analytics',
 			body: 'Advanced analytics tools.',
-			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
+			trial: true,
 			featured: true,
+			options: [{ label: '', prices: { monthly: 499, quarterly: 1349, annually: 4999 } }],
 			features: [
 				'Everything in Free',
 				'OI Tracker',
@@ -446,12 +448,16 @@ export const PRICING = {
 		},
 		{
 			name: 'Broker Account',
-			body: 'Per linked broker account.',
-			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
+			body: 'Per linked broker account, by static IP.',
+			trial: true,
+			options: [
+				{ label: 'IPv4', prices: { monthly: 499, quarterly: 1349, annually: 4999 } },
+				{ label: 'IPv6', prices: { monthly: 299, quarterly: 799, annually: 2999 } }
+			],
 			features: [
+				'Free analytics included',
 				'Place and manage orders from SvaKosh',
 				'Positions, holdings and funds',
-				'Your own broker account and login',
 				'One subscription per account'
 			]
 		}

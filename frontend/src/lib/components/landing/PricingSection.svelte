@@ -41,20 +41,37 @@
 			>
 				<div class="flex items-center justify-between gap-3">
 					<h3 class="text-lg font-semibold tracking-tight">{plan.name}</h3>
-					{#if featured}
-						<span class="bg-primary/15 text-primary rounded-md px-2 py-1 text-xs">Most popular</span
+					{#if plan.trial}
+						<span class="bg-primary/15 text-primary rounded-md px-2 py-1 text-xs"
+							>First month free</span
 						>
 					{/if}
 				</div>
 				<p class="text-muted-foreground mt-1 text-sm">{plan.body}</p>
 
-				<p class="mt-6 flex items-baseline gap-1.5">
-					<span class="text-3xl font-semibold tracking-tight tabular-nums">
-						{amount(plan.prices[period])}
-					</span>
-					<span class="text-muted-foreground text-sm">{plan.prices[period] ? unit : 'forever'}</span
-					>
-				</p>
+				{#if plan.options.length === 1}
+					{@const price = plan.options[0].prices[period]}
+					<p class="mt-6 flex items-baseline gap-1.5">
+						<span class="text-3xl font-semibold tracking-tight tabular-nums">{amount(price)}</span>
+						<span class="text-muted-foreground text-sm">{price ? unit : 'always'}</span>
+					</p>
+				{:else}
+					<dl class="mt-6 flex flex-col gap-1.5">
+						{#each plan.options as option (option.label)}
+							<div class="flex items-baseline gap-1.5">
+								<dt class="text-muted-foreground w-10 shrink-0 text-xs tracking-wider">
+									{option.label}
+								</dt>
+								<dd class="flex items-baseline gap-1.5">
+									<span class="text-2xl font-semibold tracking-tight tabular-nums">
+										{amount(option.prices[period])}
+									</span>
+									<span class="text-muted-foreground text-sm">{unit}</span>
+								</dd>
+							</div>
+						{/each}
+					</dl>
+				{/if}
 
 				<ul class="text-muted-foreground mt-6 flex flex-1 flex-col gap-3 text-sm">
 					{#each plan.features as feature (feature)}
@@ -68,7 +85,7 @@
 				<SvaKoshButton
 					variant={featured ? 'solid' : 'secondary'}
 					href="/auth/signin"
-					label={plan.prices[period] ? 'Get started' : 'Start free'}
+					label={plan.trial ? 'Start free month' : 'Start free'}
 					class="mt-8 h-11 w-full text-sm normal-case"
 				/>
 			</article>

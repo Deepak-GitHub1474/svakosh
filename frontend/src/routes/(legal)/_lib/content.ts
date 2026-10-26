@@ -144,6 +144,12 @@ export const REFUNDS: TLegalDoc = {
 	intro: 'How subscription renewals, cancellations and refunds work on SvaKosh.',
 	sections: [
 		{
+			heading: 'Free first month',
+			body: [
+				'Premium Analytics and a broker account each come with one free first month per user. You authorise autopay at the start; the first charge happens when the free month ends. Cancel autopay before then and you will not be charged.'
+			]
+		},
+		{
 			heading: 'Renewals',
 			body: [
 				'Paid plans renew automatically at the end of each billing period through autopay, at the plan price shown when you subscribed unless we notify you of a change in advance.'
