@@ -7,7 +7,6 @@ export const BRAND = {
 export const BUSINESS = {
 	legalName: 'Business name to be added',
 	email: 'support@svakosh.com',
-	address: 'Registered address to be added',
 	city: 'City to be added',
 	updated: '26 October 2026'
 } as const;

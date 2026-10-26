@@ -217,8 +217,5 @@ export const REFUNDS: TLegalDoc = {
 export const CONTACT = {
 	intro: 'Questions about your account, billing, a refund or a broker connection? Reach us here.',
 	response: 'We reply to every message within one working day.',
-	items: [
-		{ label: 'Email', value: BUSINESS.email, kind: 'email', icon: ICONS.bookmark },
-		{ label: 'Address', value: BUSINESS.address, kind: 'text', icon: ICONS.layers }
-	]
+	items: [{ label: 'Email', value: BUSINESS.email, kind: 'email', icon: ICONS.bookmark }]
 };
