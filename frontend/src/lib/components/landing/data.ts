@@ -397,7 +397,7 @@ export const PRICING = {
 			trial: false,
 			options: [{ label: '', prices: { monthly: 0, quarterly: 0, annually: 0 } }],
 			features: [
-				'Option chain and max pain',
+				'Max pain and PCR',
 				'OI glimpse, buildup and lookup',
 				'Straddle and strangle charts',
 				'Market overview and pulse'
@@ -411,9 +411,9 @@ export const PRICING = {
 			options: [{ label: '', prices: { monthly: 499, quarterly: 1349, annually: 4999 } }],
 			features: [
 				'Everything in Free',
+				'Option chain',
 				'OI Tracker',
-				'Stocks Screener',
-				'New premium tools as they ship'
+				'Stocks Screener'
 			]
 		},
 		{
