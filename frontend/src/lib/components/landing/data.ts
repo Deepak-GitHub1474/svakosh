@@ -413,7 +413,7 @@ export const PRICING = {
 		},
 		{
 			name: 'Broker Account',
-			body: 'Per linked broker account, by static IP.',
+			body: 'Per linked broker account. IPv6 where your broker supports it.',
 			trial: true,
 			options: [
 				{ label: 'IPv4', prices: { monthly: 499, quarterly: 1349, annually: 4999 } },
