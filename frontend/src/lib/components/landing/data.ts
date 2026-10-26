@@ -397,10 +397,10 @@ export const PRICING = {
 			trial: false,
 			options: [{ label: '', prices: { monthly: 0, quarterly: 0, annually: 0 } }],
 			features: [
+				'Market overview',
 				'Max pain and PCR',
-				'OI glimpse, buildup and lookup',
-				'Straddle and strangle charts',
-				'Market overview and pulse'
+				'Watchlists',
+				'And more…'
 			]
 		},
 		{
