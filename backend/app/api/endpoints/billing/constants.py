@@ -61,9 +61,9 @@ DEFAULT_PLANS = (
         "description": "Place orders from one linked broker account",
         "features": ["trading"],
         "prices": [
-            {"tenure": "monthly", "broker": None, "ip": "ipv4", "price_paise": 19900, "provider_plan_id": None},
-            {"tenure": "quarterly", "broker": None, "ip": "ipv4", "price_paise": 54900, "provider_plan_id": None},
-            {"tenure": "annually", "broker": None, "ip": "ipv4", "price_paise": 199900, "provider_plan_id": None},
+            {"tenure": "monthly", "broker": None, "ip": "ipv4", "price_paise": 49900, "provider_plan_id": None},
+            {"tenure": "quarterly", "broker": None, "ip": "ipv4", "price_paise": 134900, "provider_plan_id": None},
+            {"tenure": "annually", "broker": None, "ip": "ipv4", "price_paise": 499900, "provider_plan_id": None},
         ],
     },
 )
