@@ -1,13 +1,18 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import { toast } from '$lib/components/svakosh/toast.svelte';
+import { subscribeAction } from '$lib/billing/helper';
 import { placeOrder } from './service';
 import type { TPlaceOrder } from './types';
 
 export async function sendOrder(order: TPlaceOrder, label: string, quiet = false) {
 	const res = await placeOrder(order);
 	if (!res.ok) {
-		toast.error({ title: `${label} failed`, description: res.error });
+		toast.error({
+			title: `${label} failed`,
+			description: res.error,
+			action: res.status === 402 ? subscribeAction(order.account_id ?? '') : undefined
+		});
 		return false;
 	}
 	const { status, message } = res.data;

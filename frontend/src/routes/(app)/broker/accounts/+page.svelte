@@ -27,6 +27,7 @@
 		TRADE_STATIC_IP
 	} from '$lib/trade/const';
 	import { timeOf } from '$lib/trade/format';
+	import { subscribeAction } from '$lib/billing/helper';
 	import { linkAccount, unlinkAccount, updateAccount } from '$lib/trade/service';
 	import type { TBrokerAccount } from '$lib/trade/types';
 
@@ -52,6 +53,9 @@
 	let mode = $state<TMode>('add');
 	let target = $state<TBrokerAccount | null>(null);
 	const brokerOptions = $derived(linkableBrokers(page.data.user?.role === 'admin'));
+	const paidAccounts = $derived(page.data.entitlements?.broker_accounts ?? []);
+	const needsPlan = (account: TBrokerAccount) =>
+		page.data.user?.role !== 'admin' && !paidAccounts.includes(account.id);
 	let broker = $state(linkableBrokers(false)[0].value);
 	let setupOpen = $state(false);
 	let tag = $state('');
@@ -235,6 +239,7 @@
 							<td class={TABLE.td}>
 								<div class="flex items-center justify-end gap-2">
 									{@render iconActions(account)}
+									{@render planLink(account)}
 									{@render loginButton(account)}
 								</div>
 							</td>
@@ -274,7 +279,10 @@
 						class="border-border-subtle mt-3 flex items-center justify-between gap-3 border-t pt-3"
 					>
 						<div class="flex gap-2">{@render iconActions(account)}</div>
-						{@render loginButton(account)}
+						<div class="flex items-center gap-3">
+							{@render planLink(account)}
+							{@render loginButton(account)}
+						</div>
 					</div>
 				</div>
 			{/each}
@@ -290,6 +298,16 @@
 	>
 		{account.logged_in ? 'Active' : 'Expired'}
 	</span>
+{/snippet}
+
+{#snippet planLink(account: TBrokerAccount)}
+	{#if needsPlan(account)}
+		<button
+			type="button"
+			class="text-primary shrink-0 text-xs hover:underline"
+			onclick={subscribeAction(account.id).onClick}>Subscribe</button
+		>
+	{/if}
 {/snippet}
 
 {#snippet loginButton(account: TBrokerAccount)}

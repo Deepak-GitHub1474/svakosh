@@ -4,6 +4,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Path, Query, status
 
+from app.api.endpoints.billing.access import require_broker_subscription
 from app.api.endpoints.trade import controllers
 from app.api.endpoints.trade.models import (
     LinkAccountRequest,
@@ -13,6 +14,7 @@ from app.api.endpoints.trade.models import (
     Ticket,
     UpdateAccountRequest,
 )
+from app.database import MongoDatabase, RedisClient
 from app.responses import ok_response
 from app.trade_hub import TradeHub
 from app.utils.utils import CurrentClaims
@@ -127,7 +129,10 @@ async def order_history(
 
 
 @router.post("/orders", status_code=status.HTTP_201_CREATED)
-async def place_order(body: PlaceOrderRequest, claims: CurrentClaims, trade: TradeHub):
+async def place_order(
+    body: PlaceOrderRequest, claims: CurrentClaims, trade: TradeHub, mongo: MongoDatabase, redis: RedisClient
+):
+    await require_broker_subscription(mongo, redis, claims, body.account_id)
     data = await controllers.place_order(trade, claims, body)
     return ok_response("Order placed.", data=data)
 

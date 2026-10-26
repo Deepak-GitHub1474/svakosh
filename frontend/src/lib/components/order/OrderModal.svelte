@@ -11,6 +11,7 @@
 	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { subscribeAction } from '$lib/billing/helper';
 	import { tradeAccounts } from '$lib/trade/accounts.svelte';
 	import { untrack } from 'svelte';
 	import { MODAL_BUTTON, MODAL_CONTROL, MODAL_STEPPER } from '$lib/trade/const';
@@ -205,7 +206,11 @@
 		placing = false;
 		const label = `${isSell ? 'Sell' : 'Buy'} ${quantity} ${title}`;
 		if (!res.ok) {
-			toast.error({ title: `${label} failed`, description: res.error });
+			toast.error({
+				title: `${label} failed`,
+				description: res.error,
+				action: res.status === 402 ? subscribeAction(tradeAccounts.accountId) : undefined
+			});
 			return;
 		}
 		if (res.data.status === 'REJECTED' || res.data.status === 'FAILED') {

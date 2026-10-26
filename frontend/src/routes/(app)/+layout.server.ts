@@ -2,6 +2,7 @@ import { redirect, type Cookies, type ServerLoad } from '@sveltejs/kit';
 import { isMobileAuthEnabled, resolveBackendConfig } from '$lib/config';
 import { ACCESS_COOKIE, clearAllAuthCookies } from '$lib/auth/cookies';
 import { accessCookieHeader, tryRefreshTokens } from '$lib/server/auth-refresh';
+import type { TEntitlements } from '$lib/billing/types';
 import type { TWatchlistItem } from '$lib/components/watchlist/types';
 
 function authHeader(cookies: Cookies): Record<string, string> {
@@ -17,16 +18,17 @@ export const load: ServerLoad = async ({ cookies, url, fetch, untrack }) => {
 		throw redirect(303, signinUrl);
 	}
 
-	let [meRes, wlRes] = await Promise.all([
-		fetch(`${apiUrl}/auth/me`, { headers: authHeader(cookies) }),
-		fetch(`${apiUrl}/watchlist`, { headers: authHeader(cookies) })
-	]);
+	const loadAll = () =>
+		Promise.all([
+			fetch(`${apiUrl}/auth/me`, { headers: authHeader(cookies) }),
+			fetch(`${apiUrl}/watchlist`, { headers: authHeader(cookies) }),
+			fetch(`${apiUrl}/billing/entitlements`, { headers: authHeader(cookies) })
+		]);
+
+	let [meRes, wlRes, entRes] = await loadAll();
 
 	if (meRes.status === 401 && (await tryRefreshTokens(cookies, fetch))) {
-		[meRes, wlRes] = await Promise.all([
-			fetch(`${apiUrl}/auth/me`, { headers: authHeader(cookies) }),
-			fetch(`${apiUrl}/watchlist`, { headers: authHeader(cookies) })
-		]);
+		[meRes, wlRes, entRes] = await loadAll();
 	}
 
 	if (meRes.status === 401) {
@@ -34,9 +36,10 @@ export const load: ServerLoad = async ({ cookies, url, fetch, untrack }) => {
 		throw redirect(303, signinUrl);
 	}
 
-	const [meJson, wlJson] = await Promise.all([
+	const [meJson, wlJson, entJson] = await Promise.all([
 		meRes.json().catch(() => ({})),
-		wlRes.json().catch(() => ({}))
+		wlRes.json().catch(() => ({})),
+		entRes.json().catch(() => ({}))
 	]);
 
 	const user = meJson?.data ?? null;
@@ -45,6 +48,9 @@ export const load: ServerLoad = async ({ cookies, url, fetch, untrack }) => {
 	}
 
 	const watchlists: TWatchlistItem[] = Array.isArray(wlJson?.data) ? wlJson.data : [];
+	const entitlements: TEntitlements = entJson?.success
+		? entJson.data
+		: { features: [], broker_accounts: [] };
 
-	return { user, watchlists };
+	return { user, watchlists, entitlements };
 };
