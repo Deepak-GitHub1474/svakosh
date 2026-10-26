@@ -37,10 +37,6 @@
 					<a href="mailto:{item.value}" class="text-foreground hover:text-primary transition-colors"
 						>{item.value}</a
 					>
-				{:else if item.kind === 'phone'}
-					<a href="tel:{item.value}" class="text-foreground hover:text-primary transition-colors"
-						>{item.value}</a
-					>
 				{:else}
 					{item.value}
 				{/if}

@@ -2,7 +2,7 @@ import { BUSINESS } from '$lib/brand';
 import { ICONS } from '$lib/components/landing/data';
 import type { TLegalDoc } from './types';
 
-const contact = `${BUSINESS.email} or ${BUSINESS.phone}`;
+const contact = BUSINESS.email;
 
 export const TERMS: TLegalDoc = {
 	title: 'Terms & Conditions',
@@ -186,7 +186,6 @@ export const CONTACT = {
 	response: 'We reply to every message within one working day.',
 	items: [
 		{ label: 'Email', value: BUSINESS.email, kind: 'email', icon: ICONS.bookmark },
-		{ label: 'Phone', value: BUSINESS.phone, kind: 'phone', icon: ICONS.phone },
 		{ label: 'Address', value: BUSINESS.address, kind: 'text', icon: ICONS.layers },
 		{ label: 'Support hours', value: BUSINESS.hours, kind: 'text', icon: ICONS.clock }
 	]
