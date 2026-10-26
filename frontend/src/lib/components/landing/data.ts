@@ -402,11 +402,6 @@ export const SECURITY = {
 			title: 'Six-digit code',
 			body: 'To your email or mobile, valid once.',
 			icon: ICONS.phone
-		},
-		{
-			title: 'Staying signed in',
-			body: 'Short-lived tokens, rotated in the background.',
-			icon: ICONS.clock
 		}
 	]
 };

@@ -86,7 +86,7 @@
 	<section id="security" class="mx-auto max-w-6xl px-4 pt-20 sm:px-6 md:pt-28">
 		<SectionHead eyebrow="Security" title={SECURITY.title} />
 
-		<dl class="reveal mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+		<dl class="reveal mt-8 grid gap-3 sm:grid-cols-3">
 			{#each SECURITY.items as item (item.title)}
 				<div
 					class="spot border-border-muted bg-surface/40 relative grid grid-cols-[2.75rem_1fr] content-start gap-x-3 rounded-2xl border p-4"
