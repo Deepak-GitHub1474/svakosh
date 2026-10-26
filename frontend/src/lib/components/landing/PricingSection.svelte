@@ -17,20 +17,17 @@
 		annually: '/ year'
 	};
 	const unit = $derived(UNITS[period]);
-	const reference = PRICING.plans.find((p) => p.prices.monthly)?.prices;
-	const tabs = PRICING.periods.map((p) => {
-		const save = reference
-			? Math.round((1 - reference[p.value] / (reference.monthly * p.months)) * 100)
-			: 0;
-		return { label: save > 0 ? `${p.label} · Save ${save}%` : p.label, value: p.value };
-	});
+	const save = (prices: Record<TPeriod, number>) => {
+		const months = PRICING.periods.find((p) => p.value === period)?.months ?? 1;
+		return prices.monthly ? Math.round((1 - prices[period] / (prices.monthly * months)) * 100) : 0;
+	};
 </script>
 
 <section id="pricing" class="mx-auto max-w-6xl px-4 pt-20 sm:px-6 md:pt-28">
 	<div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
 		<SectionHead eyebrow="Pricing" title={PRICING.title} />
 		<SvaKoshTabs
-			{tabs}
+			tabs={[...PRICING.periods]}
 			activeTab={period}
 			onTabChange={(value: TPeriod) => (period = value)}
 			class="reveal border-primary/20 bg-primary-subtle w-fit shrink-0"
@@ -46,18 +43,17 @@
 					: 'border-border-muted bg-surface/40'}"
 				use:spotlight
 			>
-				<div class="flex items-start justify-between gap-3">
-					<span class="bg-primary/10 text-primary grid size-10 place-items-center rounded-xl">
+				<div class="flex items-start gap-3">
+					<span
+						class="bg-primary/10 text-primary grid size-10 shrink-0 place-items-center rounded-xl"
+					>
 						<Icon path={plan.icon} class="size-5" />
 					</span>
-					{#if plan.trial}
-						<span class="bg-primary/15 text-primary rounded-md px-2 py-1 text-xs"
-							>First month free</span
-						>
-					{/if}
+					<div class="min-w-0">
+						<h3 class="text-lg leading-tight font-semibold tracking-tight">{plan.name}</h3>
+						<p class="text-muted-foreground mt-1 text-sm">{plan.body}</p>
+					</div>
 				</div>
-				<h3 class="mt-4 text-lg font-semibold tracking-tight">{plan.name}</h3>
-				<p class="text-muted-foreground mt-1 text-sm">{plan.body}</p>
 
 				<p class="mt-6 flex items-baseline gap-1.5">
 					<span class="text-3xl font-semibold tracking-tight tabular-nums">
@@ -67,6 +63,18 @@
 						<span class="text-muted-foreground text-sm">{unit}</span>
 					{/if}
 				</p>
+				{#if plan.trial || save(plan.prices) > 0}
+					<div class="mt-3 flex flex-wrap gap-2 text-xs">
+						{#if plan.trial}
+							<span class="bg-primary/15 text-primary rounded-md px-2 py-1">First month free</span>
+						{/if}
+						{#if save(plan.prices) > 0}
+							<span class="bg-success-subtle text-success rounded-md px-2 py-1"
+								>Save {save(plan.prices)}%</span
+							>
+						{/if}
+					</div>
+				{/if}
 
 				<ul class="text-muted-foreground mt-6 flex flex-1 flex-col gap-3 text-sm">
 					{#each plan.features as feature (feature.label)}
