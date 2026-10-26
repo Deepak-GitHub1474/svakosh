@@ -21,12 +21,18 @@ export const shortDate = (iso: string | null) =>
 		? new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 		: '—';
 
+export const ipSupported = (plan: TPlan, broker: string | null, ip: string | null) => {
+	const allowed = plan.ip_brokers[ip ?? ''];
+	return !allowed || (broker !== null && allowed.includes(broker));
+};
+
 export function matchPrice(
 	plan: TPlan,
 	tenure: TTenure,
 	broker: string | null,
 	ip: string | null
 ): TPrice | null {
+	if (!ipSupported(plan, broker, ip)) return null;
 	let best: TPrice | null = null;
 	let bestScore = -1;
 	for (const entry of plan.prices) {

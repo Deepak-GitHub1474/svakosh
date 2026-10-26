@@ -9,7 +9,7 @@
 	import SvaKoshSelector from '$lib/components/svakosh/SvaKoshSelector.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import { FEATURE_LABELS, IP_LABELS, PLAN_CODES, QUOTE_DELAY_MS } from '$lib/billing/const';
-	import { openRazorpay } from '$lib/billing/helper';
+	import { ipSupported, openRazorpay } from '$lib/billing/helper';
 	import { confirmPayment, getQuote, startCheckout } from '$lib/billing/service';
 	import type { TPlan, TQuote, TQuoteRequest, TTenure } from '$lib/billing/types';
 	import { accountLabel, tradeAccounts } from '$lib/trade/accounts.svelte';
@@ -41,10 +41,9 @@
 		accounts.map((a) => ({ label: `${accountLabel(a)} · ${a.broker}`, value: a.id }))
 	);
 	const ipOptions = $derived(
-		[...new Set(plan?.prices.flatMap((p) => (p.ip ? [p.ip] : [])) ?? [])].map((value) => ({
-			label: IP_LABELS[value] ?? value,
-			value
-		}))
+		[...new Set(plan?.prices.flatMap((p) => (p.ip ? [p.ip] : [])) ?? [])]
+			.filter((value) => plan && ipSupported(plan, account?.broker ?? null, value))
+			.map((value) => ({ label: IP_LABELS[value] ?? value, value }))
 	);
 	const entitlements = $derived(page.data.entitlements);
 	const blocked = $derived.by(() => {
@@ -75,6 +74,10 @@
 
 	$effect(() => {
 		if (isBroker && !accountId && accounts.length) accountId = accounts[0].id;
+	});
+
+	$effect(() => {
+		if (ipOptions.length && !ipOptions.some((o) => o.value === ip)) ip = ipOptions[0].value;
 	});
 
 	$effect(() => {

@@ -16,6 +16,7 @@ export type TPlan = {
 	type: TPlanType;
 	description: string;
 	features: string[];
+	ip_brokers: Record<string, string[]>;
 	prices: TPrice[];
 };
 

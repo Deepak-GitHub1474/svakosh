@@ -37,7 +37,14 @@ def period_end(start: datetime, tenure: str) -> datetime:
     return end_of_day(local.replace(year=year, month=month, day=day))
 
 
+def ip_supported(plan: dict[str, Any], broker: str | None, ip: str | None) -> bool:
+    allowed = (plan.get("ip_brokers") or {}).get(ip or "")
+    return allowed is None or broker in allowed
+
+
 def match_price(plan: dict[str, Any], tenure: str, broker: str | None, ip: str | None) -> dict[str, Any] | None:
+    if not ip_supported(plan, broker, ip):
+        return None
     best, best_score = None, -1
     for entry in plan.get("prices", []):
         if entry["tenure"] != tenure:
@@ -83,6 +90,7 @@ def plan_view(plan: dict[str, Any]) -> dict[str, Any]:
         "type": plan["type"],
         "description": plan.get("description", ""),
         "features": plan.get("features", []),
+        "ip_brokers": plan.get("ip_brokers") or {},
         "prices": [
             {k: p.get(k) for k in ("tenure", "broker", "ip", "price_paise")}
             for p in plan.get("prices", [])

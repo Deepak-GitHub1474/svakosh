@@ -63,6 +63,7 @@ DEFAULT_PLANS = (
         "type": PLAN_BROKER,
         "description": "Place orders from one linked broker account",
         "features": ["trading"],
+        "ip_brokers": {"ipv6": []},
         "prices": [
             {"tenure": "monthly", "broker": None, "ip": "ipv4", "price_paise": 49900, "provider_plan_id": None},
             {"tenure": "quarterly", "broker": None, "ip": "ipv4", "price_paise": 134900, "provider_plan_id": None},
