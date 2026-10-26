@@ -91,6 +91,4 @@
 			</article>
 		{/each}
 	</div>
-
-	<p class="reveal text-muted-foreground mt-6 text-xs leading-relaxed">{PRICING.note}</p>
 </section>
