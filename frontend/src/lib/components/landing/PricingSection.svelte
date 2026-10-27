@@ -1,9 +1,9 @@
 <script lang="ts">
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
-	import Icon from './Icon.svelte';
+	import ArrowRightIcon from '$lib/components/svg-provider/ArrowRightIcon.svelte';
 	import SectionHead from './SectionHead.svelte';
-	import { ICONS, PRICING } from './data';
+	import { PRICING } from './data';
 	import { spotlight } from './utils';
 
 	type TPeriod = (typeof PRICING.periods)[number]['value'];
@@ -47,7 +47,7 @@
 					<span
 						class="bg-primary/10 text-primary grid size-10 shrink-0 place-items-center rounded-xl"
 					>
-						<Icon path={plan.icon} class="size-5" />
+						<plan.icon class="size-5" />
 					</span>
 					<div class="min-w-0">
 						<h3 class="text-lg leading-tight font-semibold tracking-tight">{plan.name}</h3>
@@ -79,14 +79,14 @@
 				<ul class="text-muted-foreground mt-6 flex flex-1 flex-col gap-3 text-sm">
 					{#each plan.features as feature (feature.label)}
 						<li class="flex items-start gap-2.5">
-							<Icon path={feature.icon} class="text-primary mt-0.5 size-4 shrink-0" />
+							<feature.icon class="text-primary mt-0.5 size-4 shrink-0" />
 							{feature.label}
 						</li>
 					{/each}
 					{#if plan.more}
 						<li class="flex items-center gap-1.5">
 							{plan.more}
-							<Icon path={ICONS.arrow} class="size-3.5" />
+							<ArrowRightIcon class="size-3.5" />
 						</li>
 					{/if}
 				</ul>

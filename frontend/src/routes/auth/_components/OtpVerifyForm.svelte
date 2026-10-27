@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LockIcon from '$lib/components/svg-provider/LockIcon.svelte';
 	import { enhance } from '$app/forms';
 	import { cn, safeSubmit } from '$lib/utils';
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
@@ -60,10 +61,7 @@
 				class="pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-muted-foreground/70"
 				aria-hidden="true"
 			>
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-					<rect x="4" y="11" width="16" height="10" rx="2" />
-					<path d="M8 11V8a4 4 0 0 1 8 0v3" />
-				</svg>
+				<LockIcon />
 			</span>
 
 			<SvaKoshInput

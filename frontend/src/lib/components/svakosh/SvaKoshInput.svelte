@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CloseIcon from '$lib/components/svg-provider/CloseIcon.svelte';
 	import { cn } from '$lib/utils';
 
 	let {
@@ -46,20 +47,7 @@
 			class="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-muted-foreground/60 hover:text-foreground hover:bg-white/10 transition-all duration-200"
 			aria-label="Clear input"
 		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="16"
-				height="16"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<line x1="18" y1="6" x2="6" y2="18"></line>
-				<line x1="6" y1="6" x2="18" y2="18"></line>
-			</svg>
+			<CloseIcon class="h-4 w-4" />
 		</button>
 	{/if}
 </div>
