@@ -8,7 +8,8 @@
 	import {
 		MAX_ORDER_PRICE,
 		MAX_ORDER_QUANTITY,
-		MODAL_BUTTON,
+		MODAL_ACTION,
+		MODAL_ACTIONS,
 		MODAL_STEPPER,
 		PRICE_TICK,
 		SOFT_TABS
@@ -145,14 +146,33 @@
 	}
 </script>
 
-<TradeSheet bind:isOpen>
+{#snippet actions()}
+	<div class={MODAL_ACTIONS}>
+		<SvaKoshButton
+			type="submit"
+			form="position-form"
+			variant="solid"
+			class={MODAL_ACTION}
+			label={placing
+				? 'Placing…'
+				: priced
+					? `Place ${TITLES[mode].toLowerCase()}`
+					: side === 'SELL'
+						? 'Sell'
+						: 'Buy'}
+			disabled={!valid || placing}
+		/>
+	</div>
+{/snippet}
+
+<TradeSheet bind:isOpen footer={target ? actions : undefined}>
 	{#if target}
 		<ModalHeader
 			title={`${TITLES[mode]} ${target.symbol}`}
 			subtitle={`${side} · ${target.product} · LTP ${target.ltp ? formatNumber(target.ltp) : '—'}`}
 			onClose={() => (isOpen = false)}
 		/>
-		<form class="flex flex-col gap-4 p-4" onsubmit={submit} novalidate>
+		<form id="position-form" class="flex flex-col gap-4 p-4" onsubmit={submit} novalidate>
 			{#if !priced}
 				<div>
 					<SvaKoshLabel class="text-foreground/80">Order type</SvaKoshLabel>
@@ -226,19 +246,6 @@
 					/>
 				</div>
 			{/if}
-			<SvaKoshButton
-				type="submit"
-				variant="solid"
-				class="mt-3 {MODAL_BUTTON}"
-				label={placing
-					? 'Placing…'
-					: priced
-						? `Place ${TITLES[mode].toLowerCase()}`
-						: side === 'SELL'
-							? 'Sell'
-							: 'Buy'}
-				disabled={!valid || placing}
-			/>
 		</form>
 	{/if}
 </TradeSheet>

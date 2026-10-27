@@ -23,10 +23,13 @@
 		BROKER_VIEW_KEY,
 		CALLBACK_PATH,
 		EMPTY_STATE,
+		MODAL_ACTION,
+		MODAL_ACTIONS,
 		TABLE,
 		TRADE_STATIC_IP
 	} from '$lib/trade/const';
 	import { timeOf } from '$lib/trade/format';
+	import { subscribeAction } from '$lib/billing/helper';
 	import { linkAccount, unlinkAccount, updateAccount } from '$lib/trade/service';
 	import type { TBrokerAccount } from '$lib/trade/types';
 
@@ -52,6 +55,9 @@
 	let mode = $state<TMode>('add');
 	let target = $state<TBrokerAccount | null>(null);
 	const brokerOptions = $derived(linkableBrokers(page.data.user?.role === 'admin'));
+	const paidAccounts = $derived(page.data.entitlements?.broker_accounts ?? []);
+	const needsPlan = (account: TBrokerAccount) =>
+		page.data.user?.role !== 'admin' && !paidAccounts.includes(account.id);
 	let broker = $state(linkableBrokers(false)[0].value);
 	let setupOpen = $state(false);
 	let tag = $state('');
@@ -235,6 +241,7 @@
 							<td class={TABLE.td}>
 								<div class="flex items-center justify-end gap-2">
 									{@render iconActions(account)}
+									{@render planLink(account)}
 									{@render loginButton(account)}
 								</div>
 							</td>
@@ -274,7 +281,10 @@
 						class="border-border-subtle mt-3 flex items-center justify-between gap-3 border-t pt-3"
 					>
 						<div class="flex gap-2">{@render iconActions(account)}</div>
-						{@render loginButton(account)}
+						<div class="flex items-center gap-3">
+							{@render planLink(account)}
+							{@render loginButton(account)}
+						</div>
 					</div>
 				</div>
 			{/each}
@@ -290,6 +300,16 @@
 	>
 		{account.logged_in ? 'Active' : 'Expired'}
 	</span>
+{/snippet}
+
+{#snippet planLink(account: TBrokerAccount)}
+	{#if needsPlan(account)}
+		<button
+			type="button"
+			class="text-primary shrink-0 text-xs hover:underline"
+			onclick={subscribeAction(account.id).onClick}>Subscribe</button
+		>
+	{/if}
 {/snippet}
 
 {#snippet loginButton(account: TBrokerAccount)}
@@ -323,13 +343,38 @@
 	</button>
 {/snippet}
 
-<SvaKoshModal bind:isOpen={modalOpen} width="34rem" class="overflow-hidden">
+{#snippet accountActions()}
+	<div class={MODAL_ACTIONS}>
+		{#if mode === 'remove'}
+			<SvaKoshButton
+				type="submit"
+				form="account-form"
+				variant="bearish"
+				class={MODAL_ACTION}
+				label={busy ? 'Removing…' : 'Remove account'}
+				disabled={busy || !target}
+			/>
+		{:else}
+			<SvaKoshButton
+				type="submit"
+				form="account-form"
+				variant="solid"
+				class={MODAL_ACTION}
+				label={busy ? 'Saving…' : mode === 'add' ? 'Link account' : 'Save'}
+				disabled={busy || !ready}
+			/>
+		{/if}
+	</div>
+{/snippet}
+
+<SvaKoshModal bind:isOpen={modalOpen} width="34rem" class="overflow-hidden" footer={accountActions}>
 	<ModalHeader
 		title={titles[mode]}
 		subtitle={subtitles[mode]}
 		onClose={() => (modalOpen = false)}
 	/>
 	<form
+		id="account-form"
 		class="flex max-h-[75vh] flex-col gap-6 overflow-y-auto p-5"
 		onsubmit={submit}
 		autocomplete="off"
@@ -340,12 +385,6 @@
 				({brokerName(target.broker)} · {target.client_id})? Its saved details are deleted. Orders
 				already placed stay at your broker.
 			</p>
-			<SvaKoshButton
-				type="submit"
-				variant="bearish"
-				label={busy ? 'Removing…' : 'Remove account'}
-				disabled={busy}
-			/>
 		{:else}
 			{#if mode === 'add'}
 				<div>
@@ -456,14 +495,6 @@
 					{/if}
 				</section>
 			{/if}
-
-			<SvaKoshButton
-				type="submit"
-				variant="solid"
-				class="py-3 text-sm"
-				label={busy ? 'Saving…' : mode === 'add' ? 'Link account' : 'Save'}
-				disabled={busy || !ready}
-			/>
 		{/if}
 	</form>
 </SvaKoshModal>

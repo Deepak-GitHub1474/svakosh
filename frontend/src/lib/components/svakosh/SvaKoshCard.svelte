@@ -14,6 +14,7 @@
 		class: className = '',
 		children,
 		valueClass = '',
+		contentClass = '',
 		ghostIconClass = ''
 	} = $props<{
 		label?: string;
@@ -25,6 +26,7 @@
 		class?: string;
 		children?: Snippet;
 		valueClass?: string;
+		contentClass?: string;
 		ghostIconClass?: string;
 	}>();
 
@@ -65,7 +67,7 @@
 	</div>
 
 	{#if children}
-		<div class={cn((label || value !== undefined) && 'mt-2')}>
+		<div class={cn((label || value !== undefined) && 'mt-2', contentClass)}>
 			{@render children()}
 		</div>
 	{/if}

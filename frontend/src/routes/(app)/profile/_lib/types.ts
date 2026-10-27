@@ -1,3 +1,5 @@
+import type { TReferral } from '$lib/billing/types';
+
 export type TAddress = {
 	city?: string | null;
 	state?: string | null;
@@ -30,5 +32,5 @@ export type TProfile = {
 } | null;
 
 export interface Props {
-	data: { profile: TProfile };
+	data: { profile: TProfile; referral: TReferral | null };
 }

@@ -11,6 +11,7 @@
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import ProfileCover from './_components/ProfileCover.svelte';
 	import WhatsappField from './_components/WhatsappField.svelte';
+	import ReferralCard from './_components/ReferralCard.svelte';
 	import { isMobileAuthEnabled } from '$lib/config';
 
 	let { data }: Props = $props();
@@ -219,3 +220,9 @@
 		{@render saveRow('address', addressChanged)}
 	</SvaKoshCard>
 </form>
+
+{#if data.referral}
+	<div class="pb-8">
+		<ReferralCard initial={data.referral} />
+	</div>
+{/if}

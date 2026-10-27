@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     NATS_URL: str = "nats://127.0.0.1:4222"
     TRADE_HUB_NATS_URL: str = ""
     TRADE_LOGIN_REDIRECT_URL: str = ""
+    RAZORPAY_KEY_ID: str = ""
+    RAZORPAY_KEY_SECRET: str = ""
+    RAZORPAY_WEBHOOK_SECRET: str = ""
     CORS_ORIGINS: str
 
     JWT_SECRET: str

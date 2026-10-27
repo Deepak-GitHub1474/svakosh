@@ -23,6 +23,7 @@
 		disabled?: boolean;
 		href?: string;
 		type?: 'button' | 'submit' | 'reset';
+		form?: string;
 		onclick?: (e: MouseEvent) => void | Promise<void>;
 	};
 
@@ -36,6 +37,7 @@
 		disabled = false,
 		href,
 		type = 'button',
+		form,
 		onclick
 	}: Props = $props();
 
@@ -58,7 +60,7 @@
 {#if href}
 	<a {href} class={buttonClass} aria-label={label}>{@render inner()}</a>
 {:else}
-	<button {type} class={buttonClass} {disabled} aria-label={label} {onclick}>
+	<button {type} {form} class={buttonClass} {disabled} aria-label={label} {onclick}>
 		{@render inner()}
 	</button>
 {/if}

@@ -14,6 +14,7 @@
 		icon,
 		class: className = '',
 		children,
+		footer,
 		width = '28rem',
 		position = 'center',
 		showBackdrop = true,
@@ -27,6 +28,7 @@
 		icon?: Snippet;
 		class?: string;
 		children: Snippet;
+		footer?: Snippet;
 		width?: string;
 		position?: ModalPosition;
 		showBackdrop?: boolean;
@@ -101,7 +103,7 @@
 				{#if title}
 					<div class="flex flex-col min-w-0">
 						{#if typeof title === 'string'}
-							<span class="text-sm text-foreground truncate">{title}</span>
+							<span class="text-base font-medium text-foreground truncate">{title}</span>
 						{:else}
 							{@render title()}
 						{/if}
@@ -123,5 +125,11 @@
 		<div class="flex-1 min-h-0 overflow-y-auto">
 			{@render children()}
 		</div>
+
+		{#if footer}
+			<div class="border-border-subtle shrink-0 border-t px-4 py-3">
+				{@render footer()}
+			</div>
+		{/if}
 	</div>
 {/if}

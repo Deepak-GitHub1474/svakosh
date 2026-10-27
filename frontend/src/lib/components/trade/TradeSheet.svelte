@@ -8,8 +8,15 @@
 		isOpen = $bindable(false),
 		onClose,
 		width = '22rem',
-		children
-	}: { isOpen: boolean; onClose?: () => void; width?: string; children: Snippet } = $props();
+		children,
+		footer
+	}: {
+		isOpen: boolean;
+		onClose?: () => void;
+		width?: string;
+		children: Snippet;
+		footer?: Snippet;
+	} = $props();
 
 	let isDesktop = $state(true);
 
@@ -29,7 +36,7 @@
 </script>
 
 {#if isDesktop}
-	<SvaKoshModal bind:isOpen {onClose} {width} class="overflow-hidden">
+	<SvaKoshModal bind:isOpen {onClose} {width} {footer} class="overflow-hidden">
 		{@render children()}
 	</SvaKoshModal>
 {:else}
@@ -38,8 +45,9 @@
 		{onClose}
 		showHandle={false}
 		snapPoints={[10, 90]}
+		{footer}
 		class="overflow-hidden"
-		contentClass="pb-[env(safe-area-inset-bottom)]"
+		contentClass={footer ? '' : 'pb-[env(safe-area-inset-bottom)]'}
 	>
 		{@render children()}
 	</SvaKoshDrawer>

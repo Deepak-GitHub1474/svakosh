@@ -6,6 +6,7 @@
 	import SvaKoshSwitch from '$lib/components/svakosh/SvaKoshSwitch.svelte';
 	import DarkMode from '$lib/components/svg-provider/material/DarkMode.svelte';
 	import Logout from '$lib/components/svg-provider/material/Logout.svelte';
+	import CardMembership from '$lib/components/svg-provider/material/CardMembership.svelte';
 	import Person from '$lib/components/svg-provider/material/Person.svelte';
 	import Settings from '$lib/components/svg-provider/material/Settings.svelte';
 	import SwapVert from '$lib/components/svg-provider/material/SwapVert.svelte';
@@ -39,6 +40,14 @@
 >
 	<Person class="icon-size" />
 	Profile
+</a>
+<a
+	href={resolve('/billing')}
+	onclick={() => onNavigate?.()}
+	class="{row} text-muted-foreground hover:bg-glass hover:text-foreground"
+>
+	<CardMembership class="icon-size" />
+	Subscription
 </a>
 <a
 	href={resolve('/broker/accounts')}

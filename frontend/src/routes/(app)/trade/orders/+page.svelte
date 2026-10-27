@@ -14,7 +14,8 @@
 	import {
 		MAX_ORDER_PRICE,
 		MAX_ORDER_QUANTITY,
-		MODAL_BUTTON,
+		MODAL_ACTION,
+		MODAL_ACTIONS,
 		MODAL_STEPPER,
 		OPEN_STATUSES,
 		ORDERS_FILTER_KEY,
@@ -376,14 +377,27 @@
 	</TradeTable>
 {/if}
 
-<TradeSheet bind:isOpen={modifyOpen}>
+{#snippet modifyActions()}
+	<div class={MODAL_ACTIONS}>
+		<SvaKoshButton
+			type="submit"
+			form="modify-form"
+			variant="solid"
+			class={MODAL_ACTION}
+			label={busy ? 'Sending…' : 'Modify order'}
+			disabled={!!busy || !modifyValid}
+		/>
+	</div>
+{/snippet}
+
+<TradeSheet bind:isOpen={modifyOpen} footer={editing ? modifyActions : undefined}>
 	{#if editing}
 		<ModalHeader
 			title={`Modify ${editing.symbol}`}
 			subtitle={`${editing.side} · ${editing.type} · ${editing.product}`}
 			onClose={() => (modifyOpen = false)}
 		/>
-		<form class="flex flex-col gap-4 p-4" onsubmit={submitModify} novalidate>
+		<form id="modify-form" class="flex flex-col gap-4 p-4" onsubmit={submitModify} novalidate>
 			<div>
 				<SvaKoshLabel class="text-foreground/80">Quantity</SvaKoshLabel>
 				<SvaKoshNumberInput
@@ -420,13 +434,6 @@
 					/>
 				</div>
 			{/if}
-			<SvaKoshButton
-				type="submit"
-				variant="solid"
-				class="mt-3 {MODAL_BUTTON}"
-				label={busy ? 'Sending…' : 'Modify order'}
-				disabled={!!busy || !modifyValid}
-			/>
 		</form>
 	{/if}
 </TradeSheet>

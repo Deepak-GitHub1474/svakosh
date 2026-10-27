@@ -3,10 +3,14 @@ import { resolveBackendConfig } from '$lib/config';
 import { authForwardHeaders } from '$lib/auth/cookies';
 import { tryRefreshTokens } from '$lib/server/auth-refresh';
 import { backendGet } from '$lib/server/backend-fetch';
+import type { TReferral } from '$lib/billing/types';
 
 export const load: ServerLoad = async ({ cookies, fetch }) => {
-	const res = await backendGet(cookies, fetch, '/profile');
-	return { profile: res.ok ? res.data : null };
+	const [res, referral] = await Promise.all([
+		backendGet(cookies, fetch, '/profile'),
+		backendGet<TReferral>(cookies, fetch, '/billing/referral')
+	]);
+	return { profile: res.ok ? res.data : null, referral: referral.ok ? referral.data : null };
 };
 
 const FIELDS = ['full_name', 'gender', 'dob', 'occupation', 'pan_number'] as const;

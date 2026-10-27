@@ -3,7 +3,7 @@
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
 	import TradeSheet from '$lib/components/trade/TradeSheet.svelte';
 	import { toast } from '$lib/components/svakosh/toast.svelte';
-	import { MODAL_BUTTON } from '$lib/trade/const';
+	import { MODAL_ACTION, MODAL_ACTIONS } from '$lib/trade/const';
 	import { exitSide } from '$lib/trade/position';
 	import { sendOrder } from '$lib/trade/send';
 	import type { TExitTarget } from '$lib/trade/types';
@@ -52,7 +52,19 @@
 	}
 </script>
 
-<TradeSheet bind:isOpen width="24rem">
+{#snippet actions()}
+	<div class={MODAL_ACTIONS}>
+		<SvaKoshButton
+			variant="solid"
+			class={MODAL_ACTION}
+			label={placing ? 'Exiting…' : 'Exit at market'}
+			disabled={placing || !targets.length}
+			onclick={exitAll}
+		/>
+	</div>
+{/snippet}
+
+<TradeSheet bind:isOpen width="24rem" footer={actions}>
 	<ModalHeader
 		title={`Exit ${targets.length} ${targets.length === 1 ? noun : `${noun}s`}`}
 		subtitle="Market orders for the full open quantity"
@@ -77,12 +89,5 @@
 				</li>
 			{/each}
 		</ul>
-		<SvaKoshButton
-			variant="solid"
-			class="mt-3 {MODAL_BUTTON}"
-			label={placing ? 'Exiting…' : 'Exit at market'}
-			disabled={placing || !targets.length}
-			onclick={exitAll}
-		/>
 	</div>
 </TradeSheet>

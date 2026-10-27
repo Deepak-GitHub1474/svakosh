@@ -51,6 +51,8 @@ export const TABLE_EMPTY = 'py-10 whitespace-normal';
 export const SHEET_CONTEXT = 'trade-sheet';
 export const MODAL_CONTROL = 'h-[2.8929rem]';
 export const MODAL_BUTTON = 'h-[2.8929rem] text-sm';
+export const MODAL_ACTIONS = 'flex gap-3 md:justify-end';
+export const MODAL_ACTION = `${MODAL_BUTTON} flex-1 whitespace-nowrap md:min-w-36 md:flex-none`;
 export const MODAL_STEPPER = '[&_.glass-panel]:h-[2.8929rem] [&_button]:bg-surface-elevated';
 
 export const SOFT_TABS =

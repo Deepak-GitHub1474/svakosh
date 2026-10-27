@@ -220,7 +220,7 @@
 				{#if title}
 					<div class="flex min-w-0 flex-col">
 						{#if typeof title === 'string'}
-							<span class="text-foreground truncate text-sm">{title}</span>
+							<span class="text-foreground truncate text-base font-medium">{title}</span>
 						{:else}
 							{@render title()}
 						{/if}
