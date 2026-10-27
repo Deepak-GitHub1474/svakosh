@@ -175,7 +175,7 @@ async def build_quote(
         "tenure": body.tenure,
         "price_paise": price,
     }
-    if price and await trial_available(mongo, claims.user_id, plan["type"]):
+    if price and body.tenure == TRIAL_TENURE and await trial_available(mongo, claims.user_id, plan["type"]):
         return {
             **base,
             "trial": True,
