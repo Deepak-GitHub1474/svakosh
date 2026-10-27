@@ -1,4 +1,6 @@
 <script lang="ts">
+	import BriefcaseIcon from '$lib/components/svg-provider/BriefcaseIcon.svelte';
+	import MapPinIcon from '$lib/components/svg-provider/MapPinIcon.svelte';
 	import cover from '../_assets/profilecover.png';
 	import VerifiedBadge from '$lib/components/svg-provider/VeifiedBadge.svelte';
 	import SvaKoshBadge from '$lib/components/svakosh/SvaKoshBadge.svelte';
@@ -51,35 +53,13 @@
 				>
 					{#if details?.occupation}
 						<span class="flex items-center gap-1.5">
-							<svg
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								class="h-3.5 w-3.5 shrink-0"
-							>
-								<rect x="2" y="7" width="20" height="14" rx="2" />
-								<path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-							</svg>
+							<BriefcaseIcon class="h-3.5 w-3.5" />
 							{details.occupation}
 						</span>
 					{/if}
 					{#if details?.address?.city}
 						<span class="flex items-center gap-1.5">
-							<svg
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								class="h-3.5 w-3.5 shrink-0"
-							>
-								<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-								<circle cx="12" cy="10" r="3" />
-							</svg>
+							<MapPinIcon class="h-3.5 w-3.5" />
 							{details.address.city}
 						</span>
 					{/if}

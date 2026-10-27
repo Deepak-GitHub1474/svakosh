@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Icon from './Icon.svelte';
 	import Panel from './Panel.svelte';
 	import { OPTIONS } from './data';
 
@@ -39,7 +38,7 @@
 			<div
 				class="border-border-subtle bg-background/60 relative overflow-hidden rounded-lg border px-3 py-2"
 			>
-				<Icon path={stat.icon} class="text-foreground/5 absolute -right-1 bottom-0 size-9" />
+				<stat.icon class="text-foreground/5 absolute -right-1 bottom-0 size-9" />
 				<dt class="text-muted-foreground relative text-[0.625rem] tracking-[0.12em] uppercase">
 					{stat.label}
 				</dt>

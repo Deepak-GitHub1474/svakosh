@@ -86,10 +86,13 @@
 			<a
 				href="/"
 				onclick={handleNavigate}
-				aria-label={BRAND.name}
-				class="select-none hover:opacity-80 transition-opacity"
+				class="flex items-center gap-2 select-none"
 			>
-				<SvaKoshLogo class="size-7" />
+				<SvaKoshLogo />
+				<span class="flex flex-col">
+					<span class="text-primary text-sm/tight font-semibold tracking-tight">{BRAND.wordmark}</span>
+					<span class="text-muted-foreground text-xs/tight">{BRAND.tagline}</span>
+				</span>
 			</a>
 			<button
 				onclick={closeMenu}

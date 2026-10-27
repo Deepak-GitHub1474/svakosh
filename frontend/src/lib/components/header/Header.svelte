@@ -85,8 +85,12 @@
 			class="flex items-center transition-all duration-300 ease-in-out shrink-0 
             {uiState.isWatchlistVisible ? 'w-[296px] 2xl:w-[355px]' : 'lg:w-[142px] w-auto'}"
 		>
-			<a href="/" aria-label={BRAND.name} class="select-none hover:opacity-80 transition-opacity">
+			<a href="/" class="flex items-center gap-2 select-none">
 				<SvaKoshLogo />
+				<span class="flex flex-col leading-tight">
+					<span class="text-sm font-semibold tracking-tight text-primary">{BRAND.wordmark}</span>
+					<span class="text-xs text-muted-foreground">{BRAND.tagline}</span>
+				</span>
 			</a>
 		</div>
 		<nav class="relative hidden lg:flex gap-8 items-center h-full ml-8">

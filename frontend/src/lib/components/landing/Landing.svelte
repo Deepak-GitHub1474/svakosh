@@ -5,7 +5,6 @@
 	import FeatureCard from './FeatureCard.svelte';
 	import Footer from './Footer.svelte';
 	import Hero from './Hero.svelte';
-	import Icon from './Icon.svelte';
 	import Nav from './Nav.svelte';
 	import MarketPanel from './MarketPanel.svelte';
 	import OptionsPanel from './OptionsPanel.svelte';
@@ -68,7 +67,7 @@
 						class="bg-primary/10 text-primary col-start-1 row-span-2 row-start-1 grid size-11 shrink-0 place-items-center self-start rounded-xl"
 						aria-hidden="true"
 					>
-						<Icon path={item.icon} class="size-5" />
+						<item.icon class="size-5" />
 					</span>
 					<dt class="col-start-2 row-start-1 self-center font-medium tracking-tight">
 						{item.title}

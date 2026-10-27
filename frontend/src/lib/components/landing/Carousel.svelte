@@ -1,4 +1,6 @@
 <script lang="ts" generics="T extends { id: string; label: string }">
+	import ChevronLeft from '$lib/components/svg-provider/material/ChevronLeft.svelte';
+	import ChevronRight from '$lib/components/svg-provider/material/ChevronRight.svelte';
 	import type { Snippet } from 'svelte';
 	import { cn } from '$lib/utils/cn';
 
@@ -99,9 +101,7 @@
 			aria-label="Previous module"
 			class="border-border-muted text-muted-foreground hover:border-primary/40 hover:text-primary grid size-10 place-items-center rounded-full border transition-colors disabled:pointer-events-none disabled:opacity-30"
 		>
-			<svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
-				<path d="M15 5 8 12l7 7 1.4-1.4L10.8 12l5.6-5.6z" />
-			</svg>
+			<ChevronLeft class="size-4" />
 		</button>
 
 		<div class="flex items-center gap-2">
@@ -123,9 +123,7 @@
 			aria-label="Next module"
 			class="border-border-muted text-muted-foreground hover:border-primary/40 hover:text-primary grid size-10 place-items-center rounded-full border transition-colors disabled:pointer-events-none disabled:opacity-30"
 		>
-			<svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
-				<path d="M9 5 7.6 6.4 13.2 12l-5.6 5.6L9 19l7-7z" />
-			</svg>
+			<ChevronRight class="size-4" />
 		</button>
 	</div>
 </div>

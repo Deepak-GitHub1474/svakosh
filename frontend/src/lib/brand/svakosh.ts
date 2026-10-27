@@ -1,5 +1,6 @@
 export const BRAND = {
 	name: 'Svakosh',
+	wordmark: 'SvaKosh',
 	tagline: 'Own Your Growth.',
 	taglineFull: 'Svakosh: Own Your Growth.'
 } as const;

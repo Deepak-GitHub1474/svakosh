@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { BRAND, BUSINESS } from '$lib/brand';
-	import Icon from '$lib/components/landing/Icon.svelte';
-	import { ICONS } from '$lib/components/landing/data';
+	import BookmarkIcon from '$lib/components/svg-provider/BookmarkIcon.svelte';
 	import { CONTACT } from '../_lib/content';
 </script>
 
@@ -27,7 +26,7 @@
 		class="bg-primary/10 text-primary grid size-11 place-items-center rounded-xl"
 		aria-hidden="true"
 	>
-		<Icon path={ICONS.bookmark} class="size-5" />
+		<BookmarkIcon class="size-5" />
 	</span>
 	<span>
 		<span class="text-muted-foreground block text-xs tracking-wider uppercase">Email</span>
