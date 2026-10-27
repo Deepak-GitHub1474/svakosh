@@ -2,7 +2,10 @@
 	import MenuToggle from './MenuToggle.svelte';
 	import Sheet from './Sheet.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
+	import { resolve } from '$app/paths';
 	import { NAV } from './data';
+
+	let { sections = true }: { sections?: boolean } = $props();
 
 	let open = $state(false);
 </script>
@@ -12,13 +15,22 @@
 	style="--i: 0"
 >
 	<nav class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-		<a href="#top" class="rise flex min-w-0 items-center">
+		{#snippet logo()}
 			<span class="truncate text-2xl font-bold tracking-tight">
 				Sva<span class="text-primary">Kosh</span>
 			</span>
-		</a>
+		{/snippet}
+		{#if sections}
+			<a href="#top" class="rise flex min-w-0 items-center">{@render logo()}</a>
+		{:else}
+			<a href={resolve('/')} class="rise flex min-w-0 items-center">{@render logo()}</a>
+		{/if}
 
-		<ul class="text-muted-foreground hidden items-center gap-7 text-base md:flex">
+		<ul
+			class="text-muted-foreground hidden items-center gap-7 text-base md:flex {sections
+				? ''
+				: 'invisible'}"
+		>
 			{#each NAV as link, i (link.id)}
 				<li class="rise" style="--i: {i + 1}">
 					<a href="#{link.id}" class="hover:text-foreground transition-colors">{link.label}</a>
@@ -51,7 +63,7 @@
 		<MenuToggle bind:open class="-mr-2.5" />
 	</div>
 
-	<nav class="flex flex-col gap-1 p-3">
+	<nav class="flex flex-col gap-1 p-3 {sections ? '' : 'hidden'}">
 		{#each NAV as link (link.id)}
 			<a
 				href="#{link.id}"

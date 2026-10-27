@@ -19,16 +19,14 @@ export const ICONS = {
 	clock:
 		'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z',
 	bookmark: 'M17 3H7a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2zm0 15-5-2.2L7 18V5h10v13z',
-	arrow: 'M12 4l-1.4 1.4L16.2 11H4v2h12.2l-5.6 5.6L12 20l8-8-8-8z',
-	check: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z',
-	chevron: 'M12 15.5 5.5 9 7 7.6l5 5 5-5L18.5 9 12 15.5z'
+	arrow: 'M12 4l-1.4 1.4L16.2 11H4v2h12.2l-5.6 5.6L12 20l8-8-8-8z'
 } as const;
 
 export const NAV = [
 	{ label: 'Modules', id: 'modules' },
 	{ label: 'Analytics', id: 'analytics' },
-	{ label: 'Workflow', id: 'workflow' },
-	{ label: 'Security', id: 'security' }
+	{ label: 'Security', id: 'security' },
+	{ label: 'Pricing', id: 'pricing' }
 ];
 
 export const HERO = {
@@ -362,28 +360,6 @@ export const ANALYTICS = {
 	]
 };
 
-export const WORKFLOW = {
-	title: 'How a session runs',
-	body: 'No broker account to link and no configuration screen in the way — open a module and start reading.',
-	items: [
-		{
-			title: 'Pick symbol and expiry',
-			body: 'Six index chains, three expiries out. Set them on the module you are reading and the strikes follow.',
-			icon: ICONS.bookmark
-		},
-		{
-			title: 'Read it from three angles',
-			body: 'Open interest and buildup for positioning, max pain and PCR for pressure, straddle and premium decay for what the volatility costs to hold.',
-			icon: ICONS.pulse
-		},
-		{
-			title: 'Keep what matters',
-			body: 'Save symbols into named watchlists with your own notes attached. They are waiting the next time you sign in.',
-			icon: ICONS.grid
-		}
-	]
-};
-
 export const SECURITY = {
 	title: 'Three ways in, no password',
 	items: [
@@ -401,19 +377,67 @@ export const SECURITY = {
 			title: 'Six-digit code',
 			body: 'To your email or mobile, valid once.',
 			icon: ICONS.phone
-		},
-		{
-			title: 'Staying signed in',
-			body: 'Short-lived tokens, rotated in the background.',
-			icon: ICONS.clock
 		}
 	]
 };
 
+export const PRICING = {
+	title: 'Plans',
+	periods: [
+		{ label: 'Monthly', value: 'monthly', months: 1 },
+		{ label: 'Quarterly', value: 'quarterly', months: 3 },
+		{ label: 'Annually', value: 'annually', months: 12 }
+	],
+	plans: [
+		{
+			name: 'Free',
+			body: 'The platform and core analytics.',
+			icon: ICONS.grid,
+			trial: false,
+			prices: { monthly: 0, quarterly: 0, annually: 0 },
+			features: [
+				{ label: 'Market overview', icon: ICONS.pulse },
+				{ label: 'Max pain and PCR', icon: ICONS.scale },
+				{ label: 'Watchlists', icon: ICONS.bookmark }
+			],
+			more: 'And more'
+		},
+		{
+			name: 'Premium Analytics',
+			body: 'Advanced analytics tools.',
+			icon: ICONS.layers,
+			trial: true,
+			featured: true,
+			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
+			features: [
+				{ label: 'Everything in Free', icon: ICONS.grid },
+				{ label: 'Option chain', icon: ICONS.layers },
+				{ label: 'OI Tracker', icon: ICONS.waves },
+				{ label: 'Stocks Screener', icon: ICONS.screen }
+			],
+			more: 'And many more'
+		},
+		{
+			name: 'Broker Account',
+			body: 'Per linked broker account.',
+			icon: ICONS.key,
+			trial: true,
+			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
+			features: [
+				{ label: 'Free analytics included', icon: ICONS.grid },
+				{ label: 'Place and manage orders from SvaKosh', icon: ICONS.arrow },
+				{ label: 'Positions, holdings and funds', icon: ICONS.scale },
+				{ label: 'One subscription per account', icon: ICONS.shield }
+			],
+			more: ''
+		}
+	]
+} as const;
+
 export const CTA = {
 	eyebrow: 'Get started',
-	title: 'The chain opens at 9:15',
-	body: 'Sign in with a passkey — no broker to link, no setup screen in the way. Seventeen modules, six index chains, three expiries out.',
+	title: 'Start free today',
+	body: 'Free to start. Add Premium Analytics or link a broker account when you need more.',
 	label: 'Launch platform',
 	href: '/auth/signin'
 };
@@ -435,6 +459,17 @@ export const FOOTER = [
 			{ label: '52-Week Breakout', href: '/stocks/breakout/52-week' },
 			{ label: 'Volume Breakout', href: '/stocks/breakout/volume' },
 			{ label: 'Market Pulse', href: '/market-pulse' }
+		]
+	},
+	{
+		title: 'Company',
+		links: [
+			{ label: 'About Us', href: '/about' },
+			{ label: 'Pricing', href: '/#pricing' },
+			{ label: 'Contact Us', href: '/contact' },
+			{ label: 'Terms & Conditions', href: '/terms' },
+			{ label: 'Privacy Policy', href: '/privacy' },
+			{ label: 'Refund & Cancellation', href: '/refund-policy' }
 		]
 	}
 ];
