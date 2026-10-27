@@ -1,1 +1,1 @@
-export { BRAND } from './svakosh';
+export { BRAND, BUSINESS } from './svakosh';

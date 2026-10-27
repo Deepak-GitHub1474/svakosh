@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Icon from './Icon.svelte';
+	import type { Component } from 'svelte';
 	import { calm, spotlight } from './utils';
 
 	let {
@@ -8,14 +8,14 @@
 		lead,
 		body,
 		route,
-		icon
+		icon: Icon
 	}: {
 		index: number;
 		title: string;
 		lead: string;
 		body: string;
 		route: string;
-		icon: string;
+		icon: Component;
 	} = $props();
 
 	const GLYPHS = '!<>-_\\/[]{}=+*^?#░▒▓';
@@ -93,7 +93,7 @@
 		class="border-border-muted bg-primary/10 text-primary relative grid size-11 place-items-center rounded-xl border"
 		aria-hidden="true"
 	>
-		<Icon path={icon} class="size-5" />
+		<Icon class="size-5" />
 	</span>
 
 	<h3 class="relative mt-5 text-xl font-semibold tracking-tight">{scrambled || title}</h3>

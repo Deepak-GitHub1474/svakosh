@@ -1,34 +1,23 @@
-export const ICONS = {
-	layers:
-		'M12 3 2 8.5 12 14l10-5.5L12 3zM4.24 11.3 2 12.5 12 18l10-5.5-2.24-1.2L12 15.6l-7.76-4.3zm0 4L2 16.5 12 22l10-5.5-2.24-1.2L12 19.6l-7.76-4.3z',
-	scale:
-		'M12 2v2.2L6.4 6 3 15h1a4 4 0 0 0 8 0h1L8.6 6.6 12 5.4l3.4 1.2L11 15h1a4 4 0 0 0 8 0h1l-3.4-9L12 4.2V2h-2zm-6 7.6L8.1 15H3.9L6 9.6zm12 0L20.1 15h-4.2L18 9.6zM7 19h10v2H7v-2z',
-	target:
-		'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3a7 7 0 1 1 0 14 7 7 0 0 1 0-14zm0 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 2.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z',
-	waves:
-		'M4 15.5c1.6 0 2.4-1 4-1s2.4 1 4 1 2.4-1 4-1 2.4 1 4 1V18c-1.6 0-2.4-1-4-1s-2.4 1-4 1-2.4-1-4-1-2.4 1-4 1v-2.5zm0-5c1.6 0 2.4-1 4-1s2.4 1 4 1 2.4-1 4-1 2.4 1 4 1V13c-1.6 0-2.4-1-4-1s-2.4 1-4 1-2.4-1-4-1-2.4 1-4 1v-2.5zm0-5c1.6 0 2.4-1 4-1s2.4 1 4 1 2.4-1 4-1 2.4 1 4 1V8c-1.6 0-2.4-1-4-1s-2.4 1-4 1-2.4-1-4-1-2.4 1-4 1V5.5z',
-	decay: 'M3 3v18h18v-2H5V3H3zm16.3 2.3-5.6 5.6-3-3L7 12.6 8.4 14l3.3-3.3 3 3 7-7-1.4-1.4z',
-	screen:
-		'M15.5 14h-.8l-.3-.3a6.5 6.5 0 1 0-.7.7l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9zM3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 0h2v6h-6v-2h4v-4z',
-	pulse: 'M3 12h3.5l2-6 4 12 2.5-6H21v2h-4.8l-3.4 8.2L8.9 10 7.6 14H3v-2z',
-	grid: 'M3 3h8v8H3V3zm0 10h8v8H3v-8zm10-10h8v8h-8V3zm0 10h8v8h-8v-8z',
-	key: 'M12.6 10A6 6 0 1 0 7 15.9V18h2v2h2v2h4v-3.6l-1.5-1.5 1.5-1.5-1.4-1.4L12.6 10zM6 10a2 2 0 1 1 4 0 2 2 0 0 1-4 0z',
-	shield:
-		'M12 1 3 5v6c0 5.6 3.8 10.7 9 12 5.2-1.3 9-6.4 9-12V5l-9-4zm-2 16-4-4 1.4-1.4L10 14.2l6.6-6.6L18 9l-8 8z',
-	phone: 'M17 1H7a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm0 18H7V5h10v14z',
-	clock:
-		'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z',
-	bookmark: 'M17 3H7a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2zm0 15-5-2.2L7 18V5h10v13z',
-	arrow: 'M12 4l-1.4 1.4L16.2 11H4v2h12.2l-5.6 5.6L12 20l8-8-8-8z',
-	check: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z',
-	chevron: 'M12 15.5 5.5 9 7 7.6l5 5 5-5L18.5 9 12 15.5z'
-} as const;
+import ArrowRightIcon from '$lib/components/svg-provider/ArrowRightIcon.svelte';
+import BookmarkIcon from '$lib/components/svg-provider/BookmarkIcon.svelte';
+import ClockIcon from '$lib/components/svg-provider/ClockIcon.svelte';
+import DecayIcon from '$lib/components/svg-provider/DecayIcon.svelte';
+import GridIcon from '$lib/components/svg-provider/GridIcon.svelte';
+import KeyIcon from '$lib/components/svg-provider/KeyIcon.svelte';
+import LayersIcon from '$lib/components/svg-provider/LayersIcon.svelte';
+import PhoneIcon from '$lib/components/svg-provider/PhoneIcon.svelte';
+import PulseIcon from '$lib/components/svg-provider/PulseIcon.svelte';
+import ScaleIcon from '$lib/components/svg-provider/ScaleIcon.svelte';
+import ScreenIcon from '$lib/components/svg-provider/ScreenIcon.svelte';
+import ShieldIcon from '$lib/components/svg-provider/ShieldIcon.svelte';
+import TargetIcon from '$lib/components/svg-provider/TargetIcon.svelte';
+import WavesIcon from '$lib/components/svg-provider/WavesIcon.svelte';
 
 export const NAV = [
-	{ label: 'Modules', id: 'modules' },
-	{ label: 'Analytics', id: 'analytics' },
-	{ label: 'Workflow', id: 'workflow' },
-	{ label: 'Security', id: 'security' }
+	{ label: 'Modules', id: 'modules', icon: GridIcon },
+	{ label: 'Analytics', id: 'analytics', icon: PulseIcon },
+	{ label: 'Security', id: 'security', icon: ShieldIcon },
+	{ label: 'Pricing', id: 'pricing', icon: LayersIcon }
 ];
 
 export const HERO = {
@@ -39,9 +28,9 @@ export const HERO = {
 };
 
 export const STATS = [
-	{ value: '17', label: 'Analytics modules in the desk', icon: ICONS.grid },
-	{ value: '6', label: 'Index chains covered', icon: ICONS.layers },
-	{ value: '3', label: 'Expiries out on every chain', icon: ICONS.clock }
+	{ value: '17', label: 'Analytics modules in the desk', icon: GridIcon },
+	{ value: '6', label: 'Index chains covered', icon: LayersIcon },
+	{ value: '3', label: 'Expiries out on every chain', icon: ClockIcon }
 ];
 
 export const TICKERS = [
@@ -77,12 +66,12 @@ export const OPTIONS = {
 	expiry: '10-Apr-2026',
 	maxPain: 24000,
 	stats: [
-		{ label: 'Spot price', value: '24,022.98', note: '', tone: '', icon: ICONS.target },
-		{ label: 'Max pain', value: '24,000.00', note: '', tone: 'primary', icon: ICONS.pulse },
-		{ label: 'PCR', value: '1', note: '(Bullish)', tone: 'down', icon: ICONS.scale },
-		{ label: 'ATM strike', value: '24,000.00', note: '', tone: '', icon: ICONS.layers },
-		{ label: 'Total CE OI', value: '99.89L', note: '', tone: 'down', icon: ICONS.decay },
-		{ label: 'Total PE OI', value: '99.65L', note: '', tone: 'up', icon: ICONS.waves }
+		{ label: 'Spot price', value: '24,022.98', note: '', tone: '', icon: TargetIcon },
+		{ label: 'Max pain', value: '24,000.00', note: '', tone: 'primary', icon: PulseIcon },
+		{ label: 'PCR', value: '1', note: '(Bullish)', tone: 'down', icon: ScaleIcon },
+		{ label: 'ATM strike', value: '24,000.00', note: '', tone: '', icon: LayersIcon },
+		{ label: 'Total CE OI', value: '99.89L', note: '', tone: 'down', icon: DecayIcon },
+		{ label: 'Total PE OI', value: '99.65L', note: '', tone: 'up', icon: WavesIcon }
 	],
 	strikes: [
 		{ strike: 23600, ce: 2.1, pe: 4.4, ceC: -0.3, peC: 0.3 },
@@ -164,9 +153,9 @@ export const TRACKER = {
 
 export const BREAKOUT = {
 	stats: [
-		{ label: 'Total breakouts', value: '10', tone: '', icon: ICONS.grid },
-		{ label: 'New highs', value: '8', tone: 'up', icon: ICONS.decay },
-		{ label: 'New lows', value: '2', tone: 'down', icon: ICONS.waves }
+		{ label: 'Total breakouts', value: '10', tone: '', icon: GridIcon },
+		{ label: 'New highs', value: '8', tone: 'up', icon: DecayIcon },
+		{ label: 'New lows', value: '2', tone: 'down', icon: WavesIcon }
 	],
 	rows: [
 		{
@@ -322,64 +311,42 @@ export const ANALYTICS = {
 			lead: 'Watch positions build and unwind strike by strike.',
 			body: 'OI tables, buildup classification, a single-strike lookup and a compressed glimpse view for when you want the whole chain on one screen.',
 			route: '/oi/tracker',
-			icon: ICONS.layers
+			icon: LayersIcon
 		},
 		{
 			title: 'Call versus put pressure',
 			lead: 'See which side is carrying the chain.',
 			body: 'Side-by-side CE and PE open interest across strikes, plus a multi-expiry overlay that shows whether the pressure is this week or further out.',
 			route: '/oi/call-vs-put',
-			icon: ICONS.scale
+			icon: ScaleIcon
 		},
 		{
 			title: 'Max pain and PCR',
 			lead: 'Find the strike that hurts option writers least.',
 			body: 'The full pain curve across the chain with the put-call ratio read alongside it, so you know both where price is pulled and who is under pressure.',
 			route: '/oi/max-pain',
-			icon: ICONS.target
+			icon: TargetIcon
 		},
 		{
 			title: 'Straddle and strangle',
 			lead: 'Track the cost of holding volatility.',
 			body: 'Combined premium curves for at-the-money straddles and selected strangles, plotted through the session so you can see expansion and collapse as it happens.',
 			route: '/charts/straddle',
-			icon: ICONS.waves
+			icon: WavesIcon
 		},
 		{
 			title: 'Air in premiums',
 			lead: 'Separate real value from time value.',
 			body: 'Extrinsic value stripped out strike by strike, showing exactly how much of each premium is air and how quickly that air is leaving the chain.',
 			route: '/charts/air-in-premiums',
-			icon: ICONS.decay
+			icon: DecayIcon
 		},
 		{
 			title: 'Screeners and breakouts',
 			lead: 'Find the stock before it is on the list.',
 			body: 'A filterable equity screener with 52-week and volume breakout scans, so cash-market moves reach you at the same time as the derivatives signal.',
 			route: '/stocks/stocks-screener',
-			icon: ICONS.screen
-		}
-	]
-};
-
-export const WORKFLOW = {
-	title: 'How a session runs',
-	body: 'No broker account to link and no configuration screen in the way — open a module and start reading.',
-	items: [
-		{
-			title: 'Pick symbol and expiry',
-			body: 'Six index chains, three expiries out. Set them on the module you are reading and the strikes follow.',
-			icon: ICONS.bookmark
-		},
-		{
-			title: 'Read it from three angles',
-			body: 'Open interest and buildup for positioning, max pain and PCR for pressure, straddle and premium decay for what the volatility costs to hold.',
-			icon: ICONS.pulse
-		},
-		{
-			title: 'Keep what matters',
-			body: 'Save symbols into named watchlists with your own notes attached. They are waiting the next time you sign in.',
-			icon: ICONS.grid
+			icon: ScreenIcon
 		}
 	]
 };
@@ -390,30 +357,78 @@ export const SECURITY = {
 		{
 			title: 'Passkey',
 			body: 'Face, fingerprint or device PIN. Never leaves your hardware.',
-			icon: ICONS.key
+			icon: KeyIcon
 		},
 		{
 			title: 'Google',
 			body: 'One tap, standard OAuth.',
-			icon: ICONS.shield
+			icon: ShieldIcon
 		},
 		{
 			title: 'Six-digit code',
 			body: 'To your email or mobile, valid once.',
-			icon: ICONS.phone
-		},
-		{
-			title: 'Staying signed in',
-			body: 'Short-lived tokens, rotated in the background.',
-			icon: ICONS.clock
+			icon: PhoneIcon
 		}
 	]
 };
 
+export const PRICING = {
+	title: 'Plans',
+	periods: [
+		{ label: 'Monthly', value: 'monthly', months: 1 },
+		{ label: 'Quarterly', value: 'quarterly', months: 3 },
+		{ label: 'Annually', value: 'annually', months: 12 }
+	],
+	plans: [
+		{
+			name: 'Free',
+			body: 'The platform and core analytics.',
+			icon: GridIcon,
+			trial: false,
+			prices: { monthly: 0, quarterly: 0, annually: 0 },
+			features: [
+				{ label: 'Market overview', icon: PulseIcon },
+				{ label: 'Max pain and PCR', icon: ScaleIcon },
+				{ label: 'Watchlists', icon: BookmarkIcon }
+			],
+			more: 'And more'
+		},
+		{
+			name: 'Premium Analytics',
+			body: 'Advanced analytics tools.',
+			icon: LayersIcon,
+			trial: true,
+			featured: true,
+			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
+			features: [
+				{ label: 'Everything in Free', icon: GridIcon },
+				{ label: 'Option chain', icon: LayersIcon },
+				{ label: 'OI Tracker', icon: WavesIcon },
+				{ label: 'Stocks Screener', icon: ScreenIcon }
+			],
+			more: 'And many more'
+		},
+		{
+			name: 'Broker Account',
+			body: 'Per linked broker account.',
+			icon: KeyIcon,
+			trial: true,
+			prices: { monthly: 499, quarterly: 1349, annually: 4999 },
+			features: [
+				{ label: 'Free analytics included', icon: GridIcon },
+				{ label: 'Place and manage orders from SvaKosh', icon: ArrowRightIcon },
+				{ label: 'Positions, holdings and funds', icon: ScaleIcon },
+				{ label: 'One subscription per account', icon: ShieldIcon }
+			],
+			more: ''
+		}
+	]
+} as const;
+
 export const CTA = {
 	eyebrow: 'Get started',
-	title: 'The chain opens at 9:15',
-	body: 'Sign in with a passkey — no broker to link, no setup screen in the way. Seventeen modules, six index chains, three expiries out.',
+	title: 'Start free today',
+	body: 'Free to start. Add Premium Analytics or link a broker account when you need more.',
 	label: 'Launch platform',
 	href: '/auth/signin'
 };
@@ -435,6 +450,17 @@ export const FOOTER = [
 			{ label: '52-Week Breakout', href: '/stocks/breakout/52-week' },
 			{ label: 'Volume Breakout', href: '/stocks/breakout/volume' },
 			{ label: 'Market Pulse', href: '/market-pulse' }
+		]
+	},
+	{
+		title: 'Company',
+		links: [
+			{ label: 'About Us', href: '/about' },
+			{ label: 'Pricing', href: '/#pricing' },
+			{ label: 'Contact Us', href: '/contact' },
+			{ label: 'Terms & Conditions', href: '/terms' },
+			{ label: 'Privacy Policy', href: '/privacy' },
+			{ label: 'Refund & Cancellation', href: '/refund-policy' }
 		]
 	}
 ];

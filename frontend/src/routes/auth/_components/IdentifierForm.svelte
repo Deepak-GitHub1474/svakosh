@@ -1,4 +1,7 @@
 <script lang="ts">
+	import MailIcon from '$lib/components/svg-provider/MailIcon.svelte';
+	import LockIcon from '$lib/components/svg-provider/LockIcon.svelte';
+	import UserIcon from '$lib/components/svg-provider/UserIcon.svelte';
 	import { enhance } from '$app/forms';
 	import { cn, safeSubmit } from '$lib/utils';
 	import SvaKoshInput from '$lib/components/svakosh/SvaKoshInput.svelte';
@@ -40,20 +43,11 @@
 				aria-hidden="true"
 			>
 				{#if iconType === 'mail'}
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-						<rect x="3" y="5" width="18" height="14" rx="2" />
-						<path d="m3 7 9 6 9-6" />
-					</svg>
+					<MailIcon />
 				{:else if iconType === 'lock'}
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-						<rect x="4" y="11" width="16" height="10" rx="2" />
-						<path d="M8 11V8a4 4 0 0 1 8 0v3" />
-					</svg>
+					<LockIcon />
 				{:else if iconType === 'user'}
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-						<circle cx="12" cy="8" r="4" />
-						<path d="M4 21a8 8 0 0 1 16 0" />
-					</svg>
+					<UserIcon />
 				{/if}
 			</span>
 

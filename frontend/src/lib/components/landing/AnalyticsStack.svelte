@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { cn } from '$lib/utils/cn';
-	import Icon from './Icon.svelte';
+	import type { Component } from 'svelte';
 
-	type Item = { title: string; lead: string; body: string; route: string; icon: string };
+	type Item = { title: string; lead: string; body: string; route: string; icon: Component };
 
 	let { items, class: className = '' }: { items: readonly Item[]; class?: string } = $props();
 
@@ -206,7 +206,7 @@
 							)}
 							aria-hidden="true"
 						>
-							<Icon path={item.icon} class="size-4" />
+							<item.icon class="size-4" />
 						</span>
 						<h3 class="truncate font-semibold tracking-tight">{item.title}</h3>
 					</button>

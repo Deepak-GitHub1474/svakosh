@@ -1,13 +1,13 @@
 <script lang="ts">
-	import Icon from './Icon.svelte';
+	import type { Component } from 'svelte';
 	import { calm } from './utils';
 
 	let {
 		value,
 		label,
-		icon,
+		icon: Icon,
 		index = 0
-	}: { value: string; label: string; icon: string; index?: number } = $props();
+	}: { value: string; label: string; icon: Component; index?: number } = $props();
 
 	let host = $state<HTMLElement>();
 	let rolled = $state(false);
@@ -41,7 +41,7 @@
 		class="bg-primary/10 text-primary col-start-1 row-span-2 row-start-1 grid size-11 place-items-center self-start rounded-xl"
 		aria-hidden="true"
 	>
-		<Icon path={icon} class="size-5" />
+		<Icon class="size-5" />
 	</span>
 
 	<dt

@@ -5,16 +5,16 @@
 	import FeatureCard from './FeatureCard.svelte';
 	import Footer from './Footer.svelte';
 	import Hero from './Hero.svelte';
-	import Icon from './Icon.svelte';
 	import Nav from './Nav.svelte';
 	import MarketPanel from './MarketPanel.svelte';
 	import OptionsPanel from './OptionsPanel.svelte';
+	import PricingSection from './PricingSection.svelte';
 	import TrackerPanel from './TrackerPanel.svelte';
 	import SectionHead from './SectionHead.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import Ticker from './Ticker.svelte';
 	import Watermark from './Watermark.svelte';
-	import { ANALYTICS, CTA, MODULES, SECURITY, WORKFLOW } from './data';
+	import { ANALYTICS, CTA, MODULES, SECURITY } from './data';
 	import { spotlight } from './utils';
 </script>
 
@@ -54,38 +54,10 @@
 		</div>
 	</section>
 
-	<section id="workflow" class="mx-auto max-w-6xl px-4 pt-20 sm:px-6 md:pt-28">
-		<SectionHead eyebrow="Workflow" title={WORKFLOW.title} body={WORKFLOW.body} />
-
-		<ol class="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
-			{#each WORKFLOW.items as step, i (step.title)}
-				<li class="reveal">
-					<div class="bg-border-muted relative h-px">
-						<span class="bg-primary absolute inset-y-0 left-0 w-12" aria-hidden="true"></span>
-					</div>
-
-					<div class="flex items-center gap-4 pt-6">
-						<span
-							class="border-border-muted bg-surface text-primary grid size-11 place-items-center rounded-xl border"
-						>
-							<Icon path={step.icon} class="size-5" />
-						</span>
-						<span class="text-muted-foreground text-xs tracking-[0.18em] uppercase">
-							Step {String(i + 1).padStart(2, '0')}
-						</span>
-					</div>
-
-					<h3 class="mt-6 text-xl font-semibold tracking-tight">{step.title}</h3>
-					<p class="text-muted-foreground mt-3 leading-relaxed">{step.body}</p>
-				</li>
-			{/each}
-		</ol>
-	</section>
-
 	<section id="security" class="mx-auto max-w-6xl px-4 pt-20 sm:px-6 md:pt-28">
 		<SectionHead eyebrow="Security" title={SECURITY.title} />
 
-		<dl class="reveal mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+		<dl class="reveal mt-8 grid gap-3 sm:grid-cols-3">
 			{#each SECURITY.items as item (item.title)}
 				<div
 					class="spot border-border-muted bg-surface/40 relative grid grid-cols-[2.75rem_1fr] content-start gap-x-3 rounded-2xl border p-4"
@@ -95,7 +67,7 @@
 						class="bg-primary/10 text-primary col-start-1 row-span-2 row-start-1 grid size-11 shrink-0 place-items-center self-start rounded-xl"
 						aria-hidden="true"
 					>
-						<Icon path={item.icon} class="size-5" />
+						<item.icon class="size-5" />
 					</span>
 					<dt class="col-start-2 row-start-1 self-center font-medium tracking-tight">
 						{item.title}
@@ -107,6 +79,8 @@
 			{/each}
 		</dl>
 	</section>
+
+	<PricingSection />
 
 	<section class="mx-auto max-w-6xl px-4 pt-20 sm:px-6 md:pt-28">
 		<div

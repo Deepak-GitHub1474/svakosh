@@ -4,7 +4,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import SvaKoshLogo from '../_components/SvaKoshLogo.svelte';
+	import SvaKoshBrand from '$lib/components/svakosh/SvaKoshBrand.svelte';
 	import IllustrationPanel from '../_components/IllustrationPanel.svelte';
 	import FeaturesBar from '../_components/FeaturesBar.svelte';
 	import IdentifierForm from '../_components/IdentifierForm.svelte';
@@ -59,7 +59,7 @@
 							</button>
 						</form>
 					</div>
-					<SvaKoshLogo class="self-start" />
+					<SvaKoshBrand />
 					<div class="mt-8 hidden lg:block">
 						<h1 class="text-2xl font-semibold leading-tight text-foreground">
 							One more step <span aria-hidden="true">🔐</span>

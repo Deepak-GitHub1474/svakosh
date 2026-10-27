@@ -1,4 +1,6 @@
 <script lang="ts">
+	import MinusIcon from '$lib/components/svg-provider/MinusIcon.svelte';
+	import PlusIcon from '$lib/components/svg-provider/PlusIcon.svelte';
 	import { cn } from '$lib/utils';
 
 	type Props = {
@@ -68,9 +70,7 @@
 			title="Decrease {label || 'value'}"
 			class="w-10 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/5 active:scale-90 disabled:opacity-20 disabled:pointer-events-none transition-all"
 		>
-			<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-			</svg>
+			<MinusIcon class="h-4 w-4" />
 		</button>
 
 		<div class="flex-1 min-w-[3.5rem] px-2">
@@ -94,9 +94,7 @@
 			title="Increase {label || 'value'}"
 			class="w-10 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/5 active:scale-90 disabled:opacity-20 disabled:pointer-events-none transition-all"
 		>
-			<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-			</svg>
+			<PlusIcon class="h-4 w-4" />
 		</button>
 	</div>
 </div>

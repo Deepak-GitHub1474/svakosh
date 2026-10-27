@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CaretDownIcon from '$lib/components/svg-provider/CaretDownIcon.svelte';
 	import { TICKERS } from './data';
 
 	const loop = [...TICKERS, ...TICKERS];
@@ -38,14 +39,9 @@
 			class="bg-primary/40 group-hover:bg-primary/75 absolute size-7 animate-pulse rounded-full blur-[7px] transition-all duration-300 group-hover:blur-[10px] motion-reduce:animate-none"
 			aria-hidden="true"
 		></span>
-		<svg
-			viewBox="0 0 24 24"
+		<CaretDownIcon
 			class="relative size-4 text-[#fbf0cd] drop-shadow-[0_0_5px_var(--primary)] transition-transform duration-300 group-hover:drop-shadow-[0_0_9px_var(--primary)] motion-reduce:transition-none"
 			style="transform: rotate({open ? 180 : 0}deg)"
-			fill="currentColor"
-			aria-hidden="true"
-		>
-			<path d="M12 15.5 5.5 9h13z" />
-		</svg>
+		/>
 	</button>
 </div>

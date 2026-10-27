@@ -1,4 +1,6 @@
 <script lang="ts">
+	import ChevronDownIcon from '$lib/components/svg-provider/ChevronDownIcon.svelte';
+	import CheckIcon from '$lib/components/svg-provider/CheckIcon.svelte';
 	import { cn } from '$lib/utils';
 	import { fly, fade } from 'svelte/transition';
 	import { onMount, onDestroy } from 'svelte';
@@ -93,17 +95,12 @@
 		<span class="text-xs tracking-wide truncate pr-4">
 			{displayLabel}
 		</span>
-		<svg
+		<ChevronDownIcon
 			class={cn(
-				'h-4 w-4 text-muted-foreground transition-all duration-300 group-hover:text-primary shrink-0',
+				'h-4 w-4 text-muted-foreground transition-all duration-300 group-hover:text-primary',
 				isOpen && 'rotate-180'
 			)}
-			fill="none"
-			viewBox="0 0 24 24"
-			stroke="currentColor"
-		>
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-		</svg>
+		/>
 	</button>
 
 	{#if isOpen}
@@ -138,9 +135,7 @@
 								value.includes(option.value) ? 'bg-primary border-primary' : 'border-white/20 bg-white/5'
 							)}>
 								{#if value.includes(option.value)}
-									<svg class="w-2.5 h-2.5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-									</svg>
+									<CheckIcon class="w-2.5 h-2.5 text-black" />
 								{/if}
 							</div>
 							<span class="text-xs tracking-wide">{option.label}</span>
