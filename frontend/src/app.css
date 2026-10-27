@@ -342,6 +342,9 @@ select:-webkit-autofill:focus {
 	--animate-marquee: marquee 46s linear infinite;
 	--animate-blink: blink 1s steps(2, start) infinite;
 	--animate-drift: drift 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+	--animate-draw: draw 0.5s ease-out forwards;
+	--animate-pop: pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1.2) both;
+	--animate-ripple: ripple 1.4s ease-out 2 both;
 
 	@keyframes marquee {
 		to {
@@ -352,6 +355,30 @@ select:-webkit-autofill:focus {
 	@keyframes blink {
 		50% {
 			opacity: 0;
+		}
+	}
+
+	@keyframes draw {
+		to {
+			stroke-dashoffset: 0;
+		}
+	}
+
+	@keyframes pop {
+		from {
+			opacity: 0;
+			transform: scale(0.6);
+		}
+	}
+
+	@keyframes ripple {
+		from {
+			opacity: 0.6;
+			transform: scale(0.9);
+		}
+		to {
+			opacity: 0;
+			transform: scale(1.8);
 		}
 	}
 

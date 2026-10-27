@@ -68,6 +68,7 @@ export type TSubscription = {
 	expires_at: string | null;
 	cancelled_at: string | null;
 	created_at: string | null;
+	payments?: TPayment[];
 };
 
 export type TPayment = {
@@ -78,10 +79,14 @@ export type TPayment = {
 	period_start: string | null;
 	period_end: string | null;
 	status: 'captured' | 'failed' | 'refunded';
+	reference: string;
 	paid_at: string | null;
 };
 
-export type TOverview = { subscriptions: TSubscription[]; payments: TPayment[] };
+export type THistory = { subscriptions: TSubscription[] };
+export type TStatusFilter = 'all' | 'active' | 'expired' | 'pending' | 'failed';
+export type TPlanFilter = 'all' | TPlanType;
+export type THistoryView = 'table' | 'cards';
 
 export type TEntitlements = { features: string[]; broker_accounts: string[] };
 

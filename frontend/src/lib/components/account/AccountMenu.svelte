@@ -6,7 +6,7 @@
 	import SvaKoshSwitch from '$lib/components/svakosh/SvaKoshSwitch.svelte';
 	import DarkMode from '$lib/components/svg-provider/material/DarkMode.svelte';
 	import Logout from '$lib/components/svg-provider/material/Logout.svelte';
-	import AwardStar from '$lib/components/svg-provider/material/AwardStar.svelte';
+	import CardMembership from '$lib/components/svg-provider/material/CardMembership.svelte';
 	import Person from '$lib/components/svg-provider/material/Person.svelte';
 	import Settings from '$lib/components/svg-provider/material/Settings.svelte';
 	import SwapVert from '$lib/components/svg-provider/material/SwapVert.svelte';
@@ -46,7 +46,7 @@
 	onclick={() => onNavigate?.()}
 	class="{row} text-muted-foreground hover:bg-glass hover:text-foreground"
 >
-	<AwardStar class="icon-size" />
+	<CardMembership class="icon-size" />
 	Subscription
 </a>
 <a

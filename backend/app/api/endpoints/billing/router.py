@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, Path, Request, status
+from fastapi import APIRouter, Depends, Header, Path, Query, Request, status
 
 from app.api.endpoints.billing import controllers
 from app.api.endpoints.billing.models import (
     ConfirmRequest,
+    PlanFilter,
     QuoteRequest,
     ReferralRequest,
+    StatusFilter,
 )
 from app.database import MongoDatabase, RedisClient
 from app.razorpay import RazorpayClient, get_razorpay
@@ -35,8 +37,13 @@ async def entitlements(claims: CurrentClaims, mongo: MongoDatabase, redis: Redis
 
 
 @router.get("/subscriptions", status_code=status.HTTP_200_OK)
-async def overview(claims: CurrentClaims, mongo: MongoDatabase):
-    data = await controllers.overview(mongo, claims)
+async def history(
+    claims: CurrentClaims,
+    mongo: MongoDatabase,
+    status_filter: StatusFilter = Query("active", alias="status"),
+    plan_filter: PlanFilter = Query("all", alias="plan"),
+):
+    data = await controllers.history(mongo, claims, status_filter, plan_filter)
     return ok_response("Subscriptions fetched.", data=data)
 
 

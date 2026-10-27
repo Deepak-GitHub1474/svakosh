@@ -5,7 +5,7 @@
 	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
 	import TradeSheet from '$lib/components/trade/TradeSheet.svelte';
-	import { MODAL_BUTTON, MODAL_CONTROL } from '$lib/trade/const';
+	import { MODAL_ACTION, MODAL_ACTIONS, MODAL_CONTROL } from '$lib/trade/const';
 	import type { TOpResult } from './types';
 
 	interface Props {
@@ -63,7 +63,26 @@
 	}
 </script>
 
-<TradeSheet bind:isOpen={modalOpen} onClose={close} width="26rem">
+{#snippet actions()}
+	<div class={MODAL_ACTIONS}>
+		<SvaKoshButton
+			variant="secondary"
+			label="Cancel"
+			disabled={isLoading}
+			onclick={close}
+			class="{MODAL_ACTION} [--terminal-border-hover:transparent] [--terminal-border:transparent]"
+		/>
+		<SvaKoshButton
+			variant="solid"
+			label={isLoading ? 'Saving…' : submitLabel}
+			disabled={isLoading || !isDirty}
+			onclick={handleSubmit}
+			class={MODAL_ACTION}
+		/>
+	</div>
+{/snippet}
+
+<TradeSheet bind:isOpen={modalOpen} onClose={close} width="26rem" footer={actions}>
 	<ModalHeader {title} onClose={close} />
 	<div class="flex flex-col gap-4 p-4">
 		<div>
@@ -76,22 +95,6 @@
 				disabled={isLoading}
 				onkeydown={handleKeydown}
 				class={MODAL_CONTROL}
-			/>
-		</div>
-		<div class="mt-3 flex gap-3 md:justify-end">
-			<SvaKoshButton
-				variant="secondary"
-				label="Cancel"
-				disabled={isLoading}
-				onclick={close}
-				class="{MODAL_BUTTON} flex-1 [--terminal-border-hover:transparent] [--terminal-border:transparent] md:min-w-36 md:flex-none"
-			/>
-			<SvaKoshButton
-				variant="solid"
-				label={isLoading ? 'Saving…' : submitLabel}
-				disabled={isLoading || !isDirty}
-				onclick={handleSubmit}
-				class="{MODAL_BUTTON} flex-1 md:min-w-36 md:flex-none"
 			/>
 		</div>
 	</div>

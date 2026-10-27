@@ -41,6 +41,25 @@
 	}
 </script>
 
+{#snippet tradeActions()}
+	<div class="flex gap-3">
+		<button
+			type="button"
+			onclick={() => onTrade?.('BUY')}
+			class="flex {MODAL_BUTTON} flex-1 cursor-pointer items-center justify-center rounded-md border font-medium {TRADE_BUTTON.BUY}"
+		>
+			Buy
+		</button>
+		<button
+			type="button"
+			onclick={() => onTrade?.('SELL')}
+			class="flex {MODAL_BUTTON} flex-1 cursor-pointer items-center justify-center rounded-md border font-medium {TRADE_BUTTON.SELL}"
+		>
+			Sell
+		</button>
+	</div>
+{/snippet}
+
 <svelte:window onkeydown={handleKeydown} />
 
 {#snippet items(size: string, tone: string, menu = false)}
@@ -83,27 +102,15 @@
 			{@render items('py-2 text-sm', 'text-foreground/80', true)}
 		</div>
 	{:else}
-		<SvaKoshDrawer isOpen={true} {onClose} title={symbolName} contentClass="flex flex-col">
+		<SvaKoshDrawer
+			isOpen={true}
+			{onClose}
+			title={symbolName}
+			contentClass="flex flex-col"
+			footer={showTrade ? tradeActions : undefined}
+		>
 			<div class="flex flex-1 flex-col p-2">
 				{@render items('py-3.5 text-base', 'text-foreground/80')}
-				{#if showTrade}
-					<div class="mt-auto flex gap-2 px-1 pt-4">
-						<button
-							type="button"
-							onclick={() => onTrade?.('BUY')}
-							class="flex {MODAL_BUTTON} flex-1 cursor-pointer items-center justify-center rounded-md border font-medium {TRADE_BUTTON.BUY}"
-						>
-							Buy
-						</button>
-						<button
-							type="button"
-							onclick={() => onTrade?.('SELL')}
-							class="flex {MODAL_BUTTON} flex-1 cursor-pointer items-center justify-center rounded-md border font-medium {TRADE_BUTTON.SELL}"
-						>
-							Sell
-						</button>
-					</div>
-				{/if}
 			</div>
 		</SvaKoshDrawer>
 	{/if}

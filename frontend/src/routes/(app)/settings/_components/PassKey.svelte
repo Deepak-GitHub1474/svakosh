@@ -4,6 +4,7 @@
 	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
+	import { MODAL_ACTION, MODAL_ACTIONS } from '$lib/trade/const';
 	import type { Passkey, PasskeyResult } from '../_lib/types';
 	import { PASSKEY_COLUMNS } from '../_lib/const';
 	import ChevronRight from '$lib/components/svg-provider/material/ChevronRight.svelte';
@@ -142,19 +143,21 @@
 	<SvaKoshLoader message="Please wait…" />
 {/if}
 
-<SvaKoshModal bind:isOpen={confirmOpen} title={confirmTitle} showClose>
-	<div class="p-4">
-		<p class="text-sm text-muted-foreground">{confirmMessage}</p>
-		<div class="mt-12 flex justify-end gap-3">
-			<SvaKoshButton
-				variant="secondary"
-				label="Cancel"
-				onclick={() => {
-					confirmOpen = false;
-				}}
-			/>
-			<SvaKoshButton variant="bearish" label="Remove" onclick={confirmYes} />
-		</div>
+{#snippet confirmActions()}
+	<div class={MODAL_ACTIONS}>
+		<SvaKoshButton
+			variant="secondary"
+			label="Cancel"
+			class={MODAL_ACTION}
+			onclick={() => {
+				confirmOpen = false;
+			}}
+		/>
+		<SvaKoshButton variant="bearish" label="Remove" class={MODAL_ACTION} onclick={confirmYes} />
 	</div>
+{/snippet}
+
+<SvaKoshModal bind:isOpen={confirmOpen} title={confirmTitle} showClose footer={confirmActions}>
+	<p class="p-4 text-sm text-muted-foreground">{confirmMessage}</p>
 </SvaKoshModal>
 

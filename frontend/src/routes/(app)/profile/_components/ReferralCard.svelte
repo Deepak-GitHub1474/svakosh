@@ -88,7 +88,7 @@
 						type="submit"
 						variant="solid"
 						label={applying ? 'Applying…' : 'Apply'}
-						class="px-4"
+						class="border-transparent"
 						disabled={!code.trim() || applying}
 					/>
 				</form>

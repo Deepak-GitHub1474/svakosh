@@ -1,7 +1,15 @@
+import appIcon from '$lib/assets/svakosh/apple-touch-icon.png?inline';
+import { BRAND } from '$lib/brand';
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
-import { PLAN_CODES, RAZORPAY_SCRIPT } from './const';
-import type { TCheckout, TPlan, TPrice, TRazorpayResponse, TTenure } from './types';
+import {
+	GST_PERCENT,
+	IP_LABELS,
+	PAYMENT_STATUS_LABELS,
+	PLAN_CODES,
+	RAZORPAY_SCRIPT
+} from './const';
+import type { TCheckout, TPlan, TPrice, TRazorpayResponse, TSubscription, TTenure } from './types';
 
 type TRazorpayInstance = {
 	open: () => void;
@@ -64,9 +72,36 @@ function loadRazorpay(): Promise<TRazorpayCtor> {
 	return loading;
 }
 
+export const includedGst = (paise: number) =>
+	Math.round((paise * GST_PERCENT) / (100 + GST_PERCENT));
+
+export const renewal = (sub: TSubscription) => {
+	if (!sub.expires_at)
+		return { label: 'Renewal', value: sub.status === 'pending' ? 'Awaiting payment' : '—' };
+	const label = sub.status === 'expired' ? 'Ended' : sub.auto_renew ? 'Renews' : 'Ends';
+	return { label, value: shortDate(sub.expires_at) };
+};
+
+export const lastPayment = (sub: TSubscription) => {
+	const payment = sub.payments?.[0];
+	return {
+		status: payment ? (PAYMENT_STATUS_LABELS[payment.status] ?? payment.status) : '—',
+		reference: payment?.reference || '—',
+		period: payment ? `${shortDate(payment.period_start)} – ${shortDate(payment.period_end)}` : '—'
+	};
+};
+
+export const planMeta = (sub: TSubscription, target: string) =>
+	[target, sub.ip ? (IP_LABELS[sub.ip] ?? sub.ip) : ''].filter(Boolean).join(' · ');
+
+export const paidTotal = (sub: TSubscription) =>
+	(sub.payments ?? []).reduce(
+		(sum, p) => (p.status === 'captured' ? sum + p.amount_paise : sum),
+		0
+	);
+
 export async function openRazorpay(
 	checkout: TCheckout,
-	description: string,
 	handlers: {
 		onPaid: (res: TRazorpayResponse) => void;
 		onDismiss: () => void;
@@ -78,8 +113,9 @@ export async function openRazorpay(
 	const instance = new Razorpay({
 		key: checkout.razorpay.key_id,
 		subscription_id: checkout.razorpay.subscription_id,
-		name: 'SvaKosh',
-		description,
+		name: BRAND.wordmark,
+		image: appIcon,
+		description: BRAND.tagline,
 		prefill: checkout.razorpay.prefill,
 		handler: handlers.onPaid,
 		modal: { ondismiss: handlers.onDismiss }

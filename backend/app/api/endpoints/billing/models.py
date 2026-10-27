@@ -11,6 +11,8 @@ def _code(v: Any) -> Any:
 
 CouponCode = Annotated[str, BeforeValidator(_code), Field(min_length=3, max_length=32, pattern=r"^[A-Z0-9_-]+$")]
 Tenure = Literal["monthly", "quarterly", "annually"]
+StatusFilter = Literal["all", "active", "expired", "pending", "failed"]
+PlanFilter = Literal["all", "analytics", "broker"]
 
 
 class QuoteRequest(BaseModel):

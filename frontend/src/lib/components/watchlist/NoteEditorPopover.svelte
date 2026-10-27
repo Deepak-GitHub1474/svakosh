@@ -4,7 +4,7 @@
 	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
 	import TradeSheet from '$lib/components/trade/TradeSheet.svelte';
-	import { MODAL_BUTTON } from '$lib/trade/const';
+	import { MODAL_ACTION, MODAL_ACTIONS } from '$lib/trade/const';
 	import type { TOpResult } from './types';
 
 	interface Props {
@@ -64,7 +64,26 @@
 	}
 </script>
 
-<TradeSheet bind:isOpen={modalOpen} onClose={close} width="26rem">
+{#snippet actions()}
+	<div class={MODAL_ACTIONS}>
+		<SvaKoshButton
+			variant="secondary"
+			label="Cancel"
+			disabled={saving}
+			onclick={close}
+			class="{MODAL_ACTION} [--terminal-border-hover:transparent] [--terminal-border:transparent]"
+		/>
+		<SvaKoshButton
+			variant="solid"
+			label={saving ? 'Saving…' : 'Save note'}
+			disabled={saving || !isDirty || !trimmed}
+			onclick={save}
+			class={MODAL_ACTION}
+		/>
+	</div>
+{/snippet}
+
+<TradeSheet bind:isOpen={modalOpen} onClose={close} width="26rem" footer={actions}>
 	<ModalHeader title={`Note for ${symbolName}`} onClose={close} />
 	<div class="flex flex-col gap-4 p-4">
 		<div>
@@ -93,21 +112,5 @@
 				Clear note
 			</button>
 		{/if}
-		<div class="mt-3 flex gap-3 md:justify-end">
-			<SvaKoshButton
-				variant="secondary"
-				label="Cancel"
-				disabled={saving}
-				onclick={close}
-				class="{MODAL_BUTTON} flex-1 [--terminal-border-hover:transparent] [--terminal-border:transparent] md:min-w-36 md:flex-none"
-			/>
-			<SvaKoshButton
-				variant="solid"
-				label={saving ? 'Saving…' : 'Save note'}
-				disabled={saving || !isDirty || !trimmed}
-				onclick={save}
-				class="{MODAL_BUTTON} flex-1 md:min-w-36 md:flex-none"
-			/>
-		</div>
 	</div>
 </TradeSheet>

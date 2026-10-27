@@ -22,7 +22,7 @@
 	});
 </script>
 
-<div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-[repeat(3,14rem)]">
 	{#each options as option (option.tenure)}
 		{@const selected = option.tenure === value}
 		<button

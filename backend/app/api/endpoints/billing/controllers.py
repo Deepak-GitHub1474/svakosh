@@ -39,6 +39,7 @@ from app.api.endpoints.billing.constants import (
     REFERRAL_WINDOW_DAYS,
     STATUS_ACTIVE,
     STATUS_FAILED,
+    STATUS_FILTERS,
     STATUS_PENDING,
     TOTAL_CYCLES,
     TRIAL_NOTE,
@@ -86,15 +87,23 @@ async def list_plans(mongo: AsyncIOMotorDatabase) -> list[dict[str, Any]]:
     return [plan_view(p) async for p in mongo[COL_PLANS].find({"active": True}).sort("type", 1)]
 
 
-async def overview(mongo: AsyncIOMotorDatabase, claims: AccessClaims) -> dict[str, Any]:
-    subs = await mongo[COL_SUBSCRIPTIONS].find(
-        {"user_id": claims.user_id, "status": {"$ne": STATUS_PENDING}}
-    ).sort("created_at", -1).to_list(length=HISTORY_LIMIT)
+async def history(
+    mongo: AsyncIOMotorDatabase, claims: AccessClaims, status_filter: str, plan_filter: str,
+) -> dict[str, Any]:
+    query: dict[str, Any] = {"user_id": claims.user_id}
+    if status_filter in STATUS_FILTERS:
+        query["status"] = {"$in": list(STATUS_FILTERS[status_filter])}
+    if plan_filter != "all":
+        query["plan_id"] = {"$in": [p["_id"] async for p in mongo[COL_PLANS].find({"type": plan_filter}, {"_id": 1})]}
+    subs = await mongo[COL_SUBSCRIPTIONS].find(query).sort("created_at", -1).to_list(length=HISTORY_LIMIT)
     plans = {p["_id"]: p async for p in mongo[COL_PLANS].find({"_id": {"$in": list({s["plan_id"] for s in subs})}})}
-    payments = await mongo[COL_PAYMENTS].find({"user_id": claims.user_id}).sort("paid_at", -1).to_list(length=HISTORY_LIMIT)
+    payments: dict[Any, list[dict[str, Any]]] = {s["_id"]: [] for s in subs}
+    async for p in mongo[COL_PAYMENTS].find({"subscription_id": {"$in": list(payments)}}).sort("paid_at", -1):
+        payments[p["subscription_id"]].append(payment_view(p))
     return {
-        "subscriptions": [subscription_view(s, plans.get(s["plan_id"])) for s in subs],
-        "payments": [payment_view(p) for p in payments],
+        "subscriptions": [
+            {**subscription_view(s, plans.get(s["plan_id"])), "payments": payments[s["_id"]]} for s in subs
+        ],
     }
 
 

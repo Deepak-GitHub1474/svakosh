@@ -18,6 +18,12 @@ STATUS_CANCELLED = "cancelled"
 STATUS_EXPIRED = "expired"
 STATUS_FAILED = "failed"
 VALID_STATUSES = (STATUS_ACTIVE, STATUS_CANCELLED)
+STATUS_FILTERS = {
+    "active": VALID_STATUSES,
+    "expired": (STATUS_EXPIRED,),
+    "pending": (STATUS_PENDING,),
+    "failed": (STATUS_FAILED,),
+}
 
 PROVIDER_RAZORPAY = "razorpay"
 PROVIDER_FREE = "free"

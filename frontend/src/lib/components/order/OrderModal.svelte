@@ -295,7 +295,7 @@
 			</div>
 		</header>
 
-		<form class="space-y-4 p-4" onsubmit={submit} novalidate>
+		<form id="order-form" class="space-y-4 p-4" onsubmit={submit} novalidate>
 			<div class="grid grid-cols-2 gap-3">
 				<div>
 					<SvaKoshLabel class="text-foreground/80">Product</SvaKoshLabel>
@@ -372,42 +372,51 @@
 					{/if}
 				</div>
 			</div>
-
-			<div class="border-border-subtle flex items-center justify-between gap-4 border-t pt-4">
-				<dl class="grid grid-cols-[auto_auto] items-center gap-x-2 gap-y-1 tabular-nums">
-					<dt class="text-muted-foreground text-xs">{isEquity ? 'Amount' : 'Premium'}</dt>
-					<dd class="text-foreground text-sm font-medium">
-						₹{premium.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-					</dd>
-					{#if required !== null}
-						<dt class="text-muted-foreground text-xs">Margin</dt>
-						<dd class="text-xs {shortfall ? 'text-bearish' : 'text-foreground'}">
-							₹{required.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-							{#if available !== null}
-								<span class="text-muted-foreground">
-									/ ₹{available.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-								</span>
-							{/if}
-						</dd>
-					{/if}
-				</dl>
-
-				<SvaKoshButton
-					type="submit"
-					variant={isSell ? 'bearish' : 'bullish'}
-					label={placing ? 'Placing…' : isSell ? 'Sell' : 'Buy'}
-					disabled={!priceValid || placing}
-					class="{MODAL_BUTTON} min-w-[10rem] font-semibold [--terminal-fg:white] {isSell
-						? '[--terminal-bg-hover:var(--bearish-solid-hover)] [--terminal-bg:var(--bearish-solid)] [--terminal-border-hover:transparent] [--terminal-border:transparent]'
-						: '[--terminal-bg-hover:var(--bullish-solid-hover)] [--terminal-bg:var(--bullish-solid)] [--terminal-border-hover:transparent] [--terminal-border:transparent]'}"
-				/>
-			</div>
 		</form>
 	{/if}
 {/snippet}
 
+{#snippet orderFooter()}
+	<div class="flex items-center justify-between gap-4">
+		<dl class="grid grid-cols-[auto_auto] items-center gap-x-2 gap-y-1 tabular-nums">
+			<dt class="text-muted-foreground text-xs">{isEquity ? 'Amount' : 'Premium'}</dt>
+			<dd class="text-foreground text-sm font-medium">
+				₹{premium.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+			</dd>
+			{#if required !== null}
+				<dt class="text-muted-foreground text-xs">Margin</dt>
+				<dd class="text-xs {shortfall ? 'text-bearish' : 'text-foreground'}">
+					₹{required.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+					{#if available !== null}
+						<span class="text-muted-foreground">
+							/ ₹{available.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+						</span>
+					{/if}
+				</dd>
+			{/if}
+		</dl>
+
+		<SvaKoshButton
+			type="submit"
+			form="order-form"
+			variant={isSell ? 'bearish' : 'bullish'}
+			label={placing ? 'Placing…' : isSell ? 'Sell' : 'Buy'}
+			disabled={!priceValid || placing}
+			class="{MODAL_BUTTON} min-w-[10rem] font-semibold [--terminal-fg:white] {isSell
+				? '[--terminal-bg-hover:var(--bearish-solid-hover)] [--terminal-bg:var(--bearish-solid)] [--terminal-border-hover:transparent] [--terminal-border:transparent]'
+				: '[--terminal-bg-hover:var(--bullish-solid-hover)] [--terminal-bg:var(--bullish-solid)] [--terminal-border-hover:transparent] [--terminal-border:transparent]'}"
+		/>
+	</div>
+{/snippet}
+
 {#if isDesktop}
-	<SvaKoshModal bind:isOpen width="26rem" class="overflow-hidden" movable>
+	<SvaKoshModal
+		bind:isOpen
+		width="26rem"
+		class="overflow-hidden"
+		movable
+		footer={draft ? orderFooter : undefined}
+	>
 		{@render orderContent(true)}
 	</SvaKoshModal>
 {:else}
@@ -416,7 +425,7 @@
 		showHandle={false}
 		snapPoints={[10, 90]}
 		class="overflow-hidden"
-		contentClass="pb-[env(safe-area-inset-bottom)]"
+		footer={draft ? orderFooter : undefined}
 	>
 		{@render orderContent(false)}
 	</SvaKoshDrawer>

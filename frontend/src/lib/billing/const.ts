@@ -1,4 +1,4 @@
-import type { TPlanType, TSubscriptionStatus, TTenure } from './types';
+import type { TPlanFilter, TPlanType, TStatusFilter, TSubscriptionStatus, TTenure } from './types';
 
 export const TENURES: TTenure[] = ['monthly', 'quarterly', 'annually'];
 
@@ -32,13 +32,44 @@ export const STATUS_LABELS: Record<TSubscriptionStatus, string> = {
 	failed: 'Not completed'
 };
 
-export const STATUS_TONE: Record<TSubscriptionStatus, string> = {
-	pending: 'text-primary',
-	active: 'text-bullish',
-	cancelled: 'text-primary',
-	expired: 'text-muted-foreground',
-	failed: 'text-bearish'
+export const STATUS_BADGE: Record<TSubscriptionStatus, string> = {
+	pending: 'bg-primary-subtle text-primary',
+	active: 'bg-bullish-subtle text-bullish',
+	cancelled: 'bg-primary-subtle text-primary',
+	expired: 'bg-glass text-muted-foreground',
+	failed: 'bg-bearish-subtle text-bearish'
 };
+
+export const STATUS_FILTERS: { label: string; value: TStatusFilter }[] = [
+	{ label: 'All', value: 'all' },
+	{ label: 'Active', value: 'active' },
+	{ label: 'Expired', value: 'expired' },
+	{ label: 'Pending', value: 'pending' },
+	{ label: 'Failed', value: 'failed' }
+];
+
+export const PLAN_FILTERS: { label: string; value: TPlanFilter }[] = [
+	{ label: 'All', value: 'all' },
+	{ label: 'Premium Analytics', value: 'analytics' },
+	{ label: 'Broker Account', value: 'broker' }
+];
+
+export const DEFAULT_STATUS_FILTER: TStatusFilter = 'active';
+export const DEFAULT_PLAN_FILTER: TPlanFilter = 'all';
+
+export const HISTORY_VIEW_KEY = 'svakosh:subscriptions-view';
+
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+	captured: 'Paid',
+	failed: 'Failed',
+	refunded: 'Refunded'
+};
+
+export const GST_PERCENT = 18;
+
+export const SKELETON = 'bg-foreground/10 rounded';
+
+export const RADIO = 'accent-primary size-5 shrink-0 cursor-pointer disabled:cursor-default';
 
 export const IP_LABELS: Record<string, string> = { ipv4: 'IPv4', ipv6: 'IPv6' };
 
@@ -47,10 +78,3 @@ export const STATUS_POLL_MS = 2000;
 export const STATUS_POLL_LIMIT = 15;
 export const QUOTE_DELAY_MS = 300;
 export const REFERRAL_PATH = '/profile';
-
-export const FEATURE_LABELS: Record<string, string> = {
-	option_chain: 'Option Chain',
-	oi_tracker: 'OI Tracker',
-	stocks_screener: 'Stocks Screener',
-	trading: 'Place orders from SvaKosh'
-};

@@ -124,5 +124,6 @@ def payment_view(payment: dict[str, Any]) -> dict[str, Any]:
         "period_start": iso(payment.get("period_start")),
         "period_end": iso(payment.get("period_end")),
         "status": payment["status"],
+        "reference": payment.get("provider_payment_id", ""),
         "paid_at": iso(payment.get("paid_at")),
     }
