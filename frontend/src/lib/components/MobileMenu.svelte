@@ -8,6 +8,7 @@
 	import { BRAND } from '$lib/brand';
 	import CloseIcon from './svg-provider/CloseIcon.svelte';
 	import SvaKoshAvatar from './svakosh/SvaKoshAvatar.svelte';
+	import SvaKoshLogo from './svakosh/SvaKoshLogo.svelte';
 	import AccountMenu from './account/AccountMenu.svelte';
 	import ExpandLess from '$lib/components/svg-provider/material/ExpandLess.svelte';
 	import Preview from '$lib/components/svg-provider/material/Preview.svelte';
@@ -85,9 +86,10 @@
 			<a
 				href="/"
 				onclick={handleNavigate}
-				class="text-xs tracking-tighter text-primary uppercase select-none hover:opacity-80 transition-opacity"
+				aria-label={BRAND.name}
+				class="select-none hover:opacity-80 transition-opacity"
 			>
-				{BRAND.name}
+				<SvaKoshLogo class="size-7" />
 			</a>
 			<button
 				onclick={closeMenu}

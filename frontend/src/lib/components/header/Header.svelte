@@ -8,6 +8,7 @@
 	import MenuIcon from '../svg-provider/MenuIcon.svelte';
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
 	import SvaKoshAvatar from '$lib/components/svakosh/SvaKoshAvatar.svelte';
+	import SvaKoshLogo from '$lib/components/svakosh/SvaKoshLogo.svelte';
 	import AccountMenu from '$lib/components/account/AccountMenu.svelte';
 
 	type TUser = {
@@ -84,8 +85,8 @@
 			class="flex items-center transition-all duration-300 ease-in-out shrink-0 
             {uiState.isWatchlistVisible ? 'w-[296px] 2xl:w-[355px]' : 'lg:w-[142px] w-auto'}"
 		>
-			<a href="/" class="text-lg tracking-tighter text-primary uppercase select-none hover:opacity-80 transition-opacity">
-				{BRAND.name}
+			<a href="/" aria-label={BRAND.name} class="select-none hover:opacity-80 transition-opacity">
+				<SvaKoshLogo />
 			</a>
 		</div>
 		<nav class="relative hidden lg:flex gap-8 items-center h-full ml-8">

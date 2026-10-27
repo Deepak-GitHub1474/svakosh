@@ -2,6 +2,7 @@
 	import MenuToggle from './MenuToggle.svelte';
 	import Sheet from './Sheet.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
+	import SvaKoshLogo from '$lib/components/svakosh/SvaKoshLogo.svelte';
 	import { resolve } from '$app/paths';
 	import { NAV } from './data';
 
@@ -16,9 +17,7 @@
 >
 	<nav class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
 		{#snippet logo()}
-			<span class="truncate text-2xl font-bold tracking-tight">
-				Sva<span class="text-primary">Kosh</span>
-			</span>
+			<SvaKoshLogo class="size-10" />
 		{/snippet}
 		{#if sections}
 			<a href="#top" class="rise flex min-w-0 items-center">{@render logo()}</a>
@@ -59,7 +58,7 @@
 
 <Sheet bind:open class="md:hidden">
 	<div class="border-border-subtle flex h-16 shrink-0 items-center justify-between border-b px-5">
-		<span class="text-muted-foreground text-sm font-semibold tracking-tight">SvaKosh</span>
+		<SvaKoshLogo />
 		<MenuToggle bind:open class="-mr-2.5" />
 	</div>
 

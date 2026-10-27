@@ -3,7 +3,7 @@
 	import { APP_FEATURES } from '$lib/utils';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import SvaKoshLogo from '../_components/SvaKoshLogo.svelte';
+	import SvaKoshLogo from '$lib/components/svakosh/SvaKoshLogo.svelte';
 	import IllustrationPanel from '../_components/IllustrationPanel.svelte';
 	import OAuthButtons from '../_components/OAuthButtons.svelte';
 	import FeaturesBar from '../_components/FeaturesBar.svelte';
@@ -47,7 +47,7 @@
 			<div class="w-full max-w-[26rem]">
 				<div class="flex flex-col">
 					{#if !otpSent}
-						<SvaKoshLogo class="self-start" />
+						<SvaKoshLogo class="size-12 self-start" />
 						<div class="mt-8 hidden lg:block">
 							<h1 class="text-2xl font-semibold leading-tight text-foreground">
 								Welcome back <span aria-hidden="true">👋</span>
