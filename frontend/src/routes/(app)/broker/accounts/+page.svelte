@@ -46,6 +46,8 @@
 	];
 	const ICON_BUTTON =
 		'bg-glass inline-flex size-9 items-center justify-center rounded-lg transition-colors';
+	const SILVER_BUTTON =
+		'[--terminal-bg-hover:color-mix(in_srgb,var(--foreground)_16%,transparent)] [--terminal-bg:color-mix(in_srgb,var(--foreground)_10%,transparent)]';
 	const SOFT_BUTTON =
 		'[--terminal-bg-hover:color-mix(in_srgb,var(--primary)_22%,transparent)] [--terminal-bg:color-mix(in_srgb,var(--primary)_14%,transparent)] [--terminal-border-hover:transparent] [--terminal-border:transparent] [--terminal-fg:var(--primary)]';
 
@@ -314,7 +316,7 @@
 			shine
 			variant="secondary"
 			label="Subscribe"
-			class="border-transparent px-4 py-1.5 text-xs"
+			class="border-transparent px-4 py-1.5 text-xs {SILVER_BUTTON}"
 			onclick={subscribeAction(account.id).onClick}
 		/>
 	{:else if badge && paidAccounts.includes(account.id)}
