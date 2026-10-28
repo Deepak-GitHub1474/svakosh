@@ -1,43 +1,27 @@
-# Svakosh frontend
+# Svakosh — Web
 
-SvelteKit + TypeScript + Tailwind CSS v4 + pnpm.
+SvelteKit app: server-rendered pages plus the `/api/**` proxy routes that forward to the backend with HTTP-only cookies. See the [root README](../README.md) for the system architecture.
+
+**Stack:** SvelteKit · Svelte 5 · TypeScript · Tailwind CSS v4 · pnpm
 
 ## Scripts
 
-- `pnpm dev` — dev server (default port 5173)
-- `pnpm build` — production build (adapter-node)
-- `pnpm preview` — preview production build
-- `pnpm check` — `svelte-check`
-- `pnpm lint` — Prettier + ESLint
-- `pnpm validate` — check + lint + build
+| Command         | What it does                                                        |
+| --------------- | ------------------------------------------------------------------- |
+| `pnpm dev`      | Dev server on `http://localhost:5173`                               |
+| `pnpm build`    | Production build (Vercel adapter on Vercel, Node adapter elsewhere) |
+| `pnpm check`    | `svelte-check`                                                      |
+| `pnpm lint`     | Prettier + ESLint                                                   |
+| `pnpm validate` | check + lint + build                                                |
 
 ## Environment
 
-Set in `.env` (not committed):
+Set in `frontend/.env` (never committed). `.env.example` lists every key.
 
-| Variable                     | Purpose                                             | Example       |
-| ---------------------------- | --------------------------------------------------- | ------------- |
-| `PUBLIC_SVAKOSH_APP_ENV`     | Picks the backend preset                            | `development` |
-| `PUBLIC_GOOGLE_CLIENT_ID`    | Google sign-in client id                            |               |
-| `PUBLIC_SVAKOSH_MOBILE_AUTH` | `true` turns on mobile OTP sign-in and verification | `false`       |
+| Variable                     | Purpose                                                                                        |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| `PUBLIC_SVAKOSH_APP_ENV`     | `development` or `production`; picks the API and WebSocket URLs in `src/lib/config/presets.ts` |
+| `PUBLIC_GOOGLE_CLIENT_ID`    | Google sign-in client ID                                                                       |
+| `PUBLIC_SVAKOSH_MOBILE_AUTH` | `true` enables mobile OTP sign-in                                                              |
 
-`development` uses `http://127.0.0.1:8000` and `ws://127.0.0.1:8000`; `production` uses the deployed API. Both REST and WebSocket URLs live in `src/lib/config/presets.ts`, read through `resolveBackendConfig()`.
-
-## Project docs
-
-Product/requirements may live in a parent monorepo as `SVAKOSH-PROJECT.md` / `SVAKOSH-IMPLEMENTATION-STATUS.md` — copy into your repo or open from the workspace root if applicable.
-
-## Health
-
-`GET /health` returns `{ ok: true }`.
-
-## Git — commit prefixes
-
-| Prefix          | Use when                                   |
-| --------------- | ------------------------------------------ |
-| `feat:`         | New API behavior clients can rely on       |
-| `fix:`          | Bug fixes, no new feature                  |
-| `refactor:`     | Internal structure; same external behavior |
-| `optimization:` | Performance; same API contract             |
-| `style:`        | Formatting, logs, OpenAPI text only        |
-| `docs:`         | Documentation only                         |
+Razorpay needs no frontend key; the API returns it with each checkout.
