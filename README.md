@@ -39,17 +39,36 @@ graph LR
     BDP --> BRK["Broker APIs"]
     TH -->|"static IPv4"| BRK
     API <-->|"API + webhooks"| RZP["Razorpay"]
+    B -->|"Checkout"| RZP
 ```
+
+### Connections
+
+| From → To                      | Protocol          | Carries                                              | Secured by                                         |
+| ------------------------------ | ----------------- | ---------------------------------------------------- | -------------------------------------------------- |
+| Browser → SvelteKit            | HTTPS             | Pages, `/api/**` calls                               | HTTP-only, same-site auth cookies                  |
+| SvelteKit → FastAPI            | HTTPS (REST)      | Every API call, forwarded server-side                | Access token from the cookie, refreshed on expiry  |
+| Browser → FastAPI              | WebSocket         | Live ticks, order and position updates               | Short-lived, single-use ticket                     |
+| FastAPI → MongoDB              | TCP               | Users, watchlists, subscriptions, payments           | App-scoped DB user on a private network            |
+| FastAPI → Redis                | TCP               | Sessions, OTP, caches, job lock                      | Password, private network                          |
+| FastAPI → broker-data-provider | NATS              | Quote, chain and history requests; tick stream       | Authenticated NATS user, subject permissions       |
+| FastAPI → trade-hub            | NATS              | Account, order and portfolio requests; order updates | Its own NATS on the private Docker network         |
+| broker-data-provider → Broker  | HTTPS / WebSocket | Market data                                          | Broker API session                                 |
+| trade-hub → Broker             | HTTPS / WebSocket | Orders, positions, holdings, funds                   | Per-account broker session from a pinned static IP |
+| FastAPI ↔ Razorpay             | HTTPS + webhooks  | Subscriptions, payments, renewals                    | API key; HMAC-verified signatures                  |
+| Browser → Razorpay             | Checkout          | Card / UPI payment                                   | Razorpay-hosted checkout                           |
 
 ### Services
 
-| Service                  | Stack                | Runs on          | Responsibility                                                    |
-| ------------------------ | -------------------- | ---------------- | ----------------------------------------------------------------- |
-| **frontend** (this repo) | SvelteKit, Svelte 5  | Vercel           | SSR pages and the `/api/**` proxy that holds auth cookies         |
-| **backend** (this repo)  | FastAPI, Python 3.13 | Dokploy (Docker) | Auth, watchlists, analytics, trading API, billing, live WebSocket |
-| **broker-data-provider** | Go                   | Dokploy          | Streams quotes, option chains and history from brokers over NATS  |
-| **trade-hub**            | Go, MongoDB, Redis   | Dokploy          | Broker sessions, orders, positions, holdings and funds over NATS  |
-| **MongoDB · Redis**      | —                    | Dokploy          | Persistent data · sessions, OTP, caches and job locks             |
+broker-data-provider and trade-hub are separate private services; Svakosh talks to them only over NATS.
+
+| Service                            | Stack                | Runs on          | Responsibility                                                    |
+| ---------------------------------- | -------------------- | ---------------- | ----------------------------------------------------------------- |
+| **frontend** (this repo)           | SvelteKit, Svelte 5  | Vercel           | SSR pages and the `/api/**` proxy that holds auth cookies         |
+| **backend** (this repo)            | FastAPI, Python 3.13 | Dokploy (Docker) | Auth, watchlists, analytics, trading API, billing, live WebSocket |
+| **broker-data-provider** (private) | Go                   | Dokploy          | Streams quotes, option chains and history from brokers over NATS  |
+| **trade-hub** (private)            | Go, MongoDB, Redis   | Dokploy          | Broker sessions, orders, positions, holdings and funds over NATS  |
+| **MongoDB · Redis**                | —                    | Dokploy          | Persistent data · sessions, OTP, caches and job locks             |
 
 ### Request flows
 
