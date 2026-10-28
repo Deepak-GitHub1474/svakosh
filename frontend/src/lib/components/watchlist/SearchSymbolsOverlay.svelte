@@ -8,8 +8,9 @@
 	import Search from '$lib/components/svg-provider/material/Search.svelte';
 	import SearchOff from '$lib/components/svg-provider/material/SearchOff.svelte';
 
+	import { TRADE_BUTTON, TRADE_ICON_BUTTON } from '$lib/components/order/const';
 	import { searchSymbols } from './service';
-	import type { TSymbol } from './types';
+	import { isTradable, type TSymbol } from './types';
 
 	const SEARCH_DEBOUNCE_MS = 250;
 
@@ -21,6 +22,7 @@
 		addedTokens?: Set<string>;
 		onadd?: (hit: TSymbol) => Promise<void> | void;
 		onseed?: (q: string) => void;
+		onorder?: (hit: TSymbol, transaction: 'BUY' | 'SELL') => void;
 	}
 
 	let {
@@ -30,7 +32,8 @@
 		isPredefined = false,
 		addedTokens = new Set<string>(),
 		onadd,
-		onseed
+		onseed,
+		onorder
 	}: Props = $props();
 
 	const trimmed = $derived(query.trim());
@@ -122,6 +125,26 @@
 								>{hit.exchange} · {hit.instrument}</span
 							>
 						</div>
+						{#if onorder && isTradable(hit.instrument)}
+							<div class="flex items-center gap-2.5 lg:hidden lg:group-hover:flex">
+								<button
+									type="button"
+									onclick={() => onorder(hit, 'BUY')}
+									aria-label="Buy {hit.trading_symbol}"
+									class="{TRADE_ICON_BUTTON} {TRADE_BUTTON.BUY}"
+								>
+									B
+								</button>
+								<button
+									type="button"
+									onclick={() => onorder(hit, 'SELL')}
+									aria-label="Sell {hit.trading_symbol}"
+									class="{TRADE_ICON_BUTTON} {TRADE_BUTTON.SELL}"
+								>
+									S
+								</button>
+							</div>
+						{/if}
 						<button
 							type="button"
 							onclick={() => handleAdd(hit)}
