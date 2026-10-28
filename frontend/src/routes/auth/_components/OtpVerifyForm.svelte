@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import LockIcon from '$lib/components/svg-provider/LockIcon.svelte';
 	import { enhance } from '$app/forms';
 	import { cn, safeSubmit } from '$lib/utils';
@@ -26,6 +27,8 @@
 	let resending = $state(false);
 	let secondsLeft = $state(0);
 	let resendKey = $state(0);
+
+	onMount(() => document.getElementById('otp-input')?.focus());
 	
 	const canResend = $derived(secondsLeft <= 0);
 	const isValidOtp = $derived(/^\d{6}$/.test(otp));
