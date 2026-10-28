@@ -219,6 +219,7 @@
 						<th class={TABLE.th}>Broker</th>
 						<th class={TABLE.th}>Session</th>
 						<th class={TABLE.th}>Linked</th>
+						<th class={TABLE.th}>Plan</th>
 						<th class="{TABLE.th} w-px text-right">Actions</th>
 					</tr>
 				</thead>
@@ -243,10 +244,10 @@
 							<td class="{TABLE.td} text-muted-foreground">{brokerName(account.broker)}</td>
 							<td class={TABLE.td}>{@render session(account)}</td>
 							<td class="{TABLE.td} text-muted-foreground">{timeOf(account.created_at)}</td>
+							<td class={TABLE.td}>{@render plan(account)}</td>
 							<td class={TABLE.td}>
 								<div class="flex items-center justify-end gap-2">
 									{@render iconActions(account)}
-									{@render planLink(account)}
 									{@render loginButton(account)}
 								</div>
 							</td>
@@ -287,7 +288,7 @@
 					>
 						<div class="flex gap-2">{@render iconActions(account)}</div>
 						<div class="flex items-center gap-3">
-							{@render planLink(account)}
+							{@render plan(account)}
 							{@render loginButton(account)}
 						</div>
 					</div>
@@ -307,13 +308,20 @@
 	</span>
 {/snippet}
 
-{#snippet planLink(account: TBrokerAccount)}
+{#snippet plan(account: TBrokerAccount)}
 	{#if needsPlan(account)}
-		<button
-			type="button"
-			class="text-primary shrink-0 text-xs hover:underline"
-			onclick={subscribeAction(account.id).onClick}>Subscribe</button
-		>
+		<SvaKoshButton
+			variant="secondary"
+			label="Subscribe"
+			class="border-transparent px-4 py-1.5 text-xs"
+			onclick={subscribeAction(account.id).onClick}
+		/>
+	{:else if paidAccounts.includes(account.id)}
+		<span class="bg-bullish-subtle text-bullish rounded px-2 py-1 text-xs font-semibold">
+			Subscribed
+		</span>
+	{:else}
+		<span class="text-muted-foreground">—</span>
 	{/if}
 {/snippet}
 
