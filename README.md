@@ -19,7 +19,7 @@ Svakosh is one workspace for:
 - **Analytics** — option chain, open interest, max pain, straddle/strangle, PCR, breakout screeners and market overview on live NSE/BSE data.
 - **Trading** — link broker accounts, place and manage orders, track positions, holdings and funds.
 - **Watchlists** — multiple lists with live prices and private notes.
-- **Subscriptions** — Premium Analytics and per-broker-account plans billed through Razorpay.
+- **Subscriptions** — Premium Analytics and per-broker-account plans on Razorpay with autopay, webhooks and hourly reconciliation. Runs in **test mode only** — no real payment is ever taken.
 
 The UI is built without a component library; the frontend ships three runtime dependencies (`echarts`, `tailwind-merge`, `@simplewebauthn/browser`).
 
@@ -30,7 +30,7 @@ The UI is built without a component library; the frontend ships three runtime de
 ```mermaid
 graph LR
     B["Browser"] -->|"HTTPS"| FE["SvelteKit<br/>Vercel · SSR + /api proxy"]
-    FE -->|"REST · HTTP-only cookies"| API["FastAPI<br/>Dokploy · Docker"]
+    FE -->|"REST · HTTP-only cookies"| API["FastAPI<br/>Google Cloud VM · Dokploy"]
     B -->|"WebSocket · one-time ticket"| API
     API --> M[("MongoDB")]
     API --> R[("Redis")]
@@ -55,20 +55,20 @@ graph LR
 | FastAPI → trade-hub            | NATS              | Account, order and portfolio requests; order updates | Its own NATS on the private Docker network         |
 | broker-data-provider → Broker  | HTTPS / WebSocket | Market data                                          | Broker API session                                 |
 | trade-hub → Broker             | HTTPS / WebSocket | Orders, positions, holdings, funds                   | Per-account broker session from a pinned static IP |
-| FastAPI ↔ Razorpay             | HTTPS + webhooks  | Subscriptions, payments, renewals                    | API key; HMAC-verified signatures                  |
-| Browser → Razorpay             | Checkout          | Card / UPI payment                                   | Razorpay-hosted checkout                           |
+| FastAPI ↔ Razorpay             | HTTPS + webhooks  | Subscriptions, payments, renewals                    | Server-side only, signed webhooks                  |
+| Browser → Razorpay             | Checkout          | Test-mode payment                                    | Razorpay-hosted checkout                           |
 
 ### Services
 
 broker-data-provider and trade-hub are separate private services; Svakosh talks to them only over NATS.
 
-| Service                            | Stack                | Runs on          | Responsibility                                                    |
-| ---------------------------------- | -------------------- | ---------------- | ----------------------------------------------------------------- |
-| **frontend** (this repo)           | SvelteKit, Svelte 5  | Vercel           | SSR pages and the `/api/**` proxy that holds auth cookies         |
-| **backend** (this repo)            | FastAPI, Python 3.13 | Dokploy (Docker) | Auth, watchlists, analytics, trading API, billing, live WebSocket |
-| **broker-data-provider** (private) | Go                   | Dokploy          | Streams quotes, option chains and history from brokers over NATS  |
-| **trade-hub** (private)            | Go, MongoDB, Redis   | Dokploy          | Broker sessions, orders, positions, holdings and funds over NATS  |
-| **MongoDB · Redis**                | —                    | Dokploy          | Persistent data · sessions, OTP, caches and job locks             |
+| Service                            | Stack                | Runs on         | Responsibility                                                    |
+| ---------------------------------- | -------------------- | --------------- | ----------------------------------------------------------------- |
+| **frontend** (this repo)           | SvelteKit, Svelte 5  | Vercel          | SSR pages and the `/api/**` proxy that holds auth cookies         |
+| **backend** (this repo)            | FastAPI, Python 3.13 | Google Cloud VM | Auth, watchlists, analytics, trading API, billing, live WebSocket |
+| **broker-data-provider** (private) | Go                   | Google Cloud VM | Streams quotes, option chains and history from brokers over NATS  |
+| **trade-hub** (private)            | Go, MongoDB, Redis   | Google Cloud VM | Broker sessions, orders, positions, holdings and funds over NATS  |
+| **MongoDB · Redis**                | —                    | Google Cloud VM | Persistent data · sessions, OTP, caches and job locks             |
 
 ### Request flows
 
@@ -84,7 +84,7 @@ Broker ◄─► trade-hub ─────────── NATS ──┘
 
 **Orders.** `Browser → /api/trade/* → FastAPI → NATS → trade-hub → broker`. FastAPI checks for an active Broker Account subscription on that account; trade-hub owns the broker session and sends every call from the account's pinned static IP.
 
-**Payments.** `/pricing` asks the API for a quote, the API creates a Razorpay subscription, and the browser completes checkout. Activation is confirmed by the client callback and by Razorpay webhooks, both verified by signature and idempotent. An hourly in-process job (guarded by a Redis lock) expires and reconciles subscriptions.
+**Payments.** `/pricing` gets a quote, the API creates a Razorpay subscription and the browser completes checkout. The checkout callback and webhooks activate it; an hourly job expires and reconciles subscriptions.
 
 ### Response contract
 
@@ -131,7 +131,6 @@ Each route keeps its own `_components/` beside it; each backend domain is one fo
 - **Passwordless sign-in** — WebAuthn passkeys, Google OAuth (JWKS-verified) and OTP (HMAC-hashed in Redis with lockout).
 - **Sessions** — short-lived JWT access tokens, rotating refresh tokens, HTTP-only cookies, server-side revocation.
 - **Data** — field-level encryption for sensitive profile data.
-- **Payments** — Razorpay signatures verified on checkout and webhooks; keys live only in server environment.
 
 ---
 
@@ -144,7 +143,7 @@ Each route keeps its own `_components/` beside it; each backend domain is one fo
 | Services   | Go · NATS                                                           |
 | Payments   | Razorpay subscriptions                                              |
 | Tooling    | pnpm · uv · ESLint · Prettier · svelte-check                        |
-| Deployment | Vercel (frontend) · Dokploy + Docker (backend and services)         |
+| Deployment | Google Cloud VM · Dokploy · Docker · static IPv4 · Vercel           |
 
 ---
 
@@ -187,7 +186,7 @@ Frontend gate: `pnpm validate`. Backend: commit `pyproject.toml` and `uv.lock` t
 
 ## Disclaimer
 
-Svakosh is a personal portfolio project. It is not investment advice, is not affiliated with NSE, BSE, SEBI or any broker, and makes no claim of regulatory standing. Trading features act on the user's own broker accounts at their own risk. The demo carries no uptime or accuracy guarantee and is provided as-is, without warranty.
+Svakosh is a personal portfolio project. It is not investment advice, is not affiliated with NSE, BSE, SEBI or any broker, and makes no claim of regulatory standing. Trading features act on the user's own broker accounts at their own risk. Payments run in Razorpay test mode for end-to-end demonstration only; no real money is charged. The demo carries no uptime or accuracy guarantee and is provided as-is, without warranty.
 
 ---
 
