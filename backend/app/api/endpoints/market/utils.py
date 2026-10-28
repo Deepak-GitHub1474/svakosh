@@ -15,6 +15,15 @@ def is_feed_token(token: Any) -> bool:
     return len(parts) >= 3 and SUBJECT_UNSAFE_CHARS.isdisjoint(parts[0] + parts[2])
 
 
+def is_expired(token: str, today: str) -> bool:
+    parts = token.split(":")
+    return len(parts) > 3 and parts[1] in ("FUT", "OPT") and parts[3] < today
+
+
+def today_ist() -> str:
+    return datetime.now(IST).strftime("%Y%m%d")
+
+
 def session_status(now: datetime, live: bool, pre_open: time | None, opens: time, closes: time) -> str:
     if now.weekday() >= 5 or not live:
         return "Closed"

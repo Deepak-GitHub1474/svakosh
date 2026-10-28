@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { TRADE_BUTTON } from '$lib/components/order/const';
+	import { TRADE_BUTTON, TRADE_ICON_BUTTON } from '$lib/components/order/const';
 	import SymbolImage from '$lib/components/symbol-image/SymbolImage.svelte';
 	import WatchlistEntryActionPanel from './WatchlistEntryActionPanel.svelte';
 	import { formatNumber } from '$lib/utils';
@@ -48,8 +48,6 @@
 	const showDelete = $derived(canMutate);
 	const hasActions = $derived(showNote || showDelete);
 	const showTrade = $derived(tradable && !!onOrder);
-	const trade =
-		'inline-flex size-7 items-center justify-center rounded border text-xs font-medium transition-colors cursor-pointer';
 
 	let actionsOpen = $state(false);
 	let openUp = $state(false);
@@ -166,7 +164,7 @@
 						type="button"
 						onclick={() => handleTrade('BUY')}
 						aria-label="Buy {name}"
-						class="{trade} {TRADE_BUTTON.BUY}"
+						class="{TRADE_ICON_BUTTON} {TRADE_BUTTON.BUY}"
 					>
 						B
 					</button>
@@ -174,7 +172,7 @@
 						type="button"
 						onclick={() => handleTrade('SELL')}
 						aria-label="Sell {name}"
-						class="{trade} {TRADE_BUTTON.SELL}"
+						class="{TRADE_ICON_BUTTON} {TRADE_BUTTON.SELL}"
 					>
 						S
 					</button>

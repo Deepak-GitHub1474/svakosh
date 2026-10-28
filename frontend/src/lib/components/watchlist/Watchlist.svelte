@@ -31,6 +31,7 @@
 	} from './service';
 	import type {
 		TSortDirection,
+		TSymbol,
 		TWatchlistEntry,
 		TWatchlistItem,
 		TWatchlistSortBy
@@ -75,11 +76,11 @@
 	const addedTokens = $derived(new Set(entries.map((e) => e.sk_token)));
 
 	let orderOpen = $state(false);
-	let orderEntry = $state<TWatchlistEntry | null>(null);
+	let orderEntry = $state<TSymbol | null>(null);
 	let orderDraft = $state<TOrderTicket | null>(null);
 	const orderQuote = $derived(orderEntry ? marketFeed.quotes[orderEntry.sk_token] : undefined);
 
-	function openOrder(entry: TWatchlistEntry, transaction: 'BUY' | 'SELL') {
+	function openOrder(entry: TSymbol, transaction: 'BUY' | 'SELL') {
 		orderEntry = entry;
 		orderDraft = {
 			token: entry.sk_token,
@@ -94,6 +95,7 @@
 	}
 
 	$effect(() => marketFeed.subscribe(entries.map((e) => e.sk_token)));
+	$effect(() => (orderEntry ? marketFeed.subscribe([orderEntry.sk_token]) : undefined));
 
 	function entryLtp(e: TWatchlistEntry): number {
 		return marketFeed.quotes[e.sk_token]?.ltp ?? 0;
@@ -438,6 +440,7 @@
 				searchQuery = q;
 				searchInput?.focus();
 			}}
+			onorder={openOrder}
 		/>
 	</div>
 

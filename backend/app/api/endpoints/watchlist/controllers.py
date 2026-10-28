@@ -9,7 +9,7 @@ from pymongo.errors import DuplicateKeyError
 
 from app.api.endpoints.auth.utils import AccessClaims
 from app.api.endpoints.market.company import company_names
-from app.api.endpoints.market.utils import symbol_of
+from app.api.endpoints.market.utils import is_expired, symbol_of, today_ist
 from app.api.endpoints.watchlist.constants import (
     COL_WATCHLIST,
     COL_WATCHLIST_NOTES,
@@ -280,9 +280,17 @@ async def get_watchlist_entries(
             detail="Watchlist not found.",
         )
 
+    today = today_ist()
     saved = doc.get("sk_tokens") or []
-    notes = {t["sk_token"]: t.get("note") for t in saved}
-    entries = await _entries(market, [t["sk_token"] for t in saved], notes)
+    expired = [t["sk_token"] for t in saved if is_expired(t["sk_token"], today)]
+    if expired:
+        await mongo[COL_WATCHLIST].update_one(
+            {"_id": doc["_id"]},
+            {"$pull": {"sk_tokens": {"sk_token": {"$in": expired}}}},
+        )
+    live = [t for t in saved if t["sk_token"] not in expired]
+    notes = {t["sk_token"]: t.get("note") for t in live}
+    entries = await _entries(market, [t["sk_token"] for t in live], notes)
     return {"watchlist": name, "predefined": False, "entries": entries}
 
 
