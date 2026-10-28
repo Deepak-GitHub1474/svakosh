@@ -1,55 +1,36 @@
-## Svakosh — API
+# Svakosh — API
 
-**Stack:** Python 3.13 · FastAPI · MongoDB (Motor) · Redis · **uv**
+FastAPI service for auth, watchlists, analytics, trading, billing and the live WebSocket. See the [root README](../README.md) for the system architecture.
 
-### Setup
+**Stack:** Python 3.13 · FastAPI · MongoDB (Motor) · Redis · NATS · uv
 
-1. Install [uv](https://docs.astral.sh/uv/).
-2. From **`backend/`**: `uv sync` (installs everything from **`uv.lock`** into **`.venv`**).
-3. To add or remove a runtime dependency, use **`uv add <package>`** or **`uv remove <package>`** from **`backend/`** — do not use **`pip install`** for project dependencies.
-4. Copy or create **`backend/.env`** (see variables below). All keys are required.
-
-### Run
-
-From **`backend/`**:
+## Run locally
 
 ```bash
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+cp .env.example .env
+docker network create dokploy-network   # once
+docker compose up -d mongodb mongo-init redis
+uv sync
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
-**Health:** `GET /health` (server health).
+Health check: `GET /health`. Add or remove dependencies with `uv add` / `uv remove`, then commit `pyproject.toml` and `uv.lock` together.
 
-## Environment (`.env`)
+On startup the API creates billing indexes and default plans, and runs an hourly reconcile job guarded by a Redis lock — no external cron is needed.
 
-| Variable | Purpose |
-| -------- | ------- |
-| `APP_NAME` | API title |
-| `APP_VERSION` | Version string |
-| `API_PREFIX` | e.g. `/api` |
-| `API_ENV` | e.g. `development` |
-| `HOST` | Bind host |
-| `PORT` | Port |
-| `MONGODB_URI` | Mongo connection URI |
-| `MONGODB_DB_NAME` | Database name |
-| `REDIS_URL` | Redis URL |
-| `NATS_URL` | broker-data-provider NATS, e.g. `nats://svakosh:<password>@127.0.0.1:4222` |
-| `CORS_ORIGINS` | Comma-separated origins |
-| `MAIL_PROVIDER` | `smtp` sends real mail, `console` prints it |
-| `MAIL_FROM` | From header (e.g. `Svakosh <your-email@gmail.com>`) |
-| `SMTP_HOST` / `SMTP_PORT` | e.g. `smtp.gmail.com` / `587` |
-| `SMTP_USERNAME` / `SMTP_PASSWORD` | Gmail address and 16-char App Password |
-| `SMTP_USE_TLS` | STARTTLS encryption (default: `true` for 587) |
-| `SMS_GATEWAY_USER` / `SMS_GATEWAY_PASSWORD` | sms-gate.app cloud credentials from the Android app; empty logs OTPs only |
+## Environment
 
-## Git — commit prefixes
+All values go in `backend/.env` (never committed). `.env.example` lists every key.
 
-| Prefix | Use when |
-| ------ | -------- |
-| `feat:` | New API behavior clients can rely on |
-| `fix:` | Bug fixes, no new feature |
-| `refactor:` | Internal structure; same external behavior |
-| `optimization:` | Performance; same API contract |
-| `style:` | Formatting, logs, OpenAPI text only |
-| `docs:` | Documentation only |
-
-After any dependency change (**`uv add`** / **`uv remove`** / manual edits to **`pyproject.toml`**), run **`uv sync`** and commit **`pyproject.toml`** and **`uv.lock`** together.
+| Group              | Variables                                                                                                     | Notes                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| App                | `APP_NAME` `APP_VERSION` `API_PREFIX` `API_ENV` `HOST` `PORT` `CORS_ORIGINS`                                  | `API_ENV=development` enables reload      |
+| MongoDB            | `MONGO_ROOT_USER` `MONGO_ROOT_PASSWORD` `MONGO_APP_USER` `MONGO_APP_PASSWORD` `MONGODB_URI` `MONGODB_DB_NAME` | Root user is used only by `mongo-init`    |
+| Redis              | `REDIS_PASSWORD` `REDIS_URL`                                                                                  | Sessions, OTP, caches, job lock           |
+| Market data        | `NATS_URL`                                                                                                    | broker-data-provider                      |
+| Trading            | `TRADE_HUB_NATS_URL` `TRADE_LOGIN_REDIRECT_URL`                                                               | trade-hub and the broker login return URL |
+| Billing            | `RAZORPAY_KEY_ID` `RAZORPAY_KEY_SECRET` `RAZORPAY_WEBHOOK_SECRET`                                             | Webhook: `<api>/billing/webhook/razorpay` |
+| Auth               | `JWT_SECRET` `OTP_HMAC_SECRET` `ENCRYPTION_KEY` `GOOGLE_CLIENT_ID`                                            | Generators are in `.env.example`          |
+| Passkeys & cookies | `WEBAUTHN_RP_NAME` `WEBAUTHN_RP_ID` `WEBAUTHN_ORIGIN` `COOKIE_SECURE` `COOKIE_SAMESITE`                       | RP ID/origin must match the frontend host |
+| Mail               | `MAIL_PROVIDER` `MAIL_FROM` `SMTP_HOST` `SMTP_PORT` `SMTP_USERNAME` `SMTP_PASSWORD` `SMTP_USE_TLS`            | `console` prints mail instead of sending  |
+| SMS                | `SMS_GATEWAY_USER` `SMS_GATEWAY_PASSWORD`                                                                     | Empty logs OTPs only                      |

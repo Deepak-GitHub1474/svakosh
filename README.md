@@ -2,11 +2,11 @@
 
 # Svakosh
 
-**A full-stack stock market analytics platform — equity and derivatives — built for speed, with a hand-rolled UI system and near-zero third-party dependencies.**
+**Market analytics, live trading and subscriptions for Indian equities and derivatives.**
 
 [**Live Demo**](https://svakosh.vercel.app) · [**Report an Issue**](https://github.com/Deepak-GitHub1474/svakosh/issues)
 
-`SvelteKit` · `Svelte 5` · `TypeScript` · `Tailwind CSS v4` · `FastAPI` · `MongoDB` · `Redis` · `Docker`
+`SvelteKit` · `Svelte 5` · `TypeScript` · `Tailwind CSS v4` · `FastAPI` · `MongoDB` · `Redis` · `NATS` · `Go` · `Razorpay`
 
 </div>
 
@@ -14,75 +14,14 @@
 
 ## Overview
 
-Svakosh is a market analytics workspace for Indian equities and derivatives. It pairs a **passwordless authentication system** — WebAuthn passkeys, Google OAuth, and OTP — with **multi-watchlist tracking** and **18 live dashboards** covering option chain, open interest, max pain, straddle/strangle spreads, PCR, and breakout screeners.
+Svakosh is one workspace for:
 
-The project exists to answer a specific question: *how fast can a data-dense trading interface be if you refuse to reach for a component library?*
+- **Analytics** — option chain, open interest, max pain, straddle/strangle, PCR, breakout screeners and market overview on live NSE/BSE data.
+- **Trading** — link broker accounts, place and manage orders, track positions, holdings and funds.
+- **Watchlists** — multiple lists with live prices and private notes.
+- **Subscriptions** — Premium Analytics and per-broker-account plans billed through Razorpay.
 
-Every interactive element — modal, drawer, toast, tabs, selector, tooltip, switch — is written from scratch. The entire frontend ships **three runtime dependencies**.
-
-> **Live data.** All dashboards and watchlists run on live NSE/BSE market data. Outside market hours they show the last session.
-
----
-
-## Why It's Fast
-
-Most dashboards are slow because of what they install, not what they render. Svakosh inverts that.
-
-| | |
-|---|---|
-| **3 runtime dependencies** | `echarts` for charts, `tailwind-merge` for class resolution, `@simplewebauthn/browser` for passkeys. Nothing else. |
-| **No component library** | 17 custom components. No Material UI, no shadcn, no Skeleton, no Flowbite — no framework's opinions, no framework's bundle. |
-| **No icon font** | 52 Material Design icons compiled to local inline SVG components. Zero network requests, zero FOUT — icon fonts render their ligature *text* until the font loads, which visibly breaks layout on slow connections. |
-| **Server-side rendered** | SvelteKit SSR means first paint carries real content, not a loading skeleton. |
-| **Svelte 5 runes** | Fine-grained reactivity compiles away the virtual DOM. No reconciliation cost on live price updates. |
-| **Route-level code splitting** | Each dashboard loads only its own chart logic. |
-
----
-
-## Features
-
-### 🔐 Authentication & Security
-
-Passwordless by default, with layered fallbacks:
-
-- **WebAuthn passkeys** — register and sign in with fingerprint, face, or device PIN. Full credential lifecycle with per-device management.
-- **Google OAuth** — ID-token verification against Google's JWKS with issuer validation and account linking to existing profiles.
-- **OTP verification** — HMAC-hashed codes in Redis with TTL expiry, failure lockout, and resend cooldown.
-- **JWT access/refresh rotation** — short-lived access tokens, rotating refresh tokens, HTTP-only cookies, and server-side session revocation.
-- **Argon2 password hashing** and application-level field encryption for sensitive profile data.
-
-### 📊 Watchlists
-
-- Multiple named watchlists per user, plus curated predefined lists
-- Symbol search with add/remove and duplicate protection
-- Per-symbol private notes
-- Sort by name, LTP, absolute change, or percentage change
-- Rename and delete with confirmation flows
-
-### 📈 Market Analytics
-
-Eighteen dashboards across equity and derivatives:
-
-**Open Interest** — OI Tracker · Lookup · Glimpse · Buildup · Call vs Put · Multi-Symbol OI · Max Pain
-
-**Options** — Option Chain · Straddle Analysis · Strangle Analysis · Air-in-Premiums · Options Chart
-
-**Equity** — Stock Screener · 52-Week Breakout · Volume Breakout
-
-**Market** — Market Pulse · Market Overview · Options Analytics
-
-### 🎨 UI System
-
-A cohesive component set where every element behaves consistently across every route:
-
-`Avatar` · `Badge` · `Button` · `Card` · `Drawer` · `Input` · `Label` · `Loader` · `Modal` · `MultiSelector` · `NumberInput` · `Selector` · `Switch` · `Tabs` · `Toast` · `Toaster` · `Tooltip`
-
-Design decisions that carry through the whole app:
-
-- **Theme tokens, never raw colours.** Components consume `--primary`, `--bullish`, `--bearish`, `--border-subtle`. Retheming is a variable change, not a find-and-replace.
-- **`class` prop on every component**, merged via `tailwind-merge` so a caller's utility always wins over the default.
-- **One overlay z-scale**, documented and enforced — modals, drawers, sheets, and popovers never fight.
-- **Responsive by construction.** The watchlist is a docked rail on desktop and a full-screen overlay on mobile — same component, one breakpoint branch.
+The UI is built without a component library; the frontend ships three runtime dependencies (`echarts`, `tailwind-merge`, `@simplewebauthn/browser`).
 
 ---
 
@@ -90,190 +29,146 @@ Design decisions that carry through the whole app:
 
 ```mermaid
 graph LR
-    B["Browser"] -->|"HTTPS"| V["SvelteKit on Vercel<br/>SSR + BFF proxy routes"]
-    V -->|"REST, HTTP-only cookies"| A["FastAPI<br/>AWS VPS via Dokploy"]
-    B -->|"WebSocket, one-time ticket"| A
-    A --> M[("MongoDB<br/>users · watchlists · profiles")]
-    A --> R[("Redis<br/>sessions · OTP · cooldowns")]
-    A -->|"NATS"| P["broker-data-provider<br/>live quotes · chains · history"]
+    B["Browser"] -->|"HTTPS"| FE["SvelteKit<br/>Vercel · SSR + /api proxy"]
+    FE -->|"REST · HTTP-only cookies"| API["FastAPI<br/>Dokploy · Docker"]
+    B -->|"WebSocket · one-time ticket"| API
+    API --> M[("MongoDB")]
+    API --> R[("Redis")]
+    API -->|"NATS"| BDP["broker-data-provider<br/>Go · market data"]
+    API -->|"NATS"| TH["trade-hub<br/>Go · orders & portfolio"]
+    BDP --> BRK["Broker APIs"]
+    TH -->|"static IPv4"| BRK
+    API <-->|"API + webhooks"| RZP["Razorpay"]
 ```
 
-**REST calls never go from the browser to the API directly.** SvelteKit server routes under `src/routes/api/**` act as a backend-for-frontend layer: they hold the auth cookies, forward requests server-side, and transparently retry once after refreshing an expired access token. Tokens never touch client JavaScript.
+### Services
 
-The live price WebSocket is the one direct connection, opened with a short-lived single-use ticket.
+| Service                  | Stack                | Runs on          | Responsibility                                                    |
+| ------------------------ | -------------------- | ---------------- | ----------------------------------------------------------------- |
+| **frontend** (this repo) | SvelteKit, Svelte 5  | Vercel           | SSR pages and the `/api/**` proxy that holds auth cookies         |
+| **backend** (this repo)  | FastAPI, Python 3.13 | Dokploy (Docker) | Auth, watchlists, analytics, trading API, billing, live WebSocket |
+| **broker-data-provider** | Go                   | Dokploy          | Streams quotes, option chains and history from brokers over NATS  |
+| **trade-hub**            | Go, MongoDB, Redis   | Dokploy          | Broker sessions, orders, positions, holdings and funds over NATS  |
+| **MongoDB · Redis**      | —                    | Dokploy          | Persistent data · sessions, OTP, caches and job locks             |
 
-### Market data pipeline
+### Request flows
+
+**REST.** The browser never calls the API directly. SvelteKit routes under `frontend/src/routes/api/**` forward each request server-side with the HTTP-only auth cookies, and retry once after refreshing an expired access token. Tokens never reach client JavaScript.
+
+**Live data.** The browser opens one WebSocket to the API with a short-lived, single-use ticket. The API fans out market ticks from broker-data-provider and order/position updates from trade-hub over that one connection.
 
 ```
-Broker ──► broker-data-provider (Go) ──► NATS ──► FastAPI ──► Browser (WebSocket)
+Broker ─► broker-data-provider ─► NATS ─┐
+                                        ├─► FastAPI ─► WebSocket ─► Browser
+Broker ◄─► trade-hub ─────────── NATS ──┘
 ```
 
-Market data streams from **broker-data-provider**, a separate **Go** service. Each broker plugs in as its own module (Angel One today) and maps to one Svakosh token format, so adding a broker needs no API or frontend change.
+**Orders.** `Browser → /api/trade/* → FastAPI → NATS → trade-hub → broker`. FastAPI checks for an active Broker Account subscription on that account; trade-hub owns the broker session and sends every call from the account's pinned static IP.
 
-### Predictable response contract
+**Payments.** `/pricing` asks the API for a quote, the API creates a Razorpay subscription, and the browser completes checkout. Activation is confirmed by the client callback and by Razorpay webhooks, both verified by signature and idempotent. An hourly in-process job (guarded by a Redis lock) expires and reconciles subscriptions.
 
-Every endpoint — success or failure, including unhandled exceptions — returns the same envelope:
+### Response contract
+
+Every endpoint, including errors and unhandled exceptions, returns one envelope:
 
 ```json
 {
   "success": true,
   "message": "Watchlist created.",
-  "data": { "name": "My Fav", "predefined": false, "count": 0 }
+  "data": { "name": "My Fav" }
 }
 ```
 
-Centralised exception handlers cover validation errors, HTTP errors, and uncaught exceptions, so the client has exactly one shape to parse. No endpoint invents its own error format.
+---
 
-### Layered backend
-
-```
-app/
-├── main.py               # app factory, CORS, middleware registration
-├── config.py             # typed settings via pydantic-settings
-├── responses.py          # ok_response / err_response envelope
-├── error_handlers.py     # centralised exception handling
-├── api/endpoints/
-│   ├── auth/             # routes · controllers · models · utils
-│   ├── market/           # market REST + live WebSocket feed
-│   ├── profile/
-│   ├── watchlist/
-│   └── health.py
-├── market_data/          # NATS client for the broker-data-provider
-├── database/             # Mongo + Redis clients
-└── utils/                # crypto, encoding, shared helpers
-```
-
-Each domain splits **routes** (HTTP surface) from **controllers** (business logic) from **models** (Pydantic schemas). Adding a domain means adding a folder — no existing file grows.
-
-### Feature-scoped frontend
+## Repository layout
 
 ```
-src/
+backend/app/
+├── api/endpoints/       # auth · billing · market · profile · trade · watchlist
+│                        # each: router · controllers · models · utils
+├── market_data/         # NATS client for broker-data-provider
+├── trade_hub/           # NATS client for trade-hub
+├── razorpay/            # Razorpay client
+├── database/ mail/ sms/ utils/
+├── responses.py  error_handlers.py  config.py  main.py
+
+frontend/src/
 ├── lib/
-│   ├── components/
-│   │   ├── svakosh/      # the design system
-│   │   ├── svg-provider/ # local SVG icon components
-│   │   ├── watchlist/    # feature module
-│   │   └── header/ sidebar/ account/ dashboard/
-│   ├── store/            # runes-based global state
-│   ├── market/           # live feed + market services
-│   ├── config/           # environment presets
-│   └── utils/
+│   ├── components/      # svakosh/ (design system) · svg-provider/ (icons) · feature folders
+│   ├── billing/ market/ trade/ store/ server/ config/
 └── routes/
-    ├── (app)/            # authenticated shell
-    │   ├── oi/ charts/ stocks/ market-pulse/ settings/ profile/
-    │   └── +layout.server.ts
-    ├── auth/             # sign-in, OTP, passkey, OAuth
-    └── api/              # BFF proxy routes
+    ├── (app)/           # authenticated pages: analytics, trade, broker, pricing, billing, …
+    ├── auth/            # sign-in, OTP, passkey, Google
+    └── api/             # proxy routes to the backend
 ```
 
-Each feature keeps its own `_components/`, `_lib/helper.ts`, and `_lib/types.ts` beside its route. Deleting a feature is deleting a folder.
+Each route keeps its own `_components/` beside it; each backend domain is one folder.
 
 ---
 
-## Tech Stack
+## Security
 
-| Layer | Technology |
-|---|---|
-| **Framework** | SvelteKit · Svelte 5 (runes) |
-| **Language** | TypeScript (frontend) · Python 3.13 (backend) |
-| **Styling** | Tailwind CSS v4 · CSS custom-property theme tokens |
-| **Charts** | Apache ECharts |
-| **API** | FastAPI · Pydantic v2 |
-| **Database** | MongoDB (Motor async driver) |
-| **Cache & Sessions** | Redis |
-| **Market Data** | NATS · broker-data-provider (Go, Angel One SmartAPI) |
-| **Auth** | WebAuthn · Google OAuth (JWKS) · PyJWT · Argon2 |
-| **Tooling** | pnpm · uv · ESLint · Prettier · svelte-check |
-| **Deployment** | Vercel (frontend) · AWS VPS + Dokploy + Docker Compose (backend) |
+- **Passwordless sign-in** — WebAuthn passkeys, Google OAuth (JWKS-verified) and OTP (HMAC-hashed in Redis with lockout).
+- **Sessions** — short-lived JWT access tokens, rotating refresh tokens, HTTP-only cookies, server-side revocation.
+- **Data** — field-level encryption for sensitive profile data.
+- **Payments** — Razorpay signatures verified on checkout and webhooks; keys live only in server environment.
 
 ---
 
-## Getting Started
+## Tech stack
 
-**Prerequisites:** Node 20+, [pnpm](https://pnpm.io/), Python 3.13+, [uv](https://docs.astral.sh/uv/), and a running MongoDB and Redis.
+| Layer      | Technology                                                          |
+| ---------- | ------------------------------------------------------------------- |
+| Frontend   | SvelteKit · Svelte 5 runes · TypeScript · Tailwind CSS v4 · ECharts |
+| Backend    | FastAPI · Pydantic v2 · Motor (MongoDB) · Redis                     |
+| Services   | Go · NATS                                                           |
+| Payments   | Razorpay subscriptions                                              |
+| Tooling    | pnpm · uv · ESLint · Prettier · svelte-check                        |
+| Deployment | Vercel (frontend) · Dokploy + Docker (backend and services)         |
+
+---
+
+## Getting started
+
+**Prerequisites:** Node 20+, pnpm, Python 3.13+, uv, Docker.
 
 ```bash
 git clone https://github.com/Deepak-GitHub1474/svakosh.git
-cd svakosh
-```
-
-**Backend**
-
-```bash
-cd backend
-uv sync                       # install from uv.lock
-cp .env.example .env          # then fill in the values
+cd svakosh/backend
+cp .env.example .env            # fill in the values
+docker network create dokploy-network   # once
+docker compose up -d mongodb mongo-init redis
+uv sync
 uv run uvicorn app.main:app --reload --port 8000
-```
 
-**Frontend**
-
-```bash
-cd frontend
+cd ../frontend
 pnpm install
-pnpm dev                      # http://localhost:5173
+pnpm dev                        # http://localhost:5173
 ```
 
-Full environment variable tables live in [`backend/README.md`](backend/README.md) and [`frontend/README.md`](frontend/README.md).
-
-### Useful commands
-
-| Command | What it does |
-|---|---|
-| `pnpm dev` | Frontend dev server |
-| `pnpm check` | Type-check with `svelte-check` |
-| `pnpm lint` | Prettier + ESLint |
-| `pnpm validate` | check + lint + build |
-| `uv run uvicorn app.main:app --reload` | Backend with hot reload |
-
----
-
-## Roadmap
-
-Planned work, roughly in order:
-
-- [x] **Market-data ingestion microservice** — a separate service consuming live exchange data, decoupled from the API so ingestion can scale independently
-- [x] **WebSocket streaming** — push live LTP, OI, and option-chain updates to the client
-- [x] **Replace the stubbed data layer** with the live feed
-- [x] **Full option chain** with strike-wise Greeks and live OI change
-- [ ] **SMS / WhatsApp OTP** — email OTP is live over SMTP; mobile delivery is still stubbed
-- [ ] **Optional password login** — user-enabled from Settings, so accounts can keep passwordless-only as the default while allowing a password fallback for those who want one
-- [ ] **Price and OI alerts** with browser push notifications
-- [ ] **Portfolio tracking** with realised and unrealised P&L
+Live market data and trading need broker-data-provider and trade-hub running and reachable at `NATS_URL` and `TRADE_HUB_NATS_URL`. Environment details: [`backend/README.md`](backend/README.md) · [`frontend/README.md`](frontend/README.md).
 
 ---
 
 ## Conventions
 
-Commits follow a fixed prefix set:
+| Prefix          | Use when                      |
+| --------------- | ----------------------------- |
+| `feat:`         | New behaviour                 |
+| `fix:`          | Bug fix                       |
+| `refactor:`     | Same behaviour, new structure |
+| `optimization:` | Performance, same contract    |
+| `style:`        | Formatting or copy only       |
+| `docs:`         | Documentation only            |
 
-| Prefix | Use when |
-|---|---|
-| `feat:` | New behaviour clients can rely on |
-| `fix:` | Bug fix, no new feature |
-| `refactor:` | Internal structure, same external behaviour |
-| `optimization:` | Performance, same contract |
-| `style:` | Formatting, logs, docs text only |
-| `docs:` | Documentation only |
-
-Code quality gates: `pnpm validate` on the frontend, `uv sync` committed alongside `pyproject.toml` and `uv.lock` on the backend.
+Frontend gate: `pnpm validate`. Backend: commit `pyproject.toml` and `uv.lock` together.
 
 ---
 
 ## Disclaimer
 
-**Svakosh is a personal portfolio project built to demonstrate full-stack engineering. It is not a commercial product, a financial service, or a trading platform.**
-
-Specifically:
-
-- **No investment advice.** Nothing here is a recommendation to buy, sell, or hold any security. No output should inform a real trading decision.
-- **No affiliation.** Not affiliated with, endorsed by, or connected to NSE, BSE, SEBI, or Angel One. Market data is read through a personal SmartAPI account.
-- **No regulatory standing.** This project is not a registered investment adviser, research analyst, or broker, and makes no claim to comply with any financial regulation.
-- **No service commitment.** The demo deployment carries no uptime, availability, accuracy, or data-retention guarantee, and may change or disappear without notice.
-- **No warranty.** Provided as-is, without warranty of any kind. The author accepts no liability for any loss arising from use of this code or the demo.
-
-Do not rely on this application for trading decisions. It exists to showcase architecture, authentication design, UI engineering, and code quality.
+Svakosh is a personal portfolio project. It is not investment advice, is not affiliated with NSE, BSE, SEBI or any broker, and makes no claim of regulatory standing. Trading features act on the user's own broker accounts at their own risk. The demo carries no uptime or accuracy guarantee and is provided as-is, without warranty.
 
 ---
 
