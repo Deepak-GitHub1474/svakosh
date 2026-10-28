@@ -289,7 +289,7 @@
 						<div class="flex gap-2">{@render iconActions(account)}</div>
 						<div class="flex items-center gap-3">
 							{@render loginButton(account)}
-							{@render plan(account)}
+							{@render plan(account, false)}
 						</div>
 					</div>
 				</div>
@@ -308,7 +308,7 @@
 	</span>
 {/snippet}
 
-{#snippet plan(account: TBrokerAccount)}
+{#snippet plan(account: TBrokerAccount, badge = true)}
 	{#if needsPlan(account)}
 		<SvaKoshButton
 			shine
@@ -317,11 +317,11 @@
 			class="border-transparent px-4 py-1.5 text-xs"
 			onclick={subscribeAction(account.id).onClick}
 		/>
-	{:else if paidAccounts.includes(account.id)}
+	{:else if badge && paidAccounts.includes(account.id)}
 		<span class="bg-bullish-subtle text-bullish rounded px-2 py-1 text-xs font-semibold">
 			Subscribed
 		</span>
-	{:else}
+	{:else if badge}
 		<span class="text-muted-foreground">—</span>
 	{/if}
 {/snippet}
