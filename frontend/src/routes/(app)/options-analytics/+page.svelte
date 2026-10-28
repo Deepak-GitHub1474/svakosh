@@ -319,6 +319,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Options Analytics | SvaKosh</title>
+</svelte:head>
+
 <div class="min-h-dvh bg-background text-foreground py-2">
 	<header class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
 		<div in:fade>
