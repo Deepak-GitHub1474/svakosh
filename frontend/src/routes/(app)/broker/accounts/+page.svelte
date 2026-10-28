@@ -219,8 +219,8 @@
 						<th class={TABLE.th}>Broker</th>
 						<th class={TABLE.th}>Session</th>
 						<th class={TABLE.th}>Linked</th>
-						<th class={TABLE.th}>Plan</th>
 						<th class="{TABLE.th} w-px text-right">Actions</th>
+						<th class="{TABLE.th} w-px text-right">Plan</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -244,13 +244,13 @@
 							<td class="{TABLE.td} text-muted-foreground">{brokerName(account.broker)}</td>
 							<td class={TABLE.td}>{@render session(account)}</td>
 							<td class="{TABLE.td} text-muted-foreground">{timeOf(account.created_at)}</td>
-							<td class={TABLE.td}>{@render plan(account)}</td>
 							<td class={TABLE.td}>
 								<div class="flex items-center justify-end gap-2">
 									{@render iconActions(account)}
 									{@render loginButton(account)}
 								</div>
 							</td>
+							<td class="{TABLE.td} text-right">{@render plan(account)}</td>
 						</tr>
 					{/each}
 				</tbody>
@@ -288,8 +288,8 @@
 					>
 						<div class="flex gap-2">{@render iconActions(account)}</div>
 						<div class="flex items-center gap-3">
-							{@render plan(account)}
 							{@render loginButton(account)}
+							{@render plan(account)}
 						</div>
 					</div>
 				</div>
