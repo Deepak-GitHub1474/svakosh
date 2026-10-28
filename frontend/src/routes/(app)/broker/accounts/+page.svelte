@@ -311,7 +311,8 @@
 {#snippet plan(account: TBrokerAccount)}
 	{#if needsPlan(account)}
 		<SvaKoshButton
-			variant="solid"
+			shine
+			variant="secondary"
 			label="Subscribe"
 			class="border-transparent px-4 py-1.5 text-xs"
 			onclick={subscribeAction(account.id).onClick}
