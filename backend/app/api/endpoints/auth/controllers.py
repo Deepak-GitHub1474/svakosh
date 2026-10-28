@@ -69,6 +69,7 @@ logger = logging.getLogger("svakosh.auth.controller")
 
 PASSKEY_CHALLENGE_TTL_SECONDS = 120
 SMS_UNAVAILABLE = "Could not send the SMS right now. Try again later or use email."
+MAIL_UNAVAILABLE = "Could not send the email right now. Try again in a moment."
 
 # --------------------------------------------------------------------------
 # Unified OTP send / verify  (signin or signup)
@@ -95,7 +96,8 @@ async def send_otp(
     otp = generate_otp()
     await save_otp(redis, identifier, otp)
     if ident_type == "email":
-        await send_otp_email(identifier, otp)
+        if not await send_otp_email(identifier, otp):
+            raise HTTPException(status_code=503, detail=MAIL_UNAVAILABLE)
     elif not await send_otp_mobile(redis, identifier, otp):
         raise HTTPException(status_code=503, detail=SMS_UNAVAILABLE)
 
@@ -200,7 +202,8 @@ async def add_channel_send_otp(
     otp = generate_otp()
     await save_otp(redis, identifier, otp)
     if ident_type == "email":
-        await send_otp_email(identifier, otp, purpose="add_email")
+        if not await send_otp_email(identifier, otp, purpose="add_email"):
+            raise HTTPException(status_code=503, detail=MAIL_UNAVAILABLE)
     elif not await send_otp_mobile(redis, identifier, otp):
         raise HTTPException(status_code=503, detail=SMS_UNAVAILABLE)
 
