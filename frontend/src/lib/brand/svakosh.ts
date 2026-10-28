@@ -6,7 +6,7 @@ export const BRAND = {
 	url: 'https://svakosh.vercel.app',
 	title: 'Svakosh | Option Chain, OI and Market Analytics',
 	description:
-		'Svakosh is a market analytics desk for Indian indices and derivatives — option chain, open interest, max pain, straddle decay and breakout screeners in one workspace.'
+		'Svakosh: market analytics for Indian indices and derivatives. Option chain, OI tracker, max pain, straddle, strangle and breakout screeners in one workspace.'
 } as const;
 
 export const BUSINESS = {
