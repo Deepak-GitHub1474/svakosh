@@ -12,12 +12,11 @@
 <svelte:head>
 	<link rel="icon" href={favicon} sizes="48x48" />
 	<link rel="apple-touch-icon" href={appleTouchIcon} />
-	<meta name="description" content={BRAND.description} />
 	<link rel="canonical" href="{BRAND.url}{page.url.pathname}" />
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content={BRAND.name} />
 	<meta property="og:url" content="{BRAND.url}{page.url.pathname}" />
-	<meta property="og:title" content={BRAND.taglineFull} />
+	<meta property="og:title" content={BRAND.title} />
 	<meta property="og:description" content={BRAND.description} />
 	<meta property="og:image" content="{BRAND.url}{appleTouchIcon}" />
 	<meta name="twitter:card" content="summary" />

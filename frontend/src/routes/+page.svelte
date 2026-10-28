@@ -6,7 +6,6 @@
 <svelte:head>
 	<title>{BRAND.title}</title>
 	<meta name="description" content={BRAND.description} />
-	<meta property="og:title" content={BRAND.title} />
 </svelte:head>
 
 <Landing />
