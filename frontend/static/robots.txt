@@ -1,3 +1,4 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /api/
+
+Sitemap: https://svakosh.vercel.app/sitemap.xml

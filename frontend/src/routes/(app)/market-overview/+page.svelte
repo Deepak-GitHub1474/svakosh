@@ -47,6 +47,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Market Overview | SvaKosh</title>
+</svelte:head>
+
 <div class="min-h-dvh text-foreground relative z-[-1] py-2">
 	{#if data}
 		<div in:fade={{ duration: 800 }}>

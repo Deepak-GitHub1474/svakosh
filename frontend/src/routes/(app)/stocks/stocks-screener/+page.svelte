@@ -62,6 +62,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Stocks Screener | SvaKosh</title>
+</svelte:head>
+
 <div class="min-h-screen bg-background text-foreground">
 	<ScreenerHeader {stats} />
 
