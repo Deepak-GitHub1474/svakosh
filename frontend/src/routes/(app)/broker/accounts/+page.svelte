@@ -46,6 +46,8 @@
 	];
 	const ICON_BUTTON =
 		'bg-glass inline-flex size-9 items-center justify-center rounded-lg transition-colors';
+	const SILVER_BUTTON =
+		'[--terminal-bg-hover:color-mix(in_srgb,var(--foreground)_16%,transparent)] [--terminal-bg:color-mix(in_srgb,var(--foreground)_10%,transparent)]';
 	const SOFT_BUTTON =
 		'[--terminal-bg-hover:color-mix(in_srgb,var(--primary)_22%,transparent)] [--terminal-bg:color-mix(in_srgb,var(--primary)_14%,transparent)] [--terminal-border-hover:transparent] [--terminal-border:transparent] [--terminal-fg:var(--primary)]';
 
@@ -196,9 +198,14 @@
 			class={EMPTY_STATE}
 			title="Trading is not available right now"
 			description={tradeAccounts.error}
-			actionLabel="Retry"
-			onAction={() => tradeAccounts.load()}
-		/>
+		>
+			<SvaKoshButton
+				variant="solid"
+				label="Retry"
+				class="border-transparent"
+				onclick={() => tradeAccounts.load()}
+			/>
+		</EmptyState>
 	{:else if !tradeAccounts.list.length}
 		<EmptyState
 			class={EMPTY_STATE}
@@ -215,6 +222,7 @@
 						<th class={TABLE.th}>Session</th>
 						<th class={TABLE.th}>Linked</th>
 						<th class="{TABLE.th} w-px text-right">Actions</th>
+						<th class="{TABLE.th} w-px text-right">Plan</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -241,10 +249,10 @@
 							<td class={TABLE.td}>
 								<div class="flex items-center justify-end gap-2">
 									{@render iconActions(account)}
-									{@render planLink(account)}
 									{@render loginButton(account)}
 								</div>
 							</td>
+							<td class="{TABLE.td} text-right">{@render plan(account)}</td>
 						</tr>
 					{/each}
 				</tbody>
@@ -282,8 +290,8 @@
 					>
 						<div class="flex gap-2">{@render iconActions(account)}</div>
 						<div class="flex items-center gap-3">
-							{@render planLink(account)}
 							{@render loginButton(account)}
+							{@render plan(account, false)}
 						</div>
 					</div>
 				</div>
@@ -302,13 +310,21 @@
 	</span>
 {/snippet}
 
-{#snippet planLink(account: TBrokerAccount)}
+{#snippet plan(account: TBrokerAccount, badge = true)}
 	{#if needsPlan(account)}
-		<button
-			type="button"
-			class="text-primary shrink-0 text-xs hover:underline"
-			onclick={subscribeAction(account.id).onClick}>Subscribe</button
-		>
+		<SvaKoshButton
+			shine
+			variant="secondary"
+			label="Subscribe"
+			class="border-transparent px-4 py-1.5 text-xs {SILVER_BUTTON}"
+			onclick={subscribeAction(account.id).onClick}
+		/>
+	{:else if badge && paidAccounts.includes(account.id)}
+		<span class="bg-bullish-subtle text-bullish rounded px-2 py-1 text-xs font-semibold">
+			Subscribed
+		</span>
+	{:else if badge}
+		<span class="text-muted-foreground">—</span>
 	{/if}
 {/snippet}
 

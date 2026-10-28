@@ -6,6 +6,7 @@
 	import { page } from '$app/state';
 	import { BRAND } from '$lib/brand';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import { tradeAccounts } from '$lib/trade/accounts.svelte';
@@ -73,25 +74,41 @@
 			class={EMPTY_STATE}
 			title="Trading is not available right now"
 			description={tradeAccounts.error}
-			actionLabel="Retry"
-			onAction={() => tradeAccounts.load()}
-		/>
+		>
+			<SvaKoshButton
+				variant="solid"
+				label="Retry"
+				class="border-transparent"
+				onclick={() => tradeAccounts.load()}
+			/>
+		</EmptyState>
 	{:else if !tradeAccounts.list.length}
 		<EmptyState
 			class={EMPTY_STATE}
 			title="No broker account linked"
 			description="Link your broker account to see positions, holdings, orders and funds."
-			actionLabel="Link account"
-			onAction={() => goto(resolve('/broker/accounts'))}
-		/>
+		>
+			<SvaKoshButton
+				variant="solid"
+				label="Link account"
+				href={resolve('/broker/accounts')}
+				class="border-transparent"
+			/>
+		</EmptyState>
 	{:else if needsLogin}
 		<EmptyState
 			class={EMPTY_STATE}
 			title="Log in to your broker"
 			description="Your broker session ends every day. Log in on your broker's page to see positions, holdings, orders and funds."
-			actionLabel={loggingIn ? 'Opening…' : 'Log in'}
-			onAction={login}
-		/>
+		>
+			<SvaKoshButton
+				variant="solid"
+				label={loggingIn ? 'Opening…' : 'Log in'}
+				class="border-transparent"
+				disabled={loggingIn}
+				onclick={login}
+			/>
+		</EmptyState>
 	{:else}
 		<div class="flex min-h-0 flex-1 flex-col">{@render children()}</div>
 	{/if}
