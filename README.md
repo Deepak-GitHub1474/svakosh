@@ -4,7 +4,7 @@
 
 **Market analytics, live trading and subscriptions for Indian equities and derivatives.**
 
-[**Live Demo**](https://svakosh.vercel.app) · [**Report an Issue**](https://github.com/Deepak-GitHub1474/svakosh/issues)
+[**Live Demo**](https://svakosh.vercel.app)
 
 `SvelteKit` · `Svelte 5` · `TypeScript` · `Tailwind CSS v4` · `FastAPI` · `MongoDB` · `Redis` · `NATS` · `Go` · `Razorpay`
 
