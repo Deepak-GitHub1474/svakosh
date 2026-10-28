@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
 	import { TABLE, TABLE_EMPTY } from '$lib/trade/const';
 
@@ -33,13 +34,14 @@
 			{#if loading}
 				<SvaKoshLoader inline message="" />
 			{:else if error}
-				<EmptyState
-					class={TABLE_EMPTY}
-					title="Could not load"
-					description={error}
-					actionLabel="Retry"
-					onAction={onRetry}
-				/>
+				<EmptyState class={TABLE_EMPTY} title="Could not load" description={error}>
+					<SvaKoshButton
+						variant="solid"
+						label="Retry"
+						class="border-transparent"
+						onclick={onRetry}
+					/>
+				</EmptyState>
 			{:else}
 				<EmptyState class={TABLE_EMPTY} title={emptyTitle} description={emptyDescription} />
 			{/if}

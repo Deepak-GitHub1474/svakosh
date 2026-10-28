@@ -196,9 +196,14 @@
 			class={EMPTY_STATE}
 			title="Trading is not available right now"
 			description={tradeAccounts.error}
-			actionLabel="Retry"
-			onAction={() => tradeAccounts.load()}
-		/>
+		>
+			<SvaKoshButton
+				variant="solid"
+				label="Retry"
+				class="border-transparent"
+				onclick={() => tradeAccounts.load()}
+			/>
+		</EmptyState>
 	{:else if !tradeAccounts.list.length}
 		<EmptyState
 			class={EMPTY_STATE}
