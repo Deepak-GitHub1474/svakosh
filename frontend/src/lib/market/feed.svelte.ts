@@ -20,15 +20,19 @@ export type TQuoteField =
 	| 'upper_circuit'
 	| 'lower_circuit'
 	| 'high_52w'
-	| 'low_52w';
+	| 'low_52w'
+	| 'ts';
 
 export type TQuote = Partial<Record<TQuoteField, number>>;
 export type TChange = { change: number; change_pct: number };
+export type TBookLevel = { price: number; qty: number; orders: number };
+export type TBook = { ts: number; bids: TBookLevel[]; asks: TBookLevel[] };
 
 type TRow = { sk_token: string } & TQuote;
 type TServerMessage =
 	| { type: 'snapshot'; data: TRow[] }
 	| { type: 'tick'; data: TRow }
+	| { type: 'depth'; data: { sk_token: string } & TBook }
 	| { type: 'order'; data: unknown }
 	| { type: 'error'; message: string };
 type TTokenMessage = {
@@ -36,7 +40,10 @@ type TTokenMessage = {
 	tokens: string[];
 	fields: TQuoteField[];
 };
-type TClientMessage = TTokenMessage | { event: 'orders'; on: boolean };
+type TClientMessage =
+	| TTokenMessage
+	| { event: 'orders'; on: boolean }
+	| { event: 'depth'; tokens: string[]; on: boolean };
 
 export const PRICE_FIELDS: TQuoteField[] = ['ltp', 'prev_close'];
 
@@ -79,6 +86,7 @@ function grouped(event: TTokenMessage['event'], changes: TFieldsByToken) {
 
 class MarketFeed {
 	quotes: Record<string, TQuote> = $state({});
+	books: Record<string, TBook> = $state({});
 	connected = $state(false);
 	error = $state('');
 
@@ -91,6 +99,7 @@ class MarketFeed {
 	private released: TFieldsByToken = {};
 	private flushQueued = false;
 	private orderListeners = new Set<(update: unknown) => void>();
+	private depthRefs: Record<string, number> = {};
 
 	followOrders(listener: (update: unknown) => void): () => void {
 		clearTimeout(this.closeTimer);
@@ -101,6 +110,25 @@ class MarketFeed {
 			this.orderListeners.delete(listener);
 			if (this.orderListeners.size) return;
 			this.send({ event: 'orders', on: false });
+			if (!this.needed()) this.closeTimer = setTimeout(() => this.close(), IDLE_CLOSE_MS);
+		};
+	}
+
+	watchDepth(token: string): () => void {
+		clearTimeout(this.closeTimer);
+		const count = this.depthRefs[token] ?? 0;
+		this.depthRefs[token] = count + 1;
+		if (count === 0) this.send({ event: 'depth', tokens: [token], on: true });
+		this.connect();
+		return () => {
+			const left = (this.depthRefs[token] ?? 1) - 1;
+			if (left > 0) {
+				this.depthRefs[token] = left;
+				return;
+			}
+			delete this.depthRefs[token];
+			delete this.books[token];
+			this.send({ event: 'depth', tokens: [token], on: false });
 			if (!this.needed()) this.closeTimer = setTimeout(() => this.close(), IDLE_CLOSE_MS);
 		};
 	}
@@ -159,7 +187,11 @@ class MarketFeed {
 	}
 
 	private needed() {
-		return Object.keys(this.refs).length > 0 || this.orderListeners.size > 0;
+		return (
+			Object.keys(this.refs).length > 0 ||
+			this.orderListeners.size > 0 ||
+			Object.keys(this.depthRefs).length > 0
+		);
 	}
 
 	private send(message: TClientMessage) {
@@ -189,6 +221,8 @@ class MarketFeed {
 			}
 			grouped('subscribe', all).forEach((message) => this.send(message));
 			if (this.orderListeners.size) this.send({ event: 'orders', on: true });
+			const depth = Object.keys(this.depthRefs);
+			if (depth.length) this.send({ event: 'depth', tokens: depth, on: true });
 		};
 		socket.onmessage = (event) => this.receive(JSON.parse(event.data) as TServerMessage);
 		socket.onclose = () => {
@@ -201,6 +235,7 @@ class MarketFeed {
 	private receive(message: TServerMessage) {
 		if (message.type === 'tick') this.apply(message.data);
 		else if (message.type === 'snapshot') message.data.forEach((row) => this.apply(row));
+		else if (message.type === 'depth') this.applyBook(message.data);
 		else if (message.type === 'order')
 			this.orderListeners.forEach((listener) => listener(message.data));
 		else this.error = message.message;
@@ -211,6 +246,10 @@ class MarketFeed {
 		const quote = this.quotes[sk_token];
 		if (quote) Object.assign(quote, fields);
 		else this.quotes[sk_token] = fields;
+	}
+
+	private applyBook({ sk_token, ...book }: { sk_token: string } & TBook) {
+		if (sk_token in this.depthRefs) this.books[sk_token] = book;
 	}
 
 	private retry() {

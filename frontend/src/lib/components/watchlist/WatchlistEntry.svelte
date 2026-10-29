@@ -20,6 +20,7 @@
 		onNote?: () => void;
 		onRemove?: () => void;
 		onOrder?: (transaction: 'BUY' | 'SELL') => void;
+		onOpen: () => void;
 	}
 
 	let {
@@ -34,7 +35,8 @@
 		hasNote = false,
 		onNote,
 		onRemove,
-		onOrder
+		onOrder,
+		onOpen
 	}: Props = $props();
 
 	const subtitle = $derived(companyName?.trim() || exchange || '');
@@ -114,14 +116,12 @@
 	}}
 	class="group relative flex items-center gap-3 pl-3 pr-4 lg:pl-2 lg:pr-3 py-2 border-b border-border-subtle hover:bg-glass transition-colors"
 >
-	{#if hasActions}
-		<button
-			type="button"
-			onclick={openActions}
-			aria-label="Actions for {name}"
-			class="absolute inset-0 z-10 cursor-pointer lg:hidden"
-		></button>
-	{/if}
+	<button
+		type="button"
+		onclick={onOpen}
+		aria-label="Details for {name}"
+		class="absolute inset-0 z-10 cursor-pointer"
+	></button>
 
 	<SymbolImage {name} {logoUrl} class="w-9 h-9 shrink-0 group-hover:border-primary/20" />
 
@@ -156,7 +156,7 @@
 
 			{#if showTrade}
 				<div
-					class="mr-2.5 items-center gap-2.5 {actionsOpen && isDesktop
+					class="relative z-20 mr-2.5 items-center gap-2.5 {actionsOpen && isDesktop
 						? 'flex'
 						: 'hidden lg:group-hover:flex'}"
 				>
@@ -180,7 +180,7 @@
 			{/if}
 
 			{#if hasActions}
-				<div use:clickOutside class="relative flex items-center">
+				<div use:clickOutside class="relative z-20 flex items-center">
 					<button
 						bind:this={triggerEl}
 						type="button"
@@ -197,14 +197,10 @@
 
 					<WatchlistEntryActionPanel
 						isOpen={actionsOpen}
-						{isDesktop}
 						{openUp}
-						symbolName={name}
 						{showNote}
 						{showDelete}
-						{showTrade}
 						{hasNote}
-						onTrade={handleTrade}
 						onNote={handleNote}
 						onDelete={handleDelete}
 						onClose={() => (actionsOpen = false)}

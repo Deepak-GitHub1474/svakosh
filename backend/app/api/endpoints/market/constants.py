@@ -19,10 +19,11 @@ DEFAULT_FIELDS = frozenset({"ltp", "prev_close"})
 FEED_FIELDS = frozenset({
     "ltp", "prev_close", "open", "high", "low", "volume", "atp", "ltq",
     "bid", "bid_qty", "ask", "ask_qty", "total_buy_qty", "total_sell_qty",
-    "oi", "prev_oi", "upper_circuit", "lower_circuit", "high_52w", "low_52w",
+    "oi", "prev_oi", "upper_circuit", "lower_circuit", "high_52w", "low_52w", "ts",
 })
 SUBJECT_UNSAFE_CHARS = frozenset(" .*>")
 MAX_TOKENS_PER_SOCKET = 1000
+MAX_DEPTH_PER_SOCKET = 5
 SEND_QUEUE_LIMIT = 2000
 SEARCH_LIMIT = 30
 INTRADAY_INTERVAL = "3m"

@@ -9,6 +9,7 @@
 	import SearchSymbolsOverlay from './SearchSymbolsOverlay.svelte';
 	import WatchlistSortBar from './WatchlistSortBar.svelte';
 	import WatchlistEntry from './WatchlistEntry.svelte';
+	import SymbolDetail from './SymbolDetail.svelte';
 	import WatchlistNamePopover from './WatchlistNamePopover.svelte';
 	import DeleteWatchlistConfirm from './DeleteWatchlistConfirm.svelte';
 	import NoteEditorPopover from './NoteEditorPopover.svelte';
@@ -75,6 +76,7 @@
 	let entriesError = $state<string | null>(null);
 	const addedTokens = $derived(new Set(entries.map((e) => e.sk_token)));
 
+	let detailEntry = $state<TWatchlistEntry | null>(null);
 	let orderOpen = $state(false);
 	let orderEntry = $state<TSymbol | null>(null);
 	let orderDraft = $state<TOrderTicket | null>(null);
@@ -424,6 +426,7 @@
 							})}
 						onRemove={() => requestRemoveSymbol(entry.sk_token, entry.trading_symbol)}
 						onOrder={(transaction) => openOrder(entry, transaction)}
+						onOpen={() => (detailEntry = entry)}
 					/>
 				{/each}
 			{/if}
@@ -491,6 +494,32 @@
 	onClose={() => (noteTarget = null)}
 	onSave={handleSaveNote}
 	onClear={handleClearNote}
+/>
+
+<SymbolDetail
+	entry={detailEntry}
+	canMutate={!selectedItem?.predefined}
+	onClose={() => (detailEntry = null)}
+	onNote={() => {
+		const entry = detailEntry;
+		detailEntry = null;
+		if (entry)
+			noteTarget = {
+				sk_token: entry.sk_token,
+				name: entry.trading_symbol,
+				note: entry.symbol_note ?? ''
+			};
+	}}
+	onRemove={() => {
+		const entry = detailEntry;
+		detailEntry = null;
+		if (entry) requestRemoveSymbol(entry.sk_token, entry.trading_symbol);
+	}}
+	onOrder={(transaction) => {
+		const entry = detailEntry;
+		detailEntry = null;
+		if (entry) openOrder(entry, transaction);
+	}}
 />
 
 <OrderModal

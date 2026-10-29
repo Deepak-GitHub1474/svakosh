@@ -10,6 +10,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from app.api.endpoints.market.constants import (
     DEFAULT_FIELDS,
     FEED_FIELDS,
+    MAX_DEPTH_PER_SOCKET,
     MAX_TOKENS_PER_SOCKET,
     SEND_QUEUE_LIMIT,
 )
@@ -30,6 +31,7 @@ async def stream_market(
     ws: WebSocket, market: MarketDataClient, trade: TradeHubClient, user_id: str
 ) -> None:
     tokens: dict[str, set[str]] = {}
+    depth: set[str] = set()
     outbox: asyncio.Queue[str] = asyncio.Queue(maxsize=SEND_QUEUE_LIMIT)
     too_slow = asyncio.Event()
     orders: list[asyncio.Task[None]] = []
@@ -58,23 +60,42 @@ async def stream_market(
         except asyncio.QueueFull:
             too_slow.set()
 
+    def on_book(book: dict[str, Any]) -> None:
+        if book["token"] not in depth:
+            return
+        try:
+            outbox.put_nowait(book_message(book))
+        except asyncio.QueueFull:
+            too_slow.set()
+
     market.listeners.add(on_tick)
+    market.book_listeners.add(on_book)
     try:
         async with asyncio.TaskGroup() as group:
-            group.create_task(receive(ws, market, tokens, outbox, follow))
+            group.create_task(receive(ws, market, tokens, depth, outbox, follow))
             group.create_task(send(ws, outbox, too_slow))
     except* (WebSocketDisconnect, SlowClientError):
         pass
     finally:
         follow(False)
         market.listeners.discard(on_tick)
+        market.book_listeners.discard(on_book)
         market.unwant(tokens)
+        market.unwant_depth(depth)
+
+
+def book_message(book: dict[str, Any]) -> str:
+    return json.dumps({
+        "type": "depth",
+        "data": {"sk_token": book["token"], "ts": book["ts"], "bids": book["bids"], "asks": book["asks"]},
+    })
 
 
 async def receive(
     ws: WebSocket,
     market: MarketDataClient,
     tokens: dict[str, set[str]],
+    depth: set[str],
     outbox: asyncio.Queue[str],
     follow: Callable[[bool], None],
 ) -> None:
@@ -83,6 +104,9 @@ async def receive(
         event, requested, fields = message.get("event"), message.get("tokens"), message.get("fields")
         if event == "orders":
             follow(message.get("on") is True)
+            continue
+        if event == "depth" and isinstance(requested, list):
+            await toggle_depth(market, depth, outbox, requested, message.get("on") is True)
             continue
         if event not in ("subscribe", "unsubscribe") or not isinstance(requested, list):
             await outbox.put(json.dumps({"type": "error", "message": "Send {event: subscribe|unsubscribe, tokens: [...], fields?: [...]}."}))
@@ -111,6 +135,26 @@ async def receive(
             if pick(market.quotes.get(t, {}), chosen)
         ]
         await outbox.put(json.dumps({"type": "snapshot", "data": snapshot}))
+
+
+async def toggle_depth(
+    market: MarketDataClient, depth: set[str], outbox: asyncio.Queue[str], requested: list[Any], on: bool
+) -> None:
+    wanted = {t for t in requested if is_feed_token(t)}
+    if not on:
+        gone = wanted & depth
+        depth.difference_update(gone)
+        market.unwant_depth(gone)
+        return
+    fresh = wanted - depth
+    if len(depth) + len(fresh) > MAX_DEPTH_PER_SOCKET:
+        await outbox.put(json.dumps({"type": "error", "message": f"At most {MAX_DEPTH_PER_SOCKET} depth tokens per socket."}))
+        return
+    depth.update(fresh)
+    await market.want_depth(fresh)
+    for t in fresh:
+        if t in market.books:
+            await outbox.put(book_message(market.books[t]))
 
 
 async def send(ws: WebSocket, outbox: asyncio.Queue[str], too_slow: asyncio.Event) -> None:
