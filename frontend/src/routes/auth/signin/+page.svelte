@@ -33,7 +33,6 @@
 
 <svelte:head>
 	<title>Sign in | {BRAND.name}</title>
-	<meta name="robots" content="noindex" />
 </svelte:head>
 
 <main class="relative min-h-dvh bg-[#101216] text-foreground">
