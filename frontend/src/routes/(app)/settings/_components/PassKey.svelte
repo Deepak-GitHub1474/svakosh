@@ -4,7 +4,7 @@
 	import SvaKoshLoader from '$lib/components/svakosh/SvaKoshLoader.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
-	import { MODAL_ACTION, MODAL_ACTIONS } from '$lib/trade/const';
+	import { MODAL_ACTIONS, MODAL_CANCEL, MODAL_DANGER } from '$lib/trade/const';
 	import type { Passkey, PasskeyResult } from '../_lib/types';
 	import { PASSKEY_COLUMNS } from '../_lib/const';
 	import ChevronRight from '$lib/components/svg-provider/material/ChevronRight.svelte';
@@ -148,12 +148,12 @@
 		<SvaKoshButton
 			variant="secondary"
 			label="Cancel"
-			class={MODAL_ACTION}
+			class={MODAL_CANCEL}
 			onclick={() => {
 				confirmOpen = false;
 			}}
 		/>
-		<SvaKoshButton variant="bearish" label="Remove" class={MODAL_ACTION} onclick={confirmYes} />
+		<SvaKoshButton variant="bearish" label="Remove" class={MODAL_DANGER} onclick={confirmYes} />
 	</div>
 {/snippet}
 

@@ -5,7 +5,7 @@
 	import { toast } from '$lib/components/svakosh/toast.svelte';
 	import ModalHeader from '$lib/components/trade/ModalHeader.svelte';
 	import TradeSheet from '$lib/components/trade/TradeSheet.svelte';
-	import { MODAL_ACTION, MODAL_ACTIONS, MODAL_CONTROL } from '$lib/trade/const';
+	import { MODAL_ACTION, MODAL_ACTIONS, MODAL_CANCEL, MODAL_CONTROL } from '$lib/trade/const';
 	import type { TOpResult } from './types';
 
 	interface Props {
@@ -70,7 +70,7 @@
 			label="Cancel"
 			disabled={isLoading}
 			onclick={close}
-			class="{MODAL_ACTION} [--terminal-border-hover:transparent] [--terminal-border:transparent]"
+			class={MODAL_CANCEL}
 		/>
 		<SvaKoshButton
 			variant="solid"

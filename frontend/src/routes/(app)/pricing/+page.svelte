@@ -9,6 +9,7 @@
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
 	import SvaKoshTabs from '$lib/components/svakosh/SvaKoshTabs.svelte';
 	import { IP_LABELS, PLAN_CODES, QUOTE_DELAY_MS, SKELETON } from '$lib/billing/const';
+	import { MODAL_BUTTON } from '$lib/trade/const';
 	import { ipSupported, openRazorpay } from '$lib/billing/helper';
 	import { confirmPayment, getQuote, startCheckout } from '$lib/billing/service';
 	import type { TPlan, TQuote, TQuoteRequest, TTenure } from '$lib/billing/types';
@@ -35,6 +36,7 @@
 
 	const plan = $derived(data.plans.find((p) => p.code === planCode) ?? data.plans[0]);
 	const isBroker = $derived(plan?.type === 'broker');
+	const noAccount = $derived(isBroker && tradeAccounts.loaded && !tradeAccounts.list.length);
 	const tabs = $derived(data.plans.map((p) => ({ label: p.name, value: p.code })));
 	const accounts = $derived(tradeAccounts.list);
 	const account = $derived(accounts.find((a) => a.id === accountId));
@@ -177,7 +179,11 @@
 		onAction={() => invalidateAll()}
 	/>
 {:else}
-	<div class="grid grid-cols-1 gap-6 pt-2 pb-8 lg:grid-cols-[auto_24rem] lg:justify-start">
+	<div
+		class="grid grid-cols-1 gap-6 pt-2 pb-8 lg:justify-start {noAccount
+			? ''
+			: 'lg:grid-cols-[auto_24rem]'}"
+	>
 		<SvaKoshCard class="flex flex-col" contentClass="flex flex-1 flex-col">
 			<div class="flex flex-1 flex-col gap-6">
 				{#if tabs.length > 1}
@@ -227,11 +233,8 @@
 								/>
 							</div>
 						{:else}
-							<p class="text-muted-foreground text-sm">
-								Link a broker account first.
-								<a href={resolve('/broker/accounts')} class="text-primary hover:underline"
-									>Link account</a
-								>
+							<p class="text-muted-foreground ml-1 text-sm">
+								Link a broker account to subscribe. You can choose a billing period after linking.
 							</p>
 						{/if}
 					</div>
@@ -255,13 +258,23 @@
 						{plan}
 						broker={account?.broker ?? null}
 						ip={isBroker ? ip : null}
+						readonly={noAccount}
 						bind:value={tenure}
 					/>
 				</div>
+
+				{#if noAccount}
+					<SvaKoshButton
+						variant="solid"
+						label="Link broker account"
+						href={resolve('/broker/accounts')}
+						class="w-full justify-center border-transparent sm:w-fit {MODAL_BUTTON}"
+					/>
+				{/if}
 			</div>
 		</SvaKoshCard>
 
-		<div>
+		<div class:hidden={noAccount}>
 			<BillSummary
 				{quote}
 				{loading}

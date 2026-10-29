@@ -12,8 +12,18 @@
 		MarkLineComponent
 	} from 'echarts/components';
 	import { CanvasRenderer } from 'echarts/renderers';
-	import { UNDERLYINGS } from './_lib/const';
-	import { calculateOiStats } from './_lib/helper';
+	import {
+		CE_ADDED,
+		CE_BASE,
+		CE_DELTA_LINE,
+		CE_REMOVED,
+		PE_DELTA_LINE,
+		PE_ADDED,
+		PE_BASE,
+		PE_REMOVED,
+		UNDERLYINGS
+	} from './_lib/const';
+	import { calculateOiStats, oiStack } from './_lib/helper';
 	import type { TOptionsAnalyticsData } from './_lib/types';
 	import { marketFeed } from '$lib/market/feed.svelte';
 	import {
@@ -55,6 +65,7 @@
 	}
 
 	let chart: echarts.ECharts | null = null;
+	let legendSelected: Record<string, boolean> = { [CE_DELTA_LINE]: false, [PE_DELTA_LINE]: false };
 	let symbol = $state('NIFTY');
 	let selectedExpiry = $state<string | null>(null);
 	let chartContainer = $state<HTMLDivElement | null>(null);
@@ -151,6 +162,7 @@
 		if (!chartContainer) return;
 
 		chart = echarts.init(chartContainer, 'dark', { renderer: 'canvas' });
+		chart.on('legendselectchanged', (e: any) => (legendSelected = e.selected));
 		updateChartOptions();
 
 		window.addEventListener('resize', resize);
@@ -161,10 +173,12 @@
 
 		const data = currentData;
 		const strikes = activeStrikes.map((s) => s.strike.toString());
-		const ceOI = activeStrikes.map((s) => s.ce_oi / 100000);
-		const peOI = activeStrikes.map((s) => s.pe_oi / 100000);
-		const ceChange = activeStrikes.map((s) => s.ce_oi_change / 100000);
-		const peChange = activeStrikes.map((s) => s.pe_oi_change / 100000);
+		const ce = activeStrikes.map((s) => oiStack(s.ce_oi, s.ce_oi_change));
+		const pe = activeStrikes.map((s) => oiStack(s.pe_oi, s.pe_oi_change));
+		const deltaBars = (rows: ReturnType<typeof oiStack>[], added: string, removed: string) =>
+			rows.map((r) => ({ value: r.delta, itemStyle: { color: r.added ? added : removed } }));
+		const lakh = (v: number) => `${(v / 100000).toFixed(2)}L`;
+		const signed = (v: number) => `${v > 0 ? '+' : ''}${lakh(v)}`;
 
 		const option: echarts.EChartsCoreOption = {
 			backgroundColor: 'transparent',
@@ -176,26 +190,32 @@
 				borderWidth: 1,
 				textStyle: { color: '#e2e8f0', fontSize: 12 },
 				formatter: (params: any) => {
-					const strike = params[0].name;
-					let html = `<div class="mb-2 border-b border-border-muted pb-1">Strike: ${strike}</div>`;
-					params.forEach((p: any) => {
-						const color = typeof p.color === 'object' ? p.color.colorStops[0].color : p.color;
-						const val = p.value.toFixed(2);
+					const row = activeStrikes[params[0].dataIndex];
+					if (!row) return '';
+					const lines: [string, string, string][] = [
+						['CE OI', lakh(row.ce_oi), CE_ADDED],
+						['CE OI Δ', signed(row.ce_oi_change), CE_ADDED],
+						['PE OI', lakh(row.pe_oi), PE_ADDED],
+						['PE OI Δ', signed(row.pe_oi_change), PE_ADDED]
+					];
+					let html = `<div class="mb-2 border-b border-border-muted pb-1">Strike: ${row.strike}</div>`;
+					for (const [name, value, color] of lines) {
 						html += `<div class="flex justify-between gap-4 mb-1">
-							<span style="color:${color}">● ${p.seriesName}</span>
-							<span class="font-mono">${val}L</span>
+							<span style="color:${color}">● ${name}</span>
+							<span class="font-mono">${value}</span>
 						</div>`;
-					});
+					}
 					return html;
 				}
 			},
 			legend: {
-				data: ['CE OI', 'PE OI', 'CE Change', 'PE Change'],
+				data: ['CE OI', 'CE OI Δ', 'PE OI', 'PE OI Δ', CE_DELTA_LINE, PE_DELTA_LINE],
+				selected: legendSelected,
 				textStyle: { color: '#94a3b8' },
-				bottom: 0
+				top: 0
 			},
 			grid: {
-				top: '12%',
+				top: '16%',
 				left: '3%',
 				right: '3%',
 				bottom: '15%',
@@ -227,16 +247,11 @@
 				{
 					name: 'CE OI',
 					type: 'bar',
-					data: ceOI,
-					barWidth: 12,
-					barCategoryGap: '20%',
-					itemStyle: { 
-						color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-							{ offset: 0, color: 'rgba(255, 61, 0, 0.8)' },
-							{ offset: 1, color: 'rgba(255, 61, 0, 0.1)' }
-						]),
-						borderRadius: [4, 4, 0, 0]
-					},
+					stack: 'ce',
+					data: ce.map((r) => r.base),
+					barWidth: 10,
+					barGap: '20%',
+					itemStyle: { color: CE_BASE },
 					markLine: {
 						symbol: ['none', 'none'],
 						label: {
@@ -262,32 +277,42 @@
 					}
 				},
 				{
-					name: 'PE OI',
+					name: 'CE OI Δ',
 					type: 'bar',
-					data: peOI,
-					barWidth: 12,
-					barCategoryGap: '10%',
-					itemStyle: { 
-						color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-							{ offset: 0, color: 'rgba(0, 255, 136, 0.8)' },
-							{ offset: 1, color: 'rgba(0, 255, 136, 0.1)' }
-						]),
-						borderRadius: [4, 4, 0, 0]
-					}
+					stack: 'ce',
+					data: deltaBars(ce, CE_ADDED, CE_REMOVED),
+					barWidth: 10,
+					itemStyle: { color: CE_ADDED, borderRadius: [3, 3, 0, 0] }
 				},
 				{
-					name: 'CE Change',
+					name: 'PE OI',
+					type: 'bar',
+					stack: 'pe',
+					data: pe.map((r) => r.base),
+					barWidth: 10,
+					itemStyle: { color: PE_BASE }
+				},
+				{
+					name: 'PE OI Δ',
+					type: 'bar',
+					stack: 'pe',
+					data: deltaBars(pe, PE_ADDED, PE_REMOVED),
+					barWidth: 10,
+					itemStyle: { color: PE_ADDED, borderRadius: [3, 3, 0, 0] }
+				},
+				{
+					name: CE_DELTA_LINE,
 					type: 'line',
-					data: ceChange,
+					data: activeStrikes.map((s) => s.ce_oi_change / 100000),
 					smooth: true,
 					symbol: 'none',
 					itemStyle: { color: 'rgba(255, 61, 0, 0.7)' },
 					lineStyle: { width: 1.5, type: 'dashed', opacity: 0.5 }
 				},
 				{
-					name: 'PE Change',
+					name: PE_DELTA_LINE,
 					type: 'line',
-					data: peChange,
+					data: activeStrikes.map((s) => s.pe_oi_change / 100000),
 					smooth: true,
 					symbol: 'none',
 					itemStyle: { color: 'rgba(0, 255, 136, 0.7)' },

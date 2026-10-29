@@ -25,6 +25,7 @@
 		EMPTY_STATE,
 		MODAL_ACTION,
 		MODAL_ACTIONS,
+		MODAL_DANGER,
 		TABLE,
 		TRADE_STATIC_IP
 	} from '$lib/trade/const';
@@ -366,7 +367,7 @@
 				type="submit"
 				form="account-form"
 				variant="bearish"
-				class={MODAL_ACTION}
+				class={MODAL_DANGER}
 				label={busy ? 'Removing…' : 'Remove account'}
 				disabled={busy || !target}
 			/>

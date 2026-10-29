@@ -4,7 +4,7 @@
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
 	import { shortDate } from '$lib/billing/helper';
 	import type { TSubscription } from '$lib/billing/types';
-	import { MODAL_ACTION, MODAL_ACTIONS } from '$lib/trade/const';
+	import { MODAL_ACTION, MODAL_ACTIONS, MODAL_DANGER } from '$lib/trade/const';
 
 	let {
 		sub,
@@ -47,7 +47,7 @@
 		<SvaKoshButton
 			variant="bearish"
 			label={busy ? 'Cancelling…' : 'Cancel autopay'}
-			class="border-transparent {MODAL_ACTION}"
+			class={MODAL_DANGER}
 			disabled={busy}
 			onclick={onConfirm}
 		/>

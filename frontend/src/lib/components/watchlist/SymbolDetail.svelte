@@ -148,7 +148,7 @@
 					onclick={onRemove}
 					aria-label="Remove"
 					title="Remove"
-					class={cn(ICON_BUTTON, 'text-bearish hover:text-bearish-hover')}
+					class={cn(ICON_BUTTON, 'text-bearish hover:text-bearish hover:bg-bearish-hover')}
 				>
 					<Delete class="text-base" />
 				</button>

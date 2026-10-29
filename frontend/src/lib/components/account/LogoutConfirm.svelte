@@ -3,7 +3,7 @@
 	import { uiState } from '$lib/store/ui.svelte';
 	import SvaKoshModal from '$lib/components/svakosh/SvaKoshModal.svelte';
 	import SvaKoshButton from '$lib/components/svakosh/SvaKoshButton.svelte';
-	import { MODAL_ACTION, MODAL_ACTIONS } from '$lib/trade/const';
+	import { MODAL_ACTIONS, MODAL_CANCEL, MODAL_DANGER } from '$lib/trade/const';
 
 	let loggingOut = $state(false);
 </script>
@@ -13,7 +13,7 @@
 		<SvaKoshButton
 			variant="secondary"
 			label="Cancel"
-			class={MODAL_ACTION}
+			class={MODAL_CANCEL}
 			disabled={loggingOut}
 			onclick={() => {
 				uiState.isLogoutConfirmOpen = false;
@@ -24,7 +24,7 @@
 			form="logout-form"
 			variant="bearish"
 			label={loggingOut ? 'Logging out…' : 'Logout'}
-			class={MODAL_ACTION}
+			class={MODAL_DANGER}
 			disabled={loggingOut}
 		/>
 	</div>

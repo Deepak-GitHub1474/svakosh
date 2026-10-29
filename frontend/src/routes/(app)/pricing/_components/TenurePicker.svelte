@@ -7,8 +7,15 @@
 		plan,
 		broker,
 		ip,
+		readonly = false,
 		value = $bindable()
-	}: { plan: TPlan; broker: string | null; ip: string | null; value: TTenure } = $props();
+	}: {
+		plan: TPlan;
+		broker: string | null;
+		ip: string | null;
+		readonly?: boolean;
+		value: TTenure;
+	} = $props();
 
 	const options = $derived(
 		TENURES.flatMap((tenure) => {
@@ -22,27 +29,37 @@
 	});
 </script>
 
+{#snippet price(option: { tenure: TTenure; paise: number })}
+	<span class="text-muted-foreground block text-xs tracking-wider uppercase">
+		{TENURE_LABELS[option.tenure]}
+	</span>
+	<span class="text-foreground mt-1 block text-lg tabular-nums">
+		{option.paise ? rupees(option.paise) : 'Free'}
+	</span>
+	{#if option.paise}
+		<span class="text-muted-foreground text-xs">per {TENURE_UNITS[option.tenure]}</span>
+	{/if}
+{/snippet}
+
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-[repeat(3,14rem)]">
 	{#each options as option (option.tenure)}
-		{@const selected = option.tenure === value}
-		<button
-			type="button"
-			aria-pressed={selected}
-			onclick={() => (value = option.tenure)}
-			class="rounded-xl p-3 text-left transition-colors {selected
-				? 'bg-primary/15 ring-primary/40 ring-1'
-				: 'glass-panel hover:bg-glass'}"
-		>
-			<span class="text-muted-foreground block text-xs tracking-wider uppercase">
-				{TENURE_LABELS[option.tenure]}
-			</span>
-			<span class="text-foreground mt-1 block text-lg tabular-nums">
-				{option.paise ? rupees(option.paise) : 'Free'}
-			</span>
-			{#if option.paise}
-				<span class="text-muted-foreground text-xs">per {TENURE_UNITS[option.tenure]}</span>
-			{/if}
-		</button>
+		{#if readonly}
+			<div class="glass-panel rounded-xl p-3">
+				{@render price(option)}
+			</div>
+		{:else}
+			{@const selected = option.tenure === value}
+			<button
+				type="button"
+				aria-pressed={selected}
+				onclick={() => (value = option.tenure)}
+				class="rounded-xl p-3 text-left transition-colors {selected
+					? 'bg-primary/15 ring-primary/40 ring-1'
+					: 'glass-panel hover:bg-glass'}"
+			>
+				{@render price(option)}
+			</button>
+		{/if}
 	{:else}
 		<p class="text-muted-foreground text-sm">No billing period is available for this choice.</p>
 	{/each}
