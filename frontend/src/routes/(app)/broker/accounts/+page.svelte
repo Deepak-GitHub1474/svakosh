@@ -116,10 +116,10 @@
 
 	async function login(account: TBrokerAccount) {
 		loggingIn = account.id;
-		const error = await tradeAccounts.login(account.id);
-		if (!error) return;
+		const { error, redirected } = await tradeAccounts.login(account.id);
+		if (redirected) return;
 		loggingIn = '';
-		toast.error({ title: 'Could not start broker login', description: error });
+		if (error) toast.error({ title: 'Could not log in to the broker', description: error });
 	}
 
 	async function submit(event: SubmitEvent) {
@@ -500,13 +500,15 @@
 							<ol class="text-muted-foreground flex list-decimal flex-col gap-1.5 pl-5 text-sm">
 								{#each guide.steps as step (step)}<li>{step}</li>{/each}
 							</ol>
-							<CopyField label="Redirect URL" value={redirectUrl} />
+							{#if guide.redirect}
+								<CopyField label="Redirect URL" value={redirectUrl} />
+							{/if}
 							<CopyField label="Primary Static IP" value={TRADE_STATIC_IP} />
 							<a
 								href={guide.portal}
 								target="_blank"
 								rel="external noopener noreferrer"
-								class="text-primary self-start text-sm hover:underline">Open SmartAPI apps ↗</a
+								class="text-primary self-start text-sm hover:underline">{guide.portalLabel} ↗</a
 							>
 						</div>
 					{/if}

@@ -1,5 +1,6 @@
-import { ACCOUNT_KEY } from './const';
-import { getLoginUrl, listAccounts } from './service';
+import { ACCOUNT_KEY, ORDER_ACCOUNTS_KEY } from './const';
+import { brokerOf } from './brokers';
+import { connectSession, getLoginUrl, listAccounts } from './service';
 import type { TBrokerAccount } from './types';
 
 function saved(): string {
@@ -7,6 +8,15 @@ function saved(): string {
 		return localStorage.getItem(ACCOUNT_KEY) ?? '';
 	} catch {
 		return '';
+	}
+}
+
+function savedOrderIds(): string[] {
+	try {
+		const ids = JSON.parse(localStorage.getItem(ORDER_ACCOUNTS_KEY) ?? '[]');
+		return Array.isArray(ids) ? ids.filter((id) => typeof id === 'string') : [];
+	} catch {
+		return [];
 	}
 }
 
@@ -21,6 +31,13 @@ class TradeAccounts {
 			this.list[0]
 	);
 	accountId = $derived(this.selected?.id ?? '');
+	loggedIn = $derived(this.list.filter((a) => a.logged_in));
+	orderIds = $state<string[]>([]);
+	orderAccounts = $derived.by(() => {
+		const chosen = this.loggedIn.filter((a) => this.orderIds.includes(a.id));
+		if (chosen.length) return chosen;
+		return this.selected?.logged_in ? [this.selected] : [];
+	});
 
 	async load() {
 		const res = await listAccounts();
@@ -32,13 +49,33 @@ class TradeAccounts {
 		this.error = '';
 		this.list = res.data;
 		if (!this.selectedId) this.selectedId = saved();
+		if (!this.orderIds.length) this.orderIds = savedOrderIds();
 	}
 
-	async login(id: string): Promise<string | null> {
+	async login(id: string): Promise<{ error?: string; redirected?: boolean }> {
+		const account = this.list.find((a) => a.id === id);
+		if (account && brokerOf(account.broker)?.autoLogin) {
+			const res = await connectSession(id, { login: 'api_key' });
+			if (res.ok) this.select(id);
+			await this.load();
+			return res.ok ? {} : { error: res.error };
+		}
 		const res = await getLoginUrl(id);
-		if (!res.ok) return res.error;
+		if (!res.ok) return { error: res.error };
 		window.location.assign(res.data.url);
-		return null;
+		return { redirected: true };
+	}
+
+	toggleOrderAccount(id: string) {
+		const current = this.orderAccounts.map((a) => a.id);
+		const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
+		if (!next.length) return;
+		this.orderIds = next;
+		try {
+			localStorage.setItem(ORDER_ACCOUNTS_KEY, JSON.stringify(next));
+		} catch {
+			return;
+		}
 	}
 
 	select(id: string) {

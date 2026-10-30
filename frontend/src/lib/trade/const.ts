@@ -26,6 +26,7 @@ export const STATUS_TONE: Record<TOrderStatus, string> = {
 };
 
 export const ACCOUNT_KEY = 'svakosh:trade-account';
+export const ORDER_ACCOUNTS_KEY = 'svakosh:order-accounts';
 export const ORDERS_VIEW_KEY = 'svakosh:orders-view';
 export const ORDERS_FILTER_KEY = 'svakosh:orders-filter';
 export const TRADES_SIDE_KEY = 'svakosh:trades-side';

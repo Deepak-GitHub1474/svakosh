@@ -12,10 +12,12 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { subscribeAction } from '$lib/billing/helper';
-	import { tradeAccounts } from '$lib/trade/accounts.svelte';
+	import { accountLabel, tradeAccounts } from '$lib/trade/accounts.svelte';
+	import { brokerOf } from '$lib/trade/brokers';
 	import { untrack } from 'svelte';
 	import { MODAL_BUTTON, MODAL_CONTROL, MODAL_STEPPER } from '$lib/trade/const';
-	import { getFunds, getMargin, placeOrder } from '$lib/trade/service';
+	import { getFunds, getMargin, placeOrder, placeOrders } from '$lib/trade/service';
+	import type { TBrokerAccount, TPlaceResult } from '$lib/trade/types';
 	import type { TOrderTicket } from './types';
 
 	type TOrderType = TOrderTicket['orderType'];
@@ -83,7 +85,11 @@
 		if (!tradeAccounts.loaded) tradeAccounts.load();
 	});
 
-	const accountId = $derived(tradeAccounts.selected?.logged_in ? tradeAccounts.accountId : '');
+	const targets = $derived(tradeAccounts.orderAccounts);
+	const multi = $derived(tradeAccounts.loggedIn.length > 1);
+	const accountId = $derived(targets.length === 1 ? targets[0].id : '');
+	const accountName = (a: TBrokerAccount) =>
+		`${brokerOf(a.broker)?.label ?? a.broker} · ${accountLabel(a)}`;
 
 	$effect(() => {
 		available = null;
@@ -183,7 +189,7 @@
 			});
 			return;
 		}
-		if (!tradeAccounts.selected?.logged_in) {
+		if (!targets.length) {
 			toast.error({
 				title: 'Log in to your broker',
 				description: 'Your broker session has ended. Log in to place orders.',
@@ -191,9 +197,10 @@
 			});
 			return;
 		}
+		if (targets.length > 1) return submitMany();
 		placing = true;
 		const res = await placeOrder({
-			account_id: tradeAccounts.accountId,
+			account_id: targets[0].id,
 			client_order_id: orderKey,
 			token: draft.token,
 			side: isSell ? 'SELL' : 'BUY',
@@ -209,7 +216,7 @@
 			toast.error({
 				title: `${label} failed`,
 				description: res.error,
-				action: res.status === 402 ? subscribeAction(tradeAccounts.accountId) : undefined
+				action: res.status === 402 ? subscribeAction(targets[0].id) : undefined
 			});
 			return;
 		}
@@ -225,6 +232,57 @@
 				title: `${label} placed`,
 				description: isLimit ? `Limit at ${formatDecimal(limitPrice)}` : 'At market',
 				action: { label: 'Orders', onClick: () => goto(resolve('/trade/orders')) }
+			});
+		}
+		isOpen = false;
+	}
+
+	const placed = (r: TPlaceResult) =>
+		r.ok && r.order?.status !== 'REJECTED' && r.order?.status !== 'FAILED';
+
+	async function submitMany() {
+		if (!draft) return;
+		placing = true;
+		const res = await placeOrders({
+			account_ids: targets.map((a) => a.id),
+			client_order_id: orderKey.replaceAll('-', '').slice(0, 32),
+			token: draft.token,
+			side: isSell ? 'SELL' : 'BUY',
+			product,
+			type: isLimit ? 'LIMIT' : 'MARKET',
+			quantity,
+			price: isLimit ? limitPrice : 0,
+			trigger_price: 0
+		});
+		placing = false;
+		const label = `${isSell ? 'Sell' : 'Buy'} ${quantity} ${title}`;
+		if (!res.ok) {
+			toast.error({ title: `${label} failed`, description: res.error });
+			return;
+		}
+		const ok = res.data.filter(placed);
+		const failed = res.data.filter((r) => !placed(r));
+		const name = (id: string) => {
+			const account = targets.find((a) => a.id === id);
+			return account ? accountName(account) : id;
+		};
+		const reasons = failed
+			.map((r) => `${name(r.account_id)}: ${r.order?.message || r.message || 'Rejected'}`)
+			.join('; ');
+		const unpaid = failed.find((r) => r.status === 402);
+		const action = unpaid
+			? subscribeAction(unpaid.account_id)
+			: { label: 'Orders', onClick: () => goto(resolve('/trade/orders')) };
+		if (!failed.length) {
+			toast.success({ title: `${label} placed in ${ok.length} accounts`, action });
+		} else if (!ok.length) {
+			toast.error({ title: `${label} failed in all accounts`, description: reasons, action });
+			return;
+		} else {
+			toast.warning({
+				title: `${label} placed in ${ok.length} of ${res.data.length} accounts`,
+				description: reasons,
+				action
 			});
 		}
 		isOpen = false;
@@ -296,6 +354,26 @@
 		</header>
 
 		<form id="order-form" class="space-y-4 p-4" onsubmit={submit} novalidate>
+			{#if multi}
+				<div>
+					<SvaKoshLabel class="text-foreground/80">Accounts</SvaKoshLabel>
+					<div class="flex flex-wrap gap-2">
+						{#each tradeAccounts.loggedIn as account (account.id)}
+							{@const on = targets.some((a) => a.id === account.id)}
+							<button
+								type="button"
+								aria-pressed={on}
+								onclick={() => tradeAccounts.toggleOrderAccount(account.id)}
+								class="rounded-lg px-3 py-1.5 text-xs transition-colors {on
+									? 'bg-primary/15 ring-primary/40 text-primary ring-1 ring-inset'
+									: 'glass-panel text-muted-foreground hover:text-foreground'}"
+							>
+								{accountName(account)}
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/if}
 			<div class="grid grid-cols-2 gap-3">
 				<div>
 					<SvaKoshLabel class="text-foreground/80">Product</SvaKoshLabel>

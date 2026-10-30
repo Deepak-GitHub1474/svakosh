@@ -140,6 +140,19 @@ export type TTicket = {
 
 export type TPlaceOrder = TTicket & { client_order_id: string };
 
+export type TPlaceOrders = Omit<TTicket, 'account_id'> & {
+	account_ids: string[];
+	client_order_id: string;
+};
+
+export type TPlaceResult = {
+	account_id: string;
+	ok: boolean;
+	order?: TOrderRecord;
+	status?: number;
+	message?: string;
+};
+
 export type TLinkAccount = {
 	broker: string;
 	account_tag: string;

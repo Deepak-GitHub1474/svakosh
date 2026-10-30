@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from fastapi import HTTPException, status
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from redis.asyncio import Redis
 
 from app.api.endpoints.auth.utils import AccessClaims
+from app.api.endpoints.billing.access import require_broker_subscription
 from app.api.endpoints.trade.models import (
     LinkAccountRequest,
     ModifyOrderRequest,
     PlaceOrderRequest,
+    PlaceOrdersRequest,
     SessionRequest,
     Ticket,
     UpdateAccountRequest,
@@ -17,7 +22,7 @@ from app.config import get_settings
 from app.trade_hub import TradeHubClient
 
 HISTORY_LIMIT_MAX = 200
-ADMIN_ONLY_BROKERS = frozenset({"paper"})
+ADMIN_ONLY_BROKERS = frozenset({"paper", "zerodha", "groww"})
 
 
 async def list_accounts(trade: TradeHubClient, claims: AccessClaims) -> Any:
@@ -130,6 +135,35 @@ async def place_order(
     )
 
 
+async def place_orders(
+    trade: TradeHubClient,
+    mongo: AsyncIOMotorDatabase,
+    redis: Redis,
+    claims: AccessClaims,
+    body: PlaceOrdersRequest,
+) -> list[dict[str, Any]]:
+    ticket = body.model_dump(exclude={"account_id", "account_ids", "client_order_id"})
+
+    async def one(account_id: str) -> dict[str, Any]:
+        try:
+            await require_broker_subscription(mongo, redis, claims, account_id)
+            data = await trade.call(
+                "trade.order.place",
+                {
+                    "user_id": claims.user_id,
+                    **ticket,
+                    "account_id": account_id,
+                    "client_order_id": f"{body.client_order_id}-{account_id[-6:]}",
+                },
+            )
+            return {"account_id": account_id, "ok": True, "order": data}
+        except HTTPException as e:
+            detail = e.detail if isinstance(e.detail, dict) else {"message": str(e.detail)}
+            return {"account_id": account_id, "ok": False, "status": e.status_code, **detail}
+
+    return list(await asyncio.gather(*(one(a) for a in dict.fromkeys(body.account_ids))))
+
+
 async def order_margin(
     trade: TradeHubClient, claims: AccessClaims, body: Ticket
 ) -> Any:
@@ -153,11 +187,13 @@ async def cancel_order(
     order_id: str,
     account_id: str,
     order_type: str,
+    token: str = "",
 ) -> Any:
     payload = {
         "user_id": claims.user_id,
         "account_id": account_id,
         "order_id": order_id,
         "type": order_type,
+        "token": token,
     }
     return await trade.call("trade.order.cancel", payload)

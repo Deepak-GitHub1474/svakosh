@@ -9,8 +9,9 @@ export type TBroker = {
 	is_free: boolean;
 	live: boolean;
 	adminOnly?: boolean;
+	autoLogin?: boolean;
 	fields: TBrokerField[];
-	guide?: { portal: string; steps: string[] };
+	guide?: { portal: string; portalLabel: string; redirect: boolean; steps: string[] };
 };
 
 export const BROKERS: TBroker[] = [
@@ -28,10 +29,77 @@ export const BROKERS: TBroker[] = [
 		],
 		guide: {
 			portal: 'https://smartapi.angelone.in/new/apps',
+			portalLabel: 'Open SmartAPI apps',
+			redirect: true,
 			steps: [
 				'Log in to SmartAPI with this Client ID and open My Apps.',
 				'Add an app with the Redirect URL and Primary Static IP below.',
 				'Save, then copy the app API key here.'
+			]
+		}
+	},
+	{
+		value: 'zerodha',
+		label: 'Zerodha',
+		logo: 'ZERODHA',
+		api: 'Kite Connect',
+		partner: false,
+		is_free: true,
+		live: true,
+		adminOnly: true,
+		fields: [
+			{ key: 'client_id', label: 'Client ID', placeholder: 'AB1234' },
+			{
+				key: 'api_key',
+				label: 'API key',
+				placeholder: 'Paste the API key of your Kite Connect app'
+			},
+			{
+				key: 'api_secret',
+				label: 'API secret',
+				placeholder: 'Paste the API secret of your Kite Connect app',
+				secret: true
+			}
+		],
+		guide: {
+			portal: 'https://developers.kite.trade/apps',
+			portalLabel: 'Open Kite Connect apps',
+			redirect: true,
+			steps: [
+				'Log in to Kite Connect and create a Personal app with this Client ID.',
+				'Set the Redirect URL below, and add the Primary Static IP in your Kite Connect profile.',
+				'Copy the app API key and API secret here.'
+			]
+		}
+	},
+	{
+		value: 'groww',
+		label: 'Groww',
+		logo: 'GROWW',
+		api: 'Groww Trade API',
+		partner: false,
+		is_free: true,
+		live: true,
+		adminOnly: true,
+		autoLogin: true,
+		fields: [
+			{ key: 'client_id', label: 'Client ID', placeholder: 'Your Groww client ID (UCC)' },
+			{ key: 'api_key', label: 'API key', placeholder: 'Paste your Groww API key' },
+			{
+				key: 'api_secret',
+				label: 'API secret',
+				placeholder: 'Paste your Groww API secret',
+				secret: true
+			}
+		],
+		guide: {
+			portal: 'https://groww.in/trade-api/api-keys',
+			portalLabel: 'Open Groww API keys',
+			redirect: false,
+			steps: [
+				'Log in to Groww with this client ID and open Trade API keys.',
+				'Generate an API key with secret, and add the Primary Static IP below if Groww asks for it.',
+				'Copy the API key and secret here. Approve the key on Groww each trading day before logging in.'
 			]
 		}
 	},
@@ -44,6 +112,7 @@ export const BROKERS: TBroker[] = [
 		is_free: true,
 		live: true,
 		adminOnly: true,
+		autoLogin: true,
 		fields: [{ key: 'client_id', label: 'Paper account ID', placeholder: 'PAPER01' }]
 	}
 ];

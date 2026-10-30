@@ -10,6 +10,7 @@ from app.api.endpoints.trade.models import (
     LinkAccountRequest,
     ModifyOrderRequest,
     PlaceOrderRequest,
+    PlaceOrdersRequest,
     SessionRequest,
     Ticket,
     UpdateAccountRequest,
@@ -137,6 +138,15 @@ async def place_order(
     return ok_response("Order placed.", data=data)
 
 
+@router.post("/orders/batch", status_code=status.HTTP_200_OK)
+async def place_orders(
+    body: PlaceOrdersRequest, claims: CurrentClaims, trade: TradeHub, mongo: MongoDatabase, redis: RedisClient
+):
+    data = await controllers.place_orders(trade, mongo, redis, claims, body)
+    placed = sum(1 for r in data if r["ok"])
+    return ok_response(f"Order placed in {placed} of {len(data)} accounts.", data=data)
+
+
 @router.post("/orders/margin", status_code=status.HTTP_200_OK)
 async def order_margin(body: Ticket, claims: CurrentClaims, trade: TradeHub):
     data = await controllers.order_margin(trade, claims, body)
@@ -161,6 +171,9 @@ async def cancel_order(
     order_id: str = OrderId,
     account_id: str = AccountQuery,
     order_type: Literal["MARKET", "LIMIT", "SL", "SL-M"] = Query("LIMIT", alias="type"),
+    token: str = Query("", max_length=80),
 ):
-    await controllers.cancel_order(trade, claims, order_id, account_id, order_type)
+    await controllers.cancel_order(
+        trade, claims, order_id, account_id, order_type, token
+    )
     return ok_response("Order cancelled.")

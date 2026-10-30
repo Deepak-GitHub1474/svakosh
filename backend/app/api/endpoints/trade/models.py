@@ -51,5 +51,12 @@ class PlaceOrderRequest(Ticket):
     client_order_id: TrimStr = Field(..., pattern=r"^[A-Za-z0-9_-]{8,64}$")
 
 
+class PlaceOrdersRequest(Ticket):
+    account_ids: Annotated[
+        list[Annotated[str, Field(pattern=r"^[a-f0-9]{24}$")]], Field(min_length=1, max_length=10)
+    ]
+    client_order_id: TrimStr = Field(..., pattern=r"^[A-Za-z0-9_-]{8,56}$")
+
+
 class ModifyOrderRequest(Ticket):
     pass

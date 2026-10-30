@@ -9,6 +9,8 @@ import type {
 	TOrderKind,
 	TOrderRecord,
 	TPlaceOrder,
+	TPlaceOrders,
+	TPlaceResult,
 	TPosition,
 	TTicket,
 	TTrade,
@@ -72,14 +74,17 @@ export const getOrderHistory = (accountId: string, limit = 50) =>
 export const placeOrder = (body: TPlaceOrder) =>
 	apiCall<TOrderRecord>('/api/trade/orders', 'POST', body);
 
+export const placeOrders = (body: TPlaceOrders) =>
+	apiCall<TPlaceResult[]>('/api/trade/orders/batch', 'POST', body);
+
 export const getMargin = (body: TTicket) =>
 	apiCall<TMargin>('/api/trade/orders/margin', 'POST', body);
 
 export const modifyOrder = (orderId: string, body: TTicket) =>
 	apiCall<null>(`/api/trade/orders/${encodeURIComponent(orderId)}`, 'PATCH', body);
 
-export const cancelOrder = (orderId: string, accountId: string, type: TOrderKind) =>
+export const cancelOrder = (orderId: string, accountId: string, type: TOrderKind, token?: string) =>
 	apiCall<null>(
-		`/api/trade/orders/${encodeURIComponent(orderId)}${query({ account_id: accountId, type })}`,
+		`/api/trade/orders/${encodeURIComponent(orderId)}${query({ account_id: accountId, type, token })}`,
 		'DELETE'
 	);
