@@ -22,7 +22,7 @@ from app.config import get_settings
 from app.trade_hub import TradeHubClient
 
 HISTORY_LIMIT_MAX = 200
-ADMIN_ONLY_BROKERS = frozenset({"paper", "zerodha", "groww"})
+ADMIN_ONLY_BROKERS = frozenset({"paper"})
 
 
 async def list_accounts(trade: TradeHubClient, claims: AccessClaims) -> Any:

@@ -46,7 +46,6 @@ export const BROKERS: TBroker[] = [
 		partner: false,
 		is_free: true,
 		live: true,
-		adminOnly: true,
 		fields: [
 			{ key: 'client_id', label: 'Client ID', placeholder: 'AB1234' },
 			{
@@ -80,7 +79,6 @@ export const BROKERS: TBroker[] = [
 		partner: false,
 		is_free: true,
 		live: true,
-		adminOnly: true,
 		autoLogin: true,
 		fields: [
 			{ key: 'client_id', label: 'Client ID', placeholder: 'Your Groww client ID (UCC)' },
